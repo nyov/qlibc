@@ -46,7 +46,7 @@ int main(void) {
 	tbl->putStr(tbl, "e2", "b", false);
 	tbl->putStr(tbl, "e2", "c", false);
 	tbl->putStr(tbl, "e2", "d", false);
-	tbl->put(tbl, "e3", "e", strlen("e3")+1, false); // equal to addStr();
+	tbl->put(tbl, "e3", "e", strlen("e")+1, false); // equal to addStr();
 
 	// print out
 	printf("--[Test 1 : adding elements]--\n");
