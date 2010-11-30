@@ -28,7 +28,7 @@
  */
 
 /**
- * @file qLib.c qLib version APIs.
+ * @file qLibc.c qLibc version APIs.
  */
 
 #include <stdio.h>
