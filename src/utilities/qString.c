@@ -437,24 +437,21 @@ char *qStrTok(char *str, const char *delimiters, char *retstop, int *offset) {
  * @param str		source string
  * @param delimiters	string that specifies a set of delimiters that may surround the token being extracted
  *
- * @return	a pointer to the Q_ENTRY list
- *
- * @note	Tokens will be stored at Q_ENTRY list with key 1, 2, 3, 4, 5...
+ * @return	Q_LIST container pointer otherwise returns NULL.
  *
  * @code
- *   FILE *fp = fopen("/etc/passwd", "r");
- *   char *buf;
- *   while((buf = qFileReadLine(fp)) != NULL) {
- *     qStrTrimTail(buf);
- *      Q_ENTRY *tokens = qStrTokenizer(buf, ":");
- *      printf("%s\n", tokens->getStr(tokens, "1"));
- *      tokens->free(tokens);
+ *   Q_LIST *tokens = qStrTokenizer("a:b:c", ":");
+ *   char *str;
+ *   while((str = tokens->popFirst(tokens, NULL)) != NULL) {
+ *     printf("%s\n", str);
  *   }
- *   fclose(fp);
+ *   tokens->free(tokens);
  * @endcode
  */
 Q_LIST *qStrTokenizer(const char *str, const char *delimiters) {
 	Q_LIST *list = qList();
+	if(list == NULL) return NULL;
+
 	int i;
 	char *dupstr = strdup(str);
 	char *token;

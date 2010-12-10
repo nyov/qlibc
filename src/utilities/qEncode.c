@@ -47,15 +47,15 @@
  * @param sepchar	separater of line.
  * @param count		if count is not NULL, a number of parsed entries are stored.
  *
- * @return	a pointer of Q_ENTRY if successful, otherwise returns NULL.
+ * @return	Q_LISTTBL container pointer, otherwise returns NULL.
  *
  * @code
  *   cont char query = "category=love&str=%C5%A5%B5%F0%C4%DA%B4%F5&sort=asc";
- *   Q_ENTRY *entry = qDecodeQueryString(NULL, req->pszQueryString, '=', '&', NULL);
- *   printf("category = %s\n", entry->getStr(entry, "category"));
- *   printf("str = %s\n", entry->getStr(entry, "str"));
- *   printf("sort = %s\n", entry->getStr(entry, "sort"));
- *   entry->free(entry);
+ *   Q_LISTTBL *tbl = qDecodeQueryString(NULL, req->pszQueryString, '=', '&', NULL);
+ *   printf("category = %s\n", tbl->getStr(tbl, "category", false));
+ *   printf("str = %s\n", tbl->getStr(tbl, "str", false));
+ *   printf("sort = %s\n", tbl->getStr(tbl, "sort", false));
+ *   tbl->free(tbl);
  * @endcode
  */
 Q_LISTTBL *qParseQueries(Q_LISTTBL *tbl, const char *query, char equalchar, char sepchar, int *count) {
