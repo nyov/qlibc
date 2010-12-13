@@ -87,7 +87,7 @@ OBJ		= \
 		extensions/qHttpClient.o	\
 		extensions/qDatabase.o		\
 						\
-		internal/qInternalCommon.o	\
+		internal/qInternal.o		\
 		internal/md5/md5c.o
 
 

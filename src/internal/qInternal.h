@@ -176,7 +176,7 @@ do {											\
 #define MAX_HUMANOUT		(60)
 
 /*
- * qInternalCommon.c
+ * qInternal.c
  */
 
 extern char	_q_x2c(char hex_up, char hex_low);
