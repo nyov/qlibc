@@ -37,10 +37,10 @@
  *   [Code sample - Object]
  *   Q_VECTOR *vector = qVector();
  *
- *   // put elements
- *   vector->putStr(vector, "AB");      // no need to supply size
- *   vector->putStrf(vector, "%d", 12); // for formatted string
- *   vector->putStr(vector, "CD");
+ *   // add elements
+ *   vector->addStr(vector, "AB");      // no need to supply size
+ *   vector->addStrf(vector, "%d", 12); // for formatted string
+ *   vector->addStr(vector, "CD");
  *
  *   // get the chunk as a string
  *   char *final = vector->toString(vector);
@@ -69,7 +69,7 @@
  *   // get new vector
  *   Q_VECTOR *vector = qVector();
  *
- *   // put objects
+ *   // add objects
  *   int i;
  *   struct sampleobj obj;
  *   for(i = 0; i < 3; i++) {
@@ -78,7 +78,7 @@
  *     sprintf(obj.str, "hello%d", i);
  *
  *     // stack
- *     vector->put(vector, (void *)&obj, sizeof(struct sampleobj));
+ *     vector->add(vector, (void *)&obj, sizeof(struct sampleobj));
  *   }
  *
  *   // final
@@ -118,9 +118,9 @@
  * Member method protos
  */
 #ifndef _DOXYGEN_SKIP
-static bool _put(Q_VECTOR *vector, const void *object, size_t size);
-static bool _putStr(Q_VECTOR *vector, const char *str);
-static bool _putStrf(Q_VECTOR *vector, const char *format, ...);
+static bool _add(Q_VECTOR *vector, const void *object, size_t size);
+static bool _addStr(Q_VECTOR *vector, const char *str);
+static bool _addStrf(Q_VECTOR *vector, const char *format, ...);
 static void *_toArray(Q_VECTOR *vector, size_t *size);
 static void *_toString(Q_VECTOR *vector);
 static size_t _size(Q_VECTOR *vector);
@@ -158,9 +158,9 @@ Q_VECTOR *qVector(void) {
 	}
 
 	// methods
-	vector->put		= _put;
-	vector->putStr		= _putStr;
-	vector->putStrf		= _putStrf;
+	vector->add		= _add;
+	vector->addStr		= _addStr;
+	vector->addStrf		= _addStrf;
 
 	vector->toArray		= _toArray;
 	vector->toString	= _toString;
@@ -174,7 +174,7 @@ Q_VECTOR *qVector(void) {
 }
 
 /**
- * Q_VECTOR->put(): Stack object
+ * Q_VECTOR->add(): Stack object
  *
  * @param vector	Q_VECTOR container pointer.
  * @param object	a pointer of object data
@@ -185,12 +185,12 @@ Q_VECTOR *qVector(void) {
  *	- EINVAL	: Invalid argument.
  *	- ENOMEM	: Memory allocation failed.
  */
-static bool _put(Q_VECTOR *vector, const void *data, size_t size) {
+static bool _add(Q_VECTOR *vector, const void *data, size_t size) {
 	return vector->list->addLast(vector->list, data, size);
 }
 
 /**
- * Q_VECTOR->putStr(): Stack string
+ * Q_VECTOR->addStr(): Stack string
  *
  * @param vector	Q_VECTOR container pointer.
  * @param str		a pointer of string
@@ -200,12 +200,12 @@ static bool _put(Q_VECTOR *vector, const void *data, size_t size) {
  *	- EINVAL	: Invalid argument.
  *	- ENOMEM	: Memory allocation failed.
  */
-static bool _putStr(Q_VECTOR *vector, const char *str) {
+static bool _addStr(Q_VECTOR *vector, const char *str) {
 	return vector->list->addLast(vector->list, str, strlen(str));
 }
 
 /**
- * Q_VECTOR->putStrf(): Stack formatted string
+ * Q_VECTOR->addStrf(): Stack formatted string
  *
  * @param vector	Q_VECTOR container pointer.
  * @param format	string format
@@ -215,7 +215,7 @@ static bool _putStr(Q_VECTOR *vector, const char *str) {
  *	- EINVAL	: Invalid argument.
  *	- ENOMEM	: Memory allocation failed.
  */
-static bool _putStrf(Q_VECTOR *vector, const char *format, ...) {
+static bool _addStrf(Q_VECTOR *vector, const char *format, ...) {
 	char *str;
 	DYNAMIC_VSPRINTF(str, format);
 	if(str == NULL) {
@@ -223,7 +223,7 @@ static bool _putStrf(Q_VECTOR *vector, const char *format, ...) {
 		return false;
 	}
 
-	bool ret = _putStr(vector, str);
+	bool ret = _addStr(vector, str);
 	free(str);
 
 	return ret;

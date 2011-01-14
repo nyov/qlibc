@@ -882,7 +882,7 @@ static bool _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *u
 	if(outBuf == NULL) return false;
 
 	// buffer out command
-	outBuf->putStrf(outBuf, "%s %s %s\r\n",
+	outBuf->addStrf(outBuf, "%s %s %s\r\n",
 		method,
 		uri,
 		HTTP_PROTOCOL_11
@@ -893,11 +893,11 @@ static bool _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *u
 	memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
 	reqheaders->lock(reqheaders);
 	while(reqheaders->getNext(reqheaders, &obj, NULL, false) == true) {
-		outBuf->putStrf(outBuf, "%s: %s\r\n", obj.name, (char*)obj.data);
+		outBuf->addStrf(outBuf, "%s: %s\r\n", obj.name, (char*)obj.data);
 	}
 	reqheaders->unlock(reqheaders);
 
-	outBuf->putStrf(outBuf, "\r\n");
+	outBuf->addStrf(outBuf, "\r\n");
 
 	// stream out
 	size_t towrite = 0;

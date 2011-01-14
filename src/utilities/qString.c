@@ -548,7 +548,9 @@ char *qStrDupBetween(const char *str, const char *start, const char *end) {
 char *qStrUnique(const char *seed) {
 	long int usec;
 #ifdef _WIN32
-	usec = 0;
+	FILETIME ft;
+	GetSystemTimeAsFileTime(&ft);
+	usec = ft.dwLowDateTime % 1000000;
 #else
 	struct timeval tv;
 	gettimeofday(&tv, NULL);

@@ -394,9 +394,9 @@ extern	Q_VECTOR*	qVector(void);
  */
 struct _Q_VECTOR {
 	/* public member methods */
-	bool		(*put)		(Q_VECTOR *vector, const void *data, size_t size);
-	bool		(*putStr)	(Q_VECTOR *vector, const char *str);
-	bool		(*putStrf)	(Q_VECTOR *vector, const char *format, ...);
+	bool		(*add)		(Q_VECTOR *vector, const void *data, size_t size);
+	bool		(*addStr)	(Q_VECTOR *vector, const char *str);
+	bool		(*addStrf)	(Q_VECTOR *vector, const char *format, ...);
 
 	void*		(*toArray)	(Q_VECTOR *vector, size_t *size);
 	void*		(*toString)	(Q_VECTOR *vector);

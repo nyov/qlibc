@@ -36,10 +36,10 @@
 int main(void) {
 	Q_VECTOR *vector = qVector();
 
-	// put elements
-	vector->putStr(vector, "AB");		// no need to supply size
-	vector->putStrf(vector, "%d", 12);	// for formatted string
-	vector->putStr(vector, "CD");
+	// add elements
+	vector->addStr(vector, "AB");		// no need to supply size
+	vector->addStrf(vector, "%d", 12);	// for formatted string
+	vector->addStr(vector, "CD");
 
 	// get the chunk as a string
 	char *final = vector->toString(vector);

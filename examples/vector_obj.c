@@ -43,7 +43,7 @@ int main(void) {
 	// get new vector
 	Q_VECTOR *vector = qVector();
 
-	// put objects
+	// add objects
 	int i;
 	struct sampleobj obj;
 	for(i = 0; i < 3; i++) {
@@ -52,7 +52,7 @@ int main(void) {
 		sprintf(obj.str, "hello%d", i);
 
 		// stack
-		vector->put(vector, (void *)&obj, sizeof(struct sampleobj));
+		vector->add(vector, (void *)&obj, sizeof(struct sampleobj));
 	}
 
 	// final
