@@ -242,13 +242,13 @@ static bool _put(Q_HASHTBL *tbl, const char *name, const void *data, size_t size
 			errno = ENOMEM;
 			return false;
 		}
+		memset((void*)obj, 0, sizeof(Q_NHLOBJ_T));
 
-		if(tbl->slots[idx] == NULL) {
-			tbl->slots[idx] = obj;
-		} else {
+		if(tbl->slots[idx] != NULL) {
+			// insert at the beginning
 			obj->next = tbl->slots[idx];
-			tbl->slots[idx] = obj;
 		}
+		tbl->slots[idx] = obj;
 
 		// increase counter
 		tbl->num++;
