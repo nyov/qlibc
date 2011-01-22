@@ -148,7 +148,7 @@ static bool	_removeObj(Q_LIST *list, Q_DLOBJ_T *obj);
  *
  * @return	a pointer of malloced Q_LIST container, otherwise returns NULL.
  * @retval	errno	will be set in error condition.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @code
  *   Q_LIST *list = qList();
@@ -231,7 +231,7 @@ static size_t _setSize(Q_LIST *list, size_t max) {
  * @retval	errno	will be set in error condition.
  * 	- ENOBUFS	: List full. Only happens when this list has set to have limited number of elements.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @code
  *   // create a sample object.
@@ -258,7 +258,7 @@ static bool _addFirst(Q_LIST *list, const void *data, size_t size) {
  * @retval	errno	will be set in error condition.
  * 	- ENOBUFS	: List full. Only happens when this list has set to have limited number of elements.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static bool _addLast(Q_LIST *list, const void *data, size_t size) {
 	return _addAt(list, -1, data, size);
@@ -277,7 +277,7 @@ static bool _addLast(Q_LIST *list, const void *data, size_t size) {
  * 	- ENOBUFS	: List full. Only happens when this list has set to have limited number of elements.
  *	- ERANGE	: Index out of range.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @code
  *                      first           last      new
@@ -391,7 +391,7 @@ static bool _addAt(Q_LIST *list, int index, const void *data, size_t size) {
  * @return	a pointer of element, otherwise returns NULL.
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: List is empty.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @code
  *   size_t size;
@@ -416,7 +416,7 @@ static void *_getFirst(Q_LIST *list, size_t *size, bool newmem) {
  * @return	a pointer of element, otherwise returns NULL.
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: List is empty.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static void *_getLast(Q_LIST *list, size_t *size, bool newmem) {
 	return _getAt(list, -1, size, newmem);
@@ -434,7 +434,7 @@ static void *_getLast(Q_LIST *list, size_t *size, bool newmem) {
  * @retval	errno
  * @retval	errno	will be set in error condition.
  *	- ERANGE	: Index out of range.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @code
  *                      first           last
@@ -461,7 +461,7 @@ static void *_getAt(Q_LIST *list, int index, size_t *size, bool newmem) {
  * @return	true if found otherwise returns false
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: No next element.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @note
  * obj should be initialized with 0 by using memset() before first call.
@@ -527,7 +527,7 @@ static bool _getNext(Q_LIST *list, Q_DLOBJ_T *obj, bool newmem) {
  * @return	a pointer of malloced element, otherwise returns NULL.
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: List is empty.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static void *_popFirst(Q_LIST *list, size_t *size) {
 	return _popAt(list, 0, size);
@@ -543,7 +543,7 @@ static void *_popFirst(Q_LIST *list, size_t *size) {
  * @return	a pointer of malloced element, otherwise returns NULL.
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: List is empty.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static void *_popLast(Q_LIST *list, size_t *size) {
 	return _popAt(list, -1, size);
@@ -559,7 +559,7 @@ static void *_popLast(Q_LIST *list, size_t *size) {
  * @return	a pointer of malloced element, otherwise returns NULL.
  * @retval	errno	will be set in error condition.
  *	- ERANGE	: Index out of range.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @code
  *                      first           last
@@ -704,7 +704,7 @@ static void _clear(Q_LIST *list) {
  * @return	a malloced pointer, otherwise(if there is no data to merge) returns NULL.
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: List is empty.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static void *_toArray(Q_LIST *list, size_t *size) {
 	if(list->num <= 0) {
@@ -742,7 +742,7 @@ static void *_toArray(Q_LIST *list, size_t *size) {
  * @return	a malloced pointer, otherwise(if there is no data to merge) returns NULL.
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: List is empty.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @note
  * Return string is always terminated by '\0'.

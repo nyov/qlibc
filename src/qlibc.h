@@ -37,7 +37,7 @@
 #define _QLIBC_H
 
 #define _Q_PRGNAME			"qlibc"
-#define _Q_VERSION			"1.0.4"
+#define _Q_VERSION			"1.0.3"
 
 #ifdef __cplusplus
 extern "C" {
@@ -352,6 +352,7 @@ struct _Q_HASHARR {
 	/* public member methods */
 	bool		(*put)		(Q_HASHARR *tbl, const char *key, const void *value, size_t size);
 	bool		(*putStr)	(Q_HASHARR *tbl, const char *key, const char *str);
+	bool		(*putStrf)	(Q_HASHARR *tbl, const char *key, const char *format, ...);
 	bool		(*putInt)	(Q_HASHARR *tbl, const char *key, int num);
 
 	void*		(*get)		(Q_HASHARR *tbl, const char *key, size_t *size);

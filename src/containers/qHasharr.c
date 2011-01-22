@@ -126,6 +126,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <string.h>
 #include <errno.h>
 #include "qlibc.h"
@@ -135,6 +136,7 @@
 
 static bool	_put(Q_HASHARR *tbl, const char *key, const void *value, size_t size);
 static bool	_putStr(Q_HASHARR *tbl, const char *key, const char *str);
+static bool	_putStrf(Q_HASHARR *tbl, const char *key, const char *format, ...);
 static bool	_putInt(Q_HASHARR *tbl, const char *key, int num);
 
 static void*	_get(Q_HASHARR *tbl, const char *key, size_t *size);
@@ -212,20 +214,21 @@ Q_HASHARR *qHasharr(void *memory, size_t memsize) {
 	tbl->slots = (struct _Q_HASHARR_SLOT*)(memory + sizeof(Q_HASHARR)); // data slot pointer
 
 	// assign methods
-	tbl->put		= _put;
-	tbl->putStr		= _putStr;
-	tbl->putInt		= _putInt;
+	tbl->put	= _put;
+	tbl->putStr	= _putStr;
+	tbl->putStrf	= _putStrf;
+	tbl->putInt	= _putInt;
 
-	tbl->get		= _get;
-	tbl->getStr		= _getStr;
-	tbl->getInt		= _getInt;
-	tbl->getNext		= _getNext;
+	tbl->get	= _get;
+	tbl->getStr	= _getStr;
+	tbl->getInt	= _getInt;
+	tbl->getNext	= _getNext;
 
-	tbl->remove		= _remove;
+	tbl->remove	= _remove;
 
-	tbl->size		= _size;
-	tbl->clear		= _clear;
-	tbl->debug		= _debug;
+	tbl->size	= _size;
+	tbl->clear	= _clear;
+	tbl->debug	= _debug;
 
 	return (Q_HASHARR*)memory;
 }
@@ -328,8 +331,8 @@ static bool _put(Q_HASHARR *tbl, const char *key, const void *value, size_t size
  * Q_HASHARR->putStr(): Put a string into this table
  *
  * @param tbl		Q_HASHARR container pointer.
- * @param key		key string
- * @param value		value string
+ * @param key		key string.
+ * @param value		string data.
  *
  * @return		true if successful, otherwise returns false
  * @retval	errno	will be set in error condition.
@@ -340,6 +343,33 @@ static bool _put(Q_HASHARR *tbl, const char *key, const void *value, size_t size
 static bool _putStr(Q_HASHARR *tbl, const char *key, const char *str) {
 	int size = (str != NULL) ? (strlen(str) + 1) : 0;
 	return _put(tbl, key, (void *)str, size);
+}
+
+/**
+ * Q_HASHARR->putStrf(): Put a formatted string into this table.
+ *
+ * @param tbl		Q_HASHARR container pointer.
+ * @param key		key name.
+ * @param format	formatted string data.
+ *
+ * @return		true if successful, otherwise returns false.
+ * @retval	errno	will be set in error condition.
+ *	- ENOBUFS	: Table doesn't have enough space to store the object.
+ *	- ENOMEM	: System memory allocation failure.
+ *	- EINVAL	: Invalid argument.
+ *	- EFAULT	: Unexpected error. Data structure is not constant.
+ */
+static bool _putStrf(Q_HASHARR *tbl, const char *key, const char *format, ...) {
+	char *str;
+	DYNAMIC_VSPRINTF(str, format);
+	if(str == NULL) {
+		errno = ENOMEM;
+		return false;
+	}
+
+	bool ret = _putStr(tbl, key, str);
+	free(str);
+	return ret;
 }
 
 /**

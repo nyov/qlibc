@@ -145,7 +145,7 @@ static void	_free(Q_STACK *stack);
  *
  * @return	a pointer of malloced Q_STACK container, otherwise returns NULL.
  * @retval	errno	will be set in error condition.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @code
  *   Q_STACK *stack = qStack();
@@ -213,7 +213,7 @@ static size_t _setSize(Q_STACK *stack, size_t max) {
  * @retval	errno	will be set in error condition.
  *	- EINVAL	: Invalid argument.
  * 	- ENOBUFS	: Stack full. Only happens when this stack has set to have limited number of elements)
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static bool _push(Q_STACK *stack, const void *data, size_t size) {
 	return stack->list->addFirst(stack->list, data, size);
@@ -230,7 +230,7 @@ static bool _push(Q_STACK *stack, const void *data, size_t size) {
  * @retval	errno	will be set in error condition.
  *	- EINVAL	: Invalid argument.
  * 	- ENOBUFS	: Stack full. Only happens when this stack has set to have limited number of elements.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static bool _pushStr(Q_STACK *stack, const char *str) {
 	if(str == NULL) {
@@ -249,7 +249,7 @@ static bool _pushStr(Q_STACK *stack, const char *str) {
  * @return	true if successful, otherwise returns false.
  * @retval	errno	will be set in error condition.
  * 	- ENOBUFS	: Stack full. Only happens when this stack has set to have limited number of elements.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static bool _pushInt(Q_STACK *stack, int num) {
 	return stack->list->addFirst(stack->list, &num, sizeof(int));
@@ -264,7 +264,7 @@ static bool _pushInt(Q_STACK *stack, int num) {
  * @return	a pointer of malloced element, otherwise returns NULL.
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: Stack is empty.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static void *_pop(Q_STACK *stack, size_t *size) {
 	return stack->list->popFirst(stack->list, size);
@@ -278,7 +278,7 @@ static void *_pop(Q_STACK *stack, size_t *size) {
  * @return	a pointer of malloced string element, otherwise returns NULL.
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: Stack is empty.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @note
  * The string element should be pushed through pushStr().
@@ -301,7 +301,7 @@ static char *_popStr(Q_STACK *stack) {
  * @return	an integer value, otherwise returns 0.
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: Stack is empty.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @note
  * The integer element should be pushed through pushInt().
@@ -327,7 +327,7 @@ static int _popInt(Q_STACK *stack) {
  * @return	a pointer of malloced element, otherwise returns NULL.
  * @retval	errno	will be set in error condition.
  *	- ERANGE	: Index out of range.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @note
  * Negative index can be used for addressing a element from the bottom in this stack.
@@ -345,7 +345,7 @@ static void *_popAt(Q_STACK *stack, int index, size_t *size) {
  * @param newmem	whether or not to allocate memory for the element.
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: Stack is empty.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @return	a pointer of malloced element, otherwise returns NULL.
  */
@@ -361,7 +361,7 @@ static void *_get(Q_STACK *stack, size_t *size, bool newmem) {
  * @return	a pointer of malloced string element, otherwise returns NULL.
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: Stack is empty.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @note
  * The string element should be pushed through pushStr().
@@ -384,7 +384,7 @@ static char *_getStr(Q_STACK *stack) {
  * @return	an integer value, otherwise returns 0.
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: Stack is empty.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @note
  * The integer element should be pushed through pushInt().
@@ -411,7 +411,7 @@ static int _getInt(Q_STACK *stack) {
  * @return	a pointer of element, otherwise returns NULL.
  * @retval	errno	will be set in error condition.
  *	- ERANGE	: Index out of range.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @note
  * Negative index can be used for addressing a element from the bottom in this stack.

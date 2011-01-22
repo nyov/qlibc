@@ -128,7 +128,7 @@ static void	_free(Q_HASHTBL *tbl);
  * @return		a pointer of malloced Q_HASHTBL, otherwise returns false
  * @retval	errno	will be set in error condition.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @code
  *   // create a hash-table with hash-index range 1000 (does not mean maximum number of objects).
@@ -200,7 +200,7 @@ Q_HASHTBL *qHashtbl(size_t range) {
  * @return		true if successful, otherwise returns false
  * @retval	errno	will be set in error condition.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static bool _put(Q_HASHTBL *tbl, const char *name, const void *data, size_t size) {
 	if(name == NULL || data == NULL) {
@@ -281,7 +281,7 @@ static bool _put(Q_HASHTBL *tbl, const char *name, const void *data, size_t size
  * @return		true if successful, otherwise returns false.
  * @retval	errno	will be set in error condition.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static bool _putStr(Q_HASHTBL *tbl, const char *name, const char *str) {
 	size_t size = (str != NULL) ? (strlen(str) + 1) : 0;
@@ -298,7 +298,7 @@ static bool _putStr(Q_HASHTBL *tbl, const char *name, const char *str) {
  * @return		true if successful, otherwise returns false.
  * @retval	errno	will be set in error condition.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static bool _putStrf(Q_HASHTBL *tbl, const char *name, const char *format, ...) {
 	char *str;
@@ -323,7 +323,7 @@ static bool _putStrf(Q_HASHTBL *tbl, const char *name, const char *format, ...) 
  * @return		true if successful, otherwise returns false.
  * @retval	errno	will be set in error condition.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @note
  * The integer will be converted to a string object and stored as string object.
@@ -346,7 +346,7 @@ static bool _putInt(Q_HASHTBL *tbl, const char *name, const int num) {
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: No such key found.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @code
  *   Q_HASHTBL *tbl = qHashtbl(1000);
@@ -418,7 +418,7 @@ static void *_get(Q_HASHTBL *tbl, const char *name, size_t *size, bool newmem) {
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: No such key found.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @note
  * If newmem flag is set, returned data will be malloced and should be deallocated by user.
@@ -437,7 +437,7 @@ static char *_getStr(Q_HASHTBL *tbl, const char *name, bool newmem) {
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: No such key found.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static int _getInt(Q_HASHTBL *tbl, const char *name) {
 	int num = 0;
@@ -461,7 +461,7 @@ static int _getInt(Q_HASHTBL *tbl, const char *name) {
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: No next element.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @code
  *   Q_HASHTBL *tbl = qHashtbl(1000);

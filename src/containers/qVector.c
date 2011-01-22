@@ -135,7 +135,7 @@ static void _free(Q_VECTOR *vector);
  *
  * @return		Q_VECTOR container pointer.
  * @retval	errno	will be set in error condition.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @code
  *   // allocate memory
@@ -185,7 +185,7 @@ Q_VECTOR *qVector(void) {
  * @return		true if successful, otherwise returns false
  * @retval	errno	will be set in error condition.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static bool _add(Q_VECTOR *vector, const void *data, size_t size) {
 	return vector->list->addLast(vector->list, data, size);
@@ -200,7 +200,7 @@ static bool _add(Q_VECTOR *vector, const void *data, size_t size) {
  * @return		true if successful, otherwise returns false
  * @retval	errno	will be set in error condition.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static bool _addStr(Q_VECTOR *vector, const char *str) {
 	return vector->list->addLast(vector->list, str, strlen(str));
@@ -215,7 +215,7 @@ static bool _addStr(Q_VECTOR *vector, const char *str) {
  * @return		true if successful, otherwise returns false
  * @retval	errno	will be set in error condition.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static bool _addStrf(Q_VECTOR *vector, const char *format, ...) {
 	char *str;
@@ -240,7 +240,7 @@ static bool _addStrf(Q_VECTOR *vector, const char *format, ...) {
  * @return	a pointer of finally merged elements(malloced), otherwise returns NULL
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: Vector is empty.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static void *_toArray(Q_VECTOR *vector, size_t *size) {
 	return vector->list->toArray(vector->list, size);
@@ -254,7 +254,7 @@ static void *_toArray(Q_VECTOR *vector, size_t *size) {
  * @return	a pointer of finally merged strings(malloced), otherwise returns NULL
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: Vector is empty.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @note
  * Return string is always terminated by '\0'.

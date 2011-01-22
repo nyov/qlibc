@@ -156,7 +156,7 @@ static void*		_get2(Q_LISTTBL *tbl, const char *name, size_t *size, bool newmem,
  *
  * @return	a pointer of malloced Q_LISTTBL structure in case of successful, otherwise returns NULL.
  * @retval	errno	will be set in error condition.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @code
  *   Q_LISTTBL *tbl = qListtbl();
@@ -246,7 +246,7 @@ static bool _setPutDirection(Q_LISTTBL *tbl, bool first) {
  *
  * @return	true if successful, otherwise returns false.
  * @retval	errno	will be set in error condition.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *	- EINVAL	: Invalid argument.
  *
  * @code
@@ -280,7 +280,7 @@ static bool _put(Q_LISTTBL *tbl, const char *name, const void *data, size_t size
  *
  * @return	true if successful, otherwise returns false.
  * @retval	errno	will be set in error condition.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *	- EINVAL	: Invalid argument.
  */
 static bool _putFirst(Q_LISTTBL *tbl, const char *name, const void *data, size_t size, bool unique) {
@@ -298,7 +298,7 @@ static bool _putFirst(Q_LISTTBL *tbl, const char *name, const void *data, size_t
  *
  * @return	true if successful, otherwise returns false.
  * @retval	errno	will be set in error condition.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *	- EINVAL	: Invalid argument.
  */
 static bool _putLast(Q_LISTTBL *tbl, const char *name, const void *data, size_t size, bool unique) {
@@ -315,7 +315,7 @@ static bool _putLast(Q_LISTTBL *tbl, const char *name, const void *data, size_t 
  *
  * @return	true if successful, otherwise returns false.
  * @retval	errno	will be set in error condition.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *	- EINVAL	: Invalid argument.
  *
  * @note
@@ -336,7 +336,7 @@ static bool _putStr(Q_LISTTBL *tbl, const char *name, const char *str, bool uniq
  *
  * @return	true if successful, otherwise returns false.
  * @retval	errno	will be set in error condition.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *	- EINVAL	: Invalid argument.
  *
  * @note
@@ -366,7 +366,7 @@ static bool _putStrf(Q_LISTTBL *tbl, bool unique, const char *name, const char *
  *
  * @return	true if successful, otherwise returns false.
  * @retval	errno	will be set in error condition.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *	- EINVAL	: Invalid argument.
  *
  * @note
@@ -391,7 +391,7 @@ static bool _putInt(Q_LISTTBL *tbl, const char *name, int num, bool unique) {
  * @retval	errno	will be set in error condition.
  * 	- ENOENT	: No such key found.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @code
  *   Q_LISTTBL *tbl = qListtbl();
@@ -429,7 +429,7 @@ static void *_get(Q_LISTTBL *tbl, const char *name, size_t *size, bool newmem) {
  * @retval	errno	will be set in error condition.
  * 	- ENOENT	: No such key found.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @note
  * This can be used for find last matched element if there are multiple objects with same name.
@@ -449,7 +449,7 @@ static void *_getLast(Q_LISTTBL *tbl, const char *name, size_t *size, bool newme
   * @retval	errno	will be set in error condition.
  * 	- ENOENT	: No such key found.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
 */
 static char *_getStr(Q_LISTTBL *tbl, const char *name, bool newmem) {
 	return (char *)_get(tbl, name, NULL, newmem);
@@ -465,7 +465,7 @@ static char *_getStr(Q_LISTTBL *tbl, const char *name, bool newmem) {
  * @retval	errno	will be set in error condition.
  * 	- ENOENT	: No such key found.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static int _getInt(Q_LISTTBL *tbl, const char *name) {
 	int num = 0;
@@ -489,7 +489,7 @@ static int _getInt(Q_LISTTBL *tbl, const char *name) {
  * @retval	errno	will be set in error condition.
  * 	- ENOENT	: No such key found.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static void *_getCase(Q_LISTTBL *tbl, const char *name, size_t *size, bool newmem) {
 	return _get2(tbl, name, size, newmem, false, strcasecmp);
@@ -506,7 +506,7 @@ static void *_getCase(Q_LISTTBL *tbl, const char *name, size_t *size, bool newme
  * @retval	errno	will be set in error condition.
  * 	- ENOENT	: No such key found.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static char *_getCaseStr(Q_LISTTBL *tbl, const char *name, bool newmem) {
 	return (char *)_getCase(tbl, name, NULL, newmem);
@@ -522,7 +522,7 @@ static char *_getCaseStr(Q_LISTTBL *tbl, const char *name, bool newmem) {
  * @retval	errno	will be set in error condition.
  * 	- ENOENT	: No such key found.
  *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  */
 static int _getCaseInt(Q_LISTTBL *tbl, const char *name) {
 	int num = 0;
@@ -545,7 +545,7 @@ static int _getCaseInt(Q_LISTTBL *tbl, const char *name) {
  * @return	true if found otherwise returns false
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: No next element.
- *	- ENOMEM	: Memory allocation failed.
+ *	- ENOMEM	: Memory allocation failure.
  *
  * @note
  * obj should be initialized with 0 by using memset() before first call.
