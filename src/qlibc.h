@@ -272,6 +272,7 @@ struct _Q_HASHTBL {
 	/* public member methods */
 	bool		(*put)		(Q_HASHTBL *tbl, const char *name, const void *data, size_t size);
 	bool		(*putStr)	(Q_HASHTBL *tbl, const char *name, const char *str);
+	bool		(*putStrf)	(Q_HASHTBL *tbl, const char *name, const char *format, ...);
 	bool		(*putInt)	(Q_HASHTBL *tbl, const char *name, int num);
 
 	void*		(*get)		(Q_HASHTBL *tbl, const char *name, size_t *size, bool newmem);

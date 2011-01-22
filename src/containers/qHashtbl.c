@@ -97,6 +97,7 @@
 // member methods
 static bool	_put(Q_HASHTBL *tbl, const char *name, const void *data, size_t size);
 static bool	_putStr(Q_HASHTBL *tbl, const char *name, const char *str);
+staric bool	_putStrf(Q_HASHTBL *tbl, const char *name, const char *format, ...);
 static bool	_putInt(Q_HASHTBL *tbl, const char *name, int num);
 
 static void*	_get(Q_HASHTBL *tbl, const char *name, size_t *size, bool newmem);
@@ -158,6 +159,7 @@ Q_HASHTBL *qHashtbl(size_t range) {
 	// assign methods
 	tbl->put	= _put;
 	tbl->putStr	= _putStr;
+	tbl->putStrf	= _putStrf;
 	tbl->putInt	= _putInt;
 
 	tbl->get	= _get;
@@ -272,10 +274,10 @@ static bool _put(Q_HASHTBL *tbl, const char *name, const void *data, size_t size
  * Q_HASHTBL->putStr(): Put a string into this table.
  *
  * @param tbl		Q_HASHTBL container pointer.
- * @param name		key name
- * @param data		data object
+ * @param name		key name.
+ * @param str		string data.
  *
- * @return		true if successful, otherwise returns false
+ * @return		true if successful, otherwise returns false.
  * @retval	errno	will be set in error condition.
  *	- EINVAL	: Invalid argument.
  *	- ENOMEM	: Memory allocation failed.
@@ -286,13 +288,38 @@ static bool _putStr(Q_HASHTBL *tbl, const char *name, const char *str) {
 }
 
 /**
+ * Q_HASHTBL->putStrf(): Put a formatted string into this table.
+ *
+ * @param tbl		Q_HASHTBL container pointer.
+ * @param name		key name.
+ * @param format	formatted string data.
+ *
+ * @return		true if successful, otherwise returns false.
+ * @retval	errno	will be set in error condition.
+ *	- EINVAL	: Invalid argument.
+ *	- ENOMEM	: Memory allocation failed.
+ */
+static bool _putStrf(Q_HASHTBL *tbl, const char *name, const char *format, ...) {
+	char *str;
+	DYNAMIC_VSPRINTF(str, format);
+	if(str == NULL) {
+		errno = ENOMEM;
+		return false;
+	}
+
+	bool ret = _putStr(tbl, name, str);
+	free(str);
+	return ret;
+}
+
+/**
  * Q_HASHTBL->putInt(): Put a integer into this table as string type.
  *
  * @param tbl		Q_HASHTBL container pointer.
- * @param name		key name
- * @param data		data object
+ * @param name		key name.
+ * @param num		integer data.
  *
- * @return		true if successful, otherwise returns false
+ * @return		true if successful, otherwise returns false.
  * @retval	errno	will be set in error condition.
  *	- EINVAL	: Invalid argument.
  *	- ENOMEM	: Memory allocation failed.
@@ -310,8 +337,8 @@ static bool _putInt(Q_HASHTBL *tbl, const char *name, const int num) {
  * Q_HASHTBL->get(): Get a object from this table.
  *
  * @param tbl		Q_HASHTBL container pointer.
- * @param name		key name
- * @param size		if not NULL, oject size will be stored
+ * @param name		key name.
+ * @param size		if not NULL, oject size will be stored.
  * @param newmem	whether or not to allocate memory for the data.
  *
  * @return		a pointer of data if the key is found, otherwise returns NULL.
