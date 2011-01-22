@@ -247,6 +247,7 @@ static bool _setPutDirection(Q_LISTTBL *tbl, bool first) {
  * @return	true if successful, otherwise returns false.
  * @retval	errno	will be set in error condition.
  *	- ENOMEM	: Memory allocation failed.
+ *	- EINVAL	: Invalid argument.
  *
  * @code
  *   struct my_obj {
@@ -280,6 +281,7 @@ static bool _put(Q_LISTTBL *tbl, const char *name, const void *data, size_t size
  * @return	true if successful, otherwise returns false.
  * @retval	errno	will be set in error condition.
  *	- ENOMEM	: Memory allocation failed.
+ *	- EINVAL	: Invalid argument.
  */
 static bool _putFirst(Q_LISTTBL *tbl, const char *name, const void *data, size_t size, bool unique) {
 	return _put2(tbl, name, data, size, unique, true);
@@ -297,6 +299,7 @@ static bool _putFirst(Q_LISTTBL *tbl, const char *name, const void *data, size_t
  * @return	true if successful, otherwise returns false.
  * @retval	errno	will be set in error condition.
  *	- ENOMEM	: Memory allocation failed.
+ *	- EINVAL	: Invalid argument.
  */
 static bool _putLast(Q_LISTTBL *tbl, const char *name, const void *data, size_t size, bool unique) {
 	return _put2(tbl, name, data, size, unique, false);
@@ -313,6 +316,7 @@ static bool _putLast(Q_LISTTBL *tbl, const char *name, const void *data, size_t 
  * @return	true if successful, otherwise returns false.
  * @retval	errno	will be set in error condition.
  *	- ENOMEM	: Memory allocation failed.
+ *	- EINVAL	: Invalid argument.
  *
  * @note
  * The default behavior is adding object at the end of this list unless it's changed by calling setDirection().
@@ -333,6 +337,7 @@ static bool _putStr(Q_LISTTBL *tbl, const char *name, const char *str, bool uniq
  * @return	true if successful, otherwise returns false.
  * @retval	errno	will be set in error condition.
  *	- ENOMEM	: Memory allocation failed.
+ *	- EINVAL	: Invalid argument.
  *
  * @note
  * The default behavior is adding object at the end of this list unless it's changed by calling setDirection().
@@ -362,6 +367,7 @@ static bool _putStrf(Q_LISTTBL *tbl, bool unique, const char *name, const char *
  * @return	true if successful, otherwise returns false.
  * @retval	errno	will be set in error condition.
  *	- ENOMEM	: Memory allocation failed.
+ *	- EINVAL	: Invalid argument.
  *
  * @note
  * The integer will be converted to a string object and stored as a string object.
