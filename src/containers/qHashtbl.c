@@ -87,6 +87,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <string.h>
 #include <errno.h>
 #include "qlibc.h"
@@ -97,7 +98,7 @@
 // member methods
 static bool	_put(Q_HASHTBL *tbl, const char *name, const void *data, size_t size);
 static bool	_putStr(Q_HASHTBL *tbl, const char *name, const char *str);
-staric bool	_putStrf(Q_HASHTBL *tbl, const char *name, const char *format, ...);
+static bool	_putStrf(Q_HASHTBL *tbl, const char *name, const char *format, ...);
 static bool	_putInt(Q_HASHTBL *tbl, const char *name, int num);
 
 static void*	_get(Q_HASHTBL *tbl, const char *name, size_t *size, bool newmem);
