@@ -575,7 +575,7 @@ static bool _getNext(Q_LISTTBL *tbl, Q_NDLOBJ_T *obj, const char *name, bool new
 
 	Q_NDLOBJ_T *cont = NULL;
 
-	if(obj->prev == NULL && obj->next == NULL) cont = tbl->first;
+	if(obj->prev == NULL && obj->next == NULL && obj->size == 0) cont = tbl->first;
 	else cont = obj->next;
 
 	if(cont == NULL) {
@@ -650,12 +650,11 @@ static bool _remove(Q_LISTTBL *tbl, const char *name) {
 			free(obj);
 
 			// adjust chain links
-			if(next == NULL) tbl->last = prev;	// if the object is last one
 			if(prev == NULL) tbl->first = next;	// if the object is first one
-			else {					// if the object is middle or last one
-				prev->next = next;
-				next->prev = prev;
-			}
+			else prev->next = next;			// not the first one
+
+			if(next == NULL) tbl->last = prev;	// if the object is last one
+			else next->prev = prev;			// not the first one
 
 			// set next list
 			obj = next;
@@ -714,7 +713,7 @@ static void _reverse(Q_LISTTBL *tbl) {
 static void _clear(Q_LISTTBL *tbl) {
 	_lock(tbl);
 	Q_NDLOBJ_T *obj;
-	for(obj = tbl->first; obj;) {
+	for(obj = tbl->first; obj != NULL;) {
 		Q_NDLOBJ_T *next = obj->next;
 		free(obj->name);
 		free(obj->data);
