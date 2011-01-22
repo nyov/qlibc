@@ -122,8 +122,9 @@ static bool _add(Q_VECTOR *vector, const void *object, size_t size);
 static bool _addStr(Q_VECTOR *vector, const char *str);
 static bool _addStrf(Q_VECTOR *vector, const char *format, ...);
 static void *_toArray(Q_VECTOR *vector, size_t *size);
-static void *_toString(Q_VECTOR *vector);
+static char *_toString(Q_VECTOR *vector);
 static size_t _size(Q_VECTOR *vector);
+static size_t _datasize(Q_VECTOR *vector);
 static void _clear(Q_VECTOR *vector);
 static bool _debug(Q_VECTOR *vector, FILE *out);
 static void _free(Q_VECTOR *vector);
@@ -166,6 +167,7 @@ Q_VECTOR *qVector(void) {
 	vector->toString	= _toString;
 
 	vector->size		= _size;
+	vector->datasize	= _datasize;
 	vector->clear		= _clear;
 	vector->debug		= _debug;
 	vector->free		= _free;
@@ -237,7 +239,7 @@ static bool _addStrf(Q_VECTOR *vector, const char *format, ...) {
  *
  * @return	a pointer of finally merged elements(malloced), otherwise returns NULL
  * @retval	errno	will be set in error condition.
- *	- ENOENT	: List is empty.
+ *	- ENOENT	: Vector is empty.
  *	- ENOMEM	: Memory allocation failed.
  */
 static void *_toArray(Q_VECTOR *vector, size_t *size) {
@@ -245,24 +247,24 @@ static void *_toArray(Q_VECTOR *vector, size_t *size) {
 }
 
 /**
- * Q_LIST->toString(): Returns a string representation of this list, containing string representation of each element.
+ * Q_VECTOR->toString(): Returns a string representation of this vector, containing string representation of each element.
  *
  * @param vector	Q_VECTOR container pointer.
  *
  * @return	a pointer of finally merged strings(malloced), otherwise returns NULL
  * @retval	errno	will be set in error condition.
- *	- ENOENT	: List is empty.
+ *	- ENOENT	: Vector is empty.
  *	- ENOMEM	: Memory allocation failed.
  *
  * @note
  * Return string is always terminated by '\0'.
  */
- static void *_toString(Q_VECTOR *vector) {
+ static char *_toString(Q_VECTOR *vector) {
 	return vector->list->toString(vector->list);
 }
 
 /**
- * Q_VECTOR->size(): Returns the number of elements in this list.
+ * Q_VECTOR->size(): Returns the number of elements in this vector.
  *
  * @param vector	Q_VECTOR container pointer.
  *
@@ -270,6 +272,17 @@ static void *_toArray(Q_VECTOR *vector, size_t *size) {
  */
 static size_t _size(Q_VECTOR *vector) {
 	return vector->list->size(vector->list);
+}
+
+/**
+ * Q_VECTOR->datasize(): Returns the sum of total element size in this vector.
+ *
+ * @param vector	Q_VECTOR container pointer.
+ *
+ * @return		tthe sum of total element size in this vector.
+ */
+static size_t _datasize(Q_VECTOR *vector) {
+	return vector->list->datasize(vector->list);
 }
 
 /**
@@ -284,7 +297,7 @@ static void _clear(Q_VECTOR *vector) {
 /**
  * Q_VECTOR->debug(): Print out stored elements for debugging purpose.
  *
- * @param list		Q_LIST container pointer.
+ * @param vector	Q_VECTOR container pointer.
  * @param out		output stream FILE descriptor such like stdout, stderr.
  *
  * @return		true if successful, otherwise returns false.

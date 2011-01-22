@@ -399,9 +399,10 @@ struct _Q_VECTOR {
 	bool		(*addStrf)	(Q_VECTOR *vector, const char *format, ...);
 
 	void*		(*toArray)	(Q_VECTOR *vector, size_t *size);
-	void*		(*toString)	(Q_VECTOR *vector);
+	char*		(*toString)	(Q_VECTOR *vector);
 
 	size_t		(*size)		(Q_VECTOR *vector);
+	size_t		(*datasize)	(Q_VECTOR *vector);
 	void		(*clear)	(Q_VECTOR *vector);
 	bool		(*debug)	(Q_VECTOR *vector, FILE *out);
 
