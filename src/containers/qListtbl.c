@@ -236,7 +236,7 @@ static bool _setPutDirection(Q_LISTTBL *tbl, bool first) {
 }
 
 /**
- * Q_LISTTBL->put(): Appends a element to this list.
+ * Q_LISTTBL->put(): Put an element to this table.
  *
  * @param tbl		Q_LISTTBL container pointer.
  * @param name		element name.
@@ -262,14 +262,14 @@ static bool _setPutDirection(Q_LISTTBL *tbl, bool first) {
  * @endcode
  *
  * @note
- * The default behavior is adding object at the end of this list unless it's changed by calling setPutDirection().
+ * The default behavior is adding object at the end of this table unless it's changed by calling setPutDirection().
  */
 static bool _put(Q_LISTTBL *tbl, const char *name, const void *data, size_t size, bool unique) {
 	return _put2(tbl, name, data, size, unique, tbl->putdir);
 }
 
 /**
- * Q_LISTTBL->putFirst(): Inserts a element at the beginning of this list.
+ * Q_LISTTBL->putFirst(): Put an element at the beginning of this table.
  *
  * @param tbl		Q_LISTTBL container pointer.
  * @param name		element name.
@@ -286,7 +286,7 @@ static bool _putFirst(Q_LISTTBL *tbl, const char *name, const void *data, size_t
 }
 
 /**
- * Q_LISTTBL->putLast(): Appends a object to the end of this list.
+ * Q_LISTTBL->putLast(): Put an object at the end of this table.
  *
  * @param tbl		Q_LISTTBL container pointer.
  * @param name		element name.
@@ -303,7 +303,7 @@ static bool _putLast(Q_LISTTBL *tbl, const char *name, const void *data, size_t 
 }
 
 /**
- * Q_LISTTBL->putStr(): Add a string into linked-list structure.
+ * Q_LISTTBL->putStr(): Put a string into this table.
  *
  * @param tbl		Q_LISTTBL container pointer.
  * @param name		element name.
@@ -323,7 +323,7 @@ static bool _putStr(Q_LISTTBL *tbl, const char *name, const char *str, bool uniq
 }
 
 /**
- * Q_LISTTBL->putStrf(): Add a formatted string into linked-list structure.
+ * Q_LISTTBL->putStrf(): Put a formatted string into this table.
  *
  * @param tbl		Q_LISTTBL container pointer.
  * @param unique	set true to remove existing elements of same name if exists, false for adding.
@@ -352,7 +352,7 @@ static bool _putStrf(Q_LISTTBL *tbl, bool unique, const char *name, const char *
 }
 
 /**
- * Q_LISTTBL->putInt(): Add an integer into linked-list structure.
+ * Q_LISTTBL->putInt(): Put an integer into this table as string type.
  *
  * @param tbl		Q_LISTTBL container pointer.
  * @param name		element name.
@@ -364,14 +364,17 @@ static bool _putStrf(Q_LISTTBL *tbl, bool unique, const char *name, const char *
  *	- ENOMEM	: Memory allocation failed.
  *
  * @note
+ * The integer will be converted to a string object and stored as a string object.
  * The default behavior is adding object at the end of this list unless it's changed by calling setDirection().
  */
 static bool _putInt(Q_LISTTBL *tbl, const char *name, int num, bool unique) {
-	return _put(tbl, name, &num, sizeof(int), unique);
+        char str[20+1];
+        snprintf(str, sizeof(str), "%d", num);
+	return _putStr(tbl, name, str, unique);
 }
 
 /**
- * Q_LISTTBL->get(): Finds object with given name
+ * Q_LISTTBL->get(): Finds an object with given name.
  *
  * @param tbl		Q_LISTTBL container pointer.
  * @param name		element name.
@@ -409,7 +412,7 @@ static void *_get(Q_LISTTBL *tbl, const char *name, size_t *size, bool newmem) {
 }
 
 /**
- * Q_LISTTBL->getLast(): Finds object backward from the last of list with given name.
+ * Q_LISTTBL->getLast(): Finds an object backward from the last of list with given name.
  *
  * @param tbl		Q_LISTTBL container pointer.
  * @param name		element name.
@@ -430,7 +433,7 @@ static void *_getLast(Q_LISTTBL *tbl, const char *name, size_t *size, bool newme
 }
 
 /**
- * Q_LISTTBL->getStr():  Finds object with given name and returns as a string type.
+ * Q_LISTTBL->getStr():  Finds an object with given name and returns as string type.
  *
  * @param tbl		Q_LISTTBL container pointer.
  * @param name		element name.
@@ -447,7 +450,7 @@ static char *_getStr(Q_LISTTBL *tbl, const char *name, bool newmem) {
 }
 
 /**
- * Q_LISTTBL->getInt():  Finds object with given name and returns as a integer type.
+ * Q_LISTTBL->getInt():  Finds an object with given name and returns as integer type.
  *
  * @param tbl		Q_LISTTBL container pointer.
  * @param name		element name.
@@ -457,22 +460,19 @@ static char *_getStr(Q_LISTTBL *tbl, const char *name, bool newmem) {
  * 	- ENOENT	: No such key found.
  *	- EINVAL	: Invalid argument.
  *	- ENOMEM	: Memory allocation failed.
- *
- * @note
- * The object shoud be stored through putInt().
  */
 static int _getInt(Q_LISTTBL *tbl, const char *name) {
 	int num = 0;
-	int *pnum = _get(tbl, name, NULL, true);
-	if(pnum != NULL) {
-		num = *pnum;
-		free(pnum);
+	char *str = _getStr(tbl, name, true);
+	if(str != NULL) {
+		num = atoi(str);
+		free(str);
 	}
 	return num;
 }
 
 /**
- * Q_LISTTBL->getCase(): Finds object with given name. (case-insensitive)
+ * Q_LISTTBL->getCase(): Finds an object with given name. (case-insensitive)
  *
  * @param tbl		Q_LISTTBL container pointer.
  * @param name		element name.
@@ -520,10 +520,10 @@ static char *_getCaseStr(Q_LISTTBL *tbl, const char *name, bool newmem) {
  */
 static int _getCaseInt(Q_LISTTBL *tbl, const char *name) {
 	int num = 0;
-	int *pnum = _getCase(tbl, name, NULL, true);
-	if(pnum != NULL) {
-		num = *pnum;
-		free(pnum);
+	char *str = _getCase(tbl, name, NULL, true);
+	if(str != NULL) {
+		num = atoi(str);
+		free(str);
 	}
 	return num;
 }

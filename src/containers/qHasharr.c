@@ -30,7 +30,7 @@
 /**
  * @file qHasharr.c Static(array) hash-table implementation.
  *
- * Q_HASHARR implements a hashtable which maps keys to values and stores into fixed size static memory
+ * Q_HASHARR implements a hash-table which maps keys to values and stores into fixed size static memory
  * like shared-memory and memory-mapped file.
  * The creator qHasharr() initializes static memory to makes small slots in it.
  * The default slot size factors are defined in _Q_HASHARR_KEYSIZE and _Q_HASHARR_VALUESIZE.
@@ -231,7 +231,7 @@ Q_HASHARR *qHasharr(void *memory, size_t memsize) {
 }
 
 /**
- * Q_HASHARR->put(): Put object into hash table
+ * Q_HASHARR->put(): Put an object into this table.
  *
  * @param tbl		Q_HASHARR container pointer.
  * @param key		key string
@@ -325,7 +325,7 @@ static bool _put(Q_HASHARR *tbl, const char *key, const void *value, size_t size
 }
 
 /**
- * Q_HASHARR->putStr(): Put string into hash table
+ * Q_HASHARR->putStr(): Put a string into this table
  *
  * @param tbl		Q_HASHARR container pointer.
  * @param key		key string
@@ -343,7 +343,7 @@ static bool _putStr(Q_HASHARR *tbl, const char *key, const char *str) {
 }
 
 /**
- * Q_HASHARR->putInt(): Put integer into hash table
+ * Q_HASHARR->putInt(): Put an integer into this table as string type.
  *
  * @param tbl		Q_HASHARR container pointer.
  * @param key		key string
@@ -354,13 +354,18 @@ static bool _putStr(Q_HASHARR *tbl, const char *key, const char *str) {
  *	- ENOBUFS	: Table doesn't have enough space to store the object.
  *	- EINVAL	: Invalid argument.
  *	- EFAULT	: Unexpected error. Data structure is not constant.
+ *
+ * @note
+ * The integer will be converted to a string object and stored as string object.
  */
 static bool _putInt(Q_HASHARR *tbl, const char *key, int num) {
-	return _put(tbl, key, &num, sizeof(int));
+        char str[20+1];
+        snprintf(str, sizeof(str), "%d", num);
+	return _putStr(tbl, key, str);
 }
 
 /**
- * Q_HASHARR->get(): Get object from hash table
+ * Q_HASHARR->get(): Get an object from this table
  *
  * @param tbl		Q_HASHARR container pointer.
  * @param key		key string
@@ -394,7 +399,7 @@ static void *_get(Q_HASHARR *tbl, const char *key, size_t *size) {
 }
 
 /**
- * Q_HASHARR->getStr(): Get string from hash table
+ * Q_HASHARR->getStr(): Finds an object with given name and returns as string type.
  *
  * @param tbl		Q_HASHARR container pointer.
  * @param key		key string
@@ -413,23 +418,23 @@ static char *_getStr(Q_HASHARR *tbl, const char *key) {
 }
 
 /**
- * Q_HASHARR->getInt(): Get integer from hash table
+ * Q_HASHARR->getInt(): Finds an object with given name and returns as integer type.
  *
  * @param tbl		Q_HASHARR container pointer.
  * @param key		key string
+ *
+ * @return		value integer if successful, otherwise(not found) returns 0
  * @retval	errno	will be set in error condition.
  *	- ENOENT	: No such key found.
  *	- EINVAL	: Invalid argument.
  *	- ENOMEM	: Memory allocation failed.
- *
- * @return		value integer if successful, otherwise(not found) returns 0
  */
 static int _getInt(Q_HASHARR *tbl, const char *key) {
 	int num = 0;
-	int *pnum = _get(tbl, key, NULL);
-	if(pnum != NULL) {
-		num = *pnum;
-		free(pnum);
+	char *str = _getStr(tbl, key);
+	if(str != NULL) {
+		num = atoi(str);
+		free(str);
 	}
 
 	return num;
@@ -497,7 +502,7 @@ static bool _getNext(Q_HASHARR *tbl, Q_NOBJ_T *obj, int *idx) {
 }
 
 /**
- * Q_HASHARR->remove(): Remove key from hash table
+ * Q_HASHARR->remove(): Remove an object from this table.
  *
  * @param tbl		Q_HASHARR container pointer.
  * @param key		key string
@@ -569,7 +574,7 @@ static bool _remove(Q_HASHARR *tbl, const char *key) {
 }
 
 /**
- * Q_HASHARR->size(): Returns the number of keys in this hashtable.
+ * Q_HASHARR->size(): Returns the number of objects in this table.
  *
  * @param tbl		Q_HASHARR container pointer.
  *
@@ -585,7 +590,7 @@ static int _size(Q_HASHARR *tbl, int *maxslots, int *usedslots) {
 }
 
 /**
- * Q_HASHARR->clear(): Clears this hashtable so that it contains no keys.
+ * Q_HASHARR->clear(): Clears this table so that it contains no keys.
  *
  * @param tbl		Q_HASHARR container pointer.
  *

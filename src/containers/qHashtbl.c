@@ -187,7 +187,7 @@ Q_HASHTBL *qHashtbl(size_t range) {
 }
 
 /**
- * Q_HASHTBL->put(): Put object into hash table.
+ * Q_HASHTBL->put(): Put a object into this table.
  *
  * @param tbl		Q_HASHTBL container pointer.
  * @param name		key name
@@ -269,7 +269,7 @@ static bool _put(Q_HASHTBL *tbl, const char *name, const void *data, size_t size
 }
 
 /**
- * Q_HASHTBL->putStr(): Put string into hash table
+ * Q_HASHTBL->putStr(): Put a string into this table.
  *
  * @param tbl		Q_HASHTBL container pointer.
  * @param name		key name
@@ -286,7 +286,7 @@ static bool _putStr(Q_HASHTBL *tbl, const char *name, const char *str) {
 }
 
 /**
- * Q_HASHTBL->putInt(): Put integer into hash table
+ * Q_HASHTBL->putInt(): Put a integer into this table as string type.
  *
  * @param tbl		Q_HASHTBL container pointer.
  * @param name		key name
@@ -296,13 +296,18 @@ static bool _putStr(Q_HASHTBL *tbl, const char *name, const char *str) {
  * @retval	errno	will be set in error condition.
  *	- EINVAL	: Invalid argument.
  *	- ENOMEM	: Memory allocation failed.
+ *
+ * @note
+ * The integer will be converted to a string object and stored as string object.
  */
 static bool _putInt(Q_HASHTBL *tbl, const char *name, const int num) {
-	return _put(tbl, name, &num, sizeof(num));
+        char str[20+1];
+        snprintf(str, sizeof(str), "%d", num);
+	return _putStr(tbl, name, str);
 }
 
 /**
- * Q_HASHTBL->get(): Get object from hash table
+ * Q_HASHTBL->get(): Get a object from this table.
  *
  * @param tbl		Q_HASHTBL container pointer.
  * @param name		key name
@@ -375,7 +380,7 @@ static void *_get(Q_HASHTBL *tbl, const char *name, size_t *size, bool newmem) {
 }
 
 /**
- * Q_HASHTBL->getStr(): Get string from hash table
+ * Q_HASHTBL->getStr(): Finds an object with given name and returns as string type.
  *
  * @param tbl		Q_HASHTBL container pointer.
  * @param name		key name
@@ -395,7 +400,7 @@ static char *_getStr(Q_HASHTBL *tbl, const char *name, bool newmem) {
 }
 
 /**
- * Q_HASHTBL->getInt(): Get integer from hash table
+ * Q_HASHTBL->getInt(): Finds an object with given name and returns as integer type.
  *
  * @param tbl		Q_HASHTBL container pointer.
  * @param name		key name
@@ -405,16 +410,13 @@ static char *_getStr(Q_HASHTBL *tbl, const char *name, bool newmem) {
  *	- ENOENT	: No such key found.
  *	- EINVAL	: Invalid argument.
  *	- ENOMEM	: Memory allocation failed.
- *
- * @note
- * If newmem flag is true, returned data will be malloced and should be deallocated by user.
  */
 static int _getInt(Q_HASHTBL *tbl, const char *name) {
 	int num = 0;
-	int *pnum = _get(tbl, name, NULL, true);
-	if(pnum != NULL) {
-		num = *pnum;
-		free(pnum);
+	char *str = _getStr(tbl, name, true);
+	if(str != NULL) {
+		num = atoi(str);
+		free(str);
 	}
 
 	return num;
@@ -525,7 +527,7 @@ static bool _getNext(Q_HASHTBL *tbl, Q_NHLOBJ_T *obj, bool newmem) {
 }
 
 /**
- * Q_HASHTBL->remove(): Remove key from hash table
+ * Q_HASHTBL->remove(): Remove an object from this table.
  *
  * @param tbl		Q_HASHTBL container pointer.
  * @param name		key name
