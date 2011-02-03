@@ -904,7 +904,6 @@ static bool _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *u
 	char *final = outBuf->toArray(outBuf, &towrite);
 	ssize_t written = 0;
 	if(final != NULL) {
-		towrite = strlen(final);
 		written = qIoWrite(client->socket, final, towrite, -1);
 		free(final);
 	}
