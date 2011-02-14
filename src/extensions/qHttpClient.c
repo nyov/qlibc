@@ -32,6 +32,63 @@
  *
  * Q_HTTPCLIENT implements HTTP client.
  *
+ * Example code for simple HTTP GET operation.
+ *
+ * @code
+ *   #define REMOTE_HOST "www.qdecoder.org"
+ *   #define REMOTE_PORT (80)
+ *   #define REMOTE_URL  "/robots.txt"
+ *   #define SAVEFILE    "/tmp/robots.txt"
+ *
+ *   int main(void) {
+ *     // create new HTTP client
+ *     Q_HTTPCLIENT *httpClient = qHttpClient(REMOTE_HOST, REMOTE_PORT);
+ *     if(httpClient == NULL) return -1;
+ *
+ *     // open file for writing
+ *     int nFd = open(SAVEFILE, O_CREAT | O_TRUNC | O_WRONLY, 0755);
+ *     if(nFd < 0) {
+ *       httpClient->free(httpClient);
+ *       return -1;
+ *     }
+ *
+ *     // container for storing response headers for debugging purpose
+ *     Q_LISTTBL *pResHeaders = qListtbl();
+ *
+ *     // download
+ *     off_t nSavesize = 0;
+ *     int nRescode = 0;
+ *     bool bRet = httpClient->get(httpClient, REMOTE_URL, nFd, &nSavesize, &nRescode, NULL, pResHeaders, NULL, NULL);
+ *
+ *     // close file
+ *     close(nFd);
+ *
+ *     // print out debugging info
+ *     printf("%s %d, %d bytes saved\n", (bRet?"Success":"Failed"), nRescode, (int)nSavesize);
+ *     pResHeaders->debug(pResHeaders, stdout);
+ *
+ *     // de-allocate HTTP client object
+ *     httpClient->free(httpClient);
+ *
+ *     return (bRet ? 0 : -1);
+ *  }
+ *
+ *  [Output]
+ *  Success 200, 30 bytes saved
+ *  Date=Fri, 11 Feb 2011 23:40:50 GMT? (30)
+ *  Server=Apache? (7)
+ *  Last-Modified=Sun, 15 Mar 2009 11:43:07 GMT? (30)
+ *  ETag="2e5c9d-1e-46526d665c8c0"? (26)
+ *  Accept-Ranges=bytes? (6)
+ *  Content-Length=30? (3)
+ *  Cache-Control=max-age=604800? (15)
+ *  Expires=Fri, 18 Feb 2011 23:40:50 GMT? (30)
+ *  Connection=close? (6)
+ *  Content-Type=text/plain? (11)
+ * @endcode
+ *
+ * Example code for multiple PUT operation using same keep-alive connection.
+ *
  * @code
  *   // create new HTTP client
  *   Q_HTTPCLIENT *httpClient = qHttpClient("www.qdecoder.org", 80);
@@ -302,7 +359,7 @@ static bool _open(Q_HTTPCLIENT *client) {
  * @param reqheaders	Q_LISTTBL pointer which contains additional user request headers. (can be NULL)
  * @param resheaders	Q_LISTTBL pointer for storing response headers. (can be NULL)
  *
- * @return	true if successful(200 OK), otherwise returns false
+ * @return	true if successful(got 200 response), otherwise returns false
  *
  * @code
  *   main() {
@@ -506,17 +563,16 @@ static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize,
 		return false;
 	}
 
-	// retrieve data
+	// start retrieving data
 	off_t recv = 0;
-	if(callback != NULL) {
-		if(callback(userdata, recv) == false) {
-			_close(client);
-			return false;
-		}
+	if(callback != NULL && callback(userdata, recv) == false) {
+		_close(client);
+		return false;
 	}
+
 	if(clength > 0) {
 		while(recv < clength) {
-			size_t recvsize;	// this time receive size
+			unsigned int recvsize;	// this time receive size
 			if(clength - recv < MAX_ATOMIC_DATA_SIZE) recvsize = clength - recv;
 			else recvsize = MAX_ATOMIC_DATA_SIZE;
 
@@ -538,17 +594,58 @@ static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize,
 			return false;
 		}
 
-		if(callback != NULL) {
-			if(callback(userdata, recv) == false) {
+	} else if(clength == -1) { // chunked
+		bool completed = false;
+		do {
+			// read chunk size
+			char buf[64];
+			if(qIoGets(buf, sizeof(buf), client->socket, client->timeoutms) <= 0) break;
+
+			// parse chunk size
+			unsigned int recvsize;	// this time chunk size
+			sscanf(buf, "%x", &recvsize);
+			if(recvsize == 0) {
+				// end of transfer
+				completed = true;
+			} else if(recvsize < 0) {
+				// parsing failure
+				break;
+			}
+
+			// save chunk
+			if(recvsize > 0) {
+				ssize_t ret = qIoSend(fd, client->socket, recvsize, client->timeoutms);
+				if(ret != recvsize) break;
+				recv += ret;
+				if(savesize != NULL) *savesize = recv;
+			}
+
+			// read tailing CRLF
+			if(qIoGets(buf, sizeof(buf), client->socket, client->timeoutms) <= 0) break;
+
+			// call back
+			if(callback != NULL && callback(userdata, recv) == false) {
 				_close(client);
 				return false;
 			}
+		} while(completed == false);
+
+		if(completed == false) {
+			DEBUG("Broken pipe. %jd/chunked, errno=%d", recv, errno);
+			_close(client);
+			return false;
 		}
 	}
 
 	// close connection
 	if(client->keepalive == false || client->connclose == true) {
 		_close(client);
+	}
+
+	// call back for closing connection
+	if(callback != NULL && callback(userdata, recv) == false) {
+		_close(client);
+		return false;
 	}
 
 	return true;
@@ -921,7 +1018,7 @@ static bool _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *u
  *
  * @param client	Q_HTTPCLIENT object pointer
  * @param resheaders	Q_LISTTBL pointer for storing response headers. (can be NULL)
- * @param contentlength	length of content body will be stored. (can be NULL)
+ * @param contentlength	length of content body(or -1 for chunked transfer encoding) will be stored. (can be NULL)
  *
  * @return	numeric HTTP response code if successful, otherwise returns 0.
  *
@@ -962,33 +1059,37 @@ static int _readResponse(Q_HTTPCLIENT *client, Q_LISTTBL *resheaders, off_t *con
 	// read headers
 	while(qIoGets(buf, sizeof(buf), client->socket, client->timeoutms) > 0) {
 		if(buf[0] == '\0') break;
-		if(resheaders != NULL || contentlength != NULL) {
-			// parse header
-			char *value = strstr(buf, ":");
-			if(value != NULL) {
-				*value = '\0';
-				value += 1;
-				qStrTrim(value);
-			} else {
-				// missing colon
-				value = "";
-			}
 
-			if(resheaders != NULL) {
-				resheaders->putStr(resheaders, buf, value, true);
-			}
+		// parse header
+		char *name = buf;
+		char *value = strstr(buf, ":");
+		if(value != NULL) {
+			*value = '\0';
+			value += 1;
+			qStrTrim(value);
+		} else {
+			// missing colon
+			value = "";
+		}
 
-			// check keep-alive header
-			if(!strcasecmp(buf, "Connection")) {
-				if(!strcasecmp(value, "close")) {
-					client->connclose = true;
-				}
+		if(resheaders != NULL) {
+			resheaders->putStr(resheaders, name, value, true);
+		}
+
+		// check Connection header
+		if(!strcasecmp(name, "Connection")) {
+			if(!strcasecmp(value, "close")) {
+				client->connclose = true;
 			}
-			// check content-length header
-			else if(!strcasecmp(buf, "Content-Length")) {
-				if(contentlength != NULL) {
-					*contentlength = atoll(value);
-				}
+		}
+		// check Content-Length & Transfer-Encoding header
+		else if(contentlength != NULL && *contentlength == 0) {
+			if(!strcasecmp(name, "Content-Length")) {
+				*contentlength = atoll(value);
+			}
+			// check transfer-encoding header
+			else if(!strcasecmp(name, "Transfer-Encoding") && !strcasecmp(value, "chunked")) {
+				*contentlength = -1;
 			}
 		}
 	}

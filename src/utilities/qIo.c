@@ -179,13 +179,13 @@ off_t qIoSend(int outfd, int infd, off_t nbytes, int timeoutms) {
 
 		// read
 		ssize_t rsize = qIoRead(buf, infd, chunksize, timeoutms);
-		if (rsize <= 0) break;
 		DEBUG("read %zd", rsize);
+		if (rsize <= 0) break;
 
 		// write
 		ssize_t wsize = qIoWrite(outfd, buf, rsize, timeoutms);
-		if(wsize <= 0) break;
 		DEBUG("write %zd", wsize);
+		if(wsize <= 0) break;
 
 		total += wsize;
 		if(rsize != wsize) {
