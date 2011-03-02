@@ -552,10 +552,10 @@ extern	uint64_t	qHashFnv64(const void *data, size_t nbytes);
  */
 extern	int		qIoWaitReadable(int fd, int timeoutms);
 extern	int		qIoWaitWritable(int fd, int timeoutms);
-extern	ssize_t		qIoRead(void *buf, int fd, size_t nbytes, int timeoutms);
+extern	ssize_t		qIoRead(int fd, void *buf, size_t nbytes, int timeoutms);
 extern	ssize_t		qIoWrite(int fd, const void *data, size_t nbytes, int timeoutms);
 extern	off_t		qIoSend(int outfd, int infd, off_t nbytes, int timeoutms);
-extern	ssize_t		qIoGets(char *buf, size_t bufsize, int fd, int timeoutms);
+extern	ssize_t		qIoGets(int fd, char *buf, size_t bufsize, int timeoutms);
 extern	ssize_t		qIoPuts(int fd, const char *str, int timeoutms);
 extern	ssize_t		qIoPrintf(int fd, int timeoutms, const char *format, ...);
 
@@ -717,6 +717,7 @@ extern	Q_HTTPCLIENT*	qHttpClient(const char *hostname, int port);
  */
 struct _Q_HTTPCLIENT {
 	/* public member methods */
+	bool		(*setSsl)		(Q_HTTPCLIENT *client);
 	void		(*setTimeout)		(Q_HTTPCLIENT *client, int timeoutms);
 	void		(*setKeepalive)		(Q_HTTPCLIENT *client, bool keepalive);
 	void		(*setUseragent)		(Q_HTTPCLIENT *client, const char *useragent);
@@ -730,13 +731,19 @@ struct _Q_HTTPCLIENT {
 
 	bool		(*sendRequest)		(Q_HTTPCLIENT *client, const char *method, const char *uri, Q_LISTTBL *reqheaders);
 	int		(*readResponse)		(Q_HTTPCLIENT *client, Q_LISTTBL *resheaders, off_t *contentlength);
-	off_t		(*readContent)		(Q_HTTPCLIENT *client, void *buf, off_t length);
+
+	ssize_t		(*gets)			(Q_HTTPCLIENT *client, char *buf, size_t bufsize);
+	ssize_t		(*read)			(Q_HTTPCLIENT *client, void *buf, size_t nbytes);
+	ssize_t		(*write)		(Q_HTTPCLIENT *client, const void *buf, size_t nbytes);
+	off_t		(*recvfile)		(Q_HTTPCLIENT *client, int fd, off_t nbytes);
+	off_t		(*sendfile)		(Q_HTTPCLIENT *client, int fd, off_t nbytes);
 
 	bool		(*close)		(Q_HTTPCLIENT *client);
 	void		(*free)			(Q_HTTPCLIENT *client);
 
 	/* private variables */
 	int		socket;			/*!< socket descriptor */
+	void		*ssl;			/*!< will be used if SSL has been enabled at compile time */
 
 	struct sockaddr_in addr;
 	char		*hostname;

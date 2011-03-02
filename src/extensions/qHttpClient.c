@@ -35,6 +35,7 @@
  * Example code for simple HTTP GET operation.
  *
  * @code
+ *   #define HTTPS       (false)
  *   #define REMOTE_HOST "www.qdecoder.org"
  *   #define REMOTE_PORT (80)
  *   #define REMOTE_URL  "/robots.txt"
@@ -45,8 +46,15 @@
  *     Q_HTTPCLIENT *httpClient = qHttpClient(REMOTE_HOST, REMOTE_PORT);
  *     if(httpClient == NULL) return -1;
  *
+ *     // set SSL if required.
+ *     if(HTTPS == true && httpClient->setSsl(httpClient) == false) {
+ *       httpClient->free(httpClient);
+ *       printf("\n");
+ *       return -1;
+ *     }
+ *
  *     // open file for writing
- *     int nFd = open(SAVEFILE, O_CREAT | O_TRUNC | O_WRONLY, 0755);
+ *     int nFd = open(SAVEFILE, O_CREAT | O_TRUNC | O_WRONLY, 0644);
  *     if(nFd < 0) {
  *       httpClient->free(httpClient);
  *       return -1;
@@ -125,12 +133,19 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
+
+#ifdef	ENABLE_OPENSSL
+#include "openssl/ssl.h"
+#include "openssl/err.h"
+#endif
+
 #include "qlibc.h"
 #include "qInternal.h"
 
 #ifndef _DOXYGEN_SKIP
 
 static bool	_open(Q_HTTPCLIENT *client);
+static bool	_setSsl(Q_HTTPCLIENT *client);
 static void	_setTimeout(Q_HTTPCLIENT *client, int timeoutms);
 static void	_setKeepalive(Q_HTTPCLIENT *client, bool keepalive);
 static void	_setUseragent(Q_HTTPCLIENT *client, const char *agentname);
@@ -149,7 +164,12 @@ static void*	_cmd(Q_HTTPCLIENT *client, const char *method, const char *uri,
 
 static bool	_sendRequest(Q_HTTPCLIENT *client, const char *method, const char *uri, Q_LISTTBL *reqheaders);
 static int	_readResponse(Q_HTTPCLIENT *client, Q_LISTTBL *resheaders, off_t *contentlength);
-static off_t	_readContent(Q_HTTPCLIENT *client, void *buf, off_t length);
+
+static ssize_t	_gets(Q_HTTPCLIENT *client, char *buf, size_t bufsize);
+static ssize_t	_read(Q_HTTPCLIENT *client, void *buf, size_t nbytes);
+static ssize_t	_write(Q_HTTPCLIENT *client, const void *buf, size_t nbytes);
+static off_t	_recvfile(Q_HTTPCLIENT *client, int fd, off_t nbytes);
+static off_t	_sendfile(Q_HTTPCLIENT *client, int fd, off_t nbytes);
 
 static bool	_close(Q_HTTPCLIENT *client);
 static void	_free(Q_HTTPCLIENT *client);
@@ -187,8 +207,15 @@ static bool	_setSocketOption(int socket);
 //
 #define	SET_TCP_LINGER_TIMEOUT			(15)		/*< linger seconds, 0 for disable */
 #define SET_TCP_NODELAY				(1)		/*< 0 for disable */
-#define	MAX_SHUTDOWN_WAIT			(5 * 1000)	/*< maximum shutdown wait, unit is ms */
-#define MAX_ATOMIC_DATA_SIZE			(32 * 1024)	/*< maximum sending bytes, used in PUT method */
+#define	MAX_SHUTDOWN_WAIT			(100)		/*< maximum shutdown wait, unit is ms */
+#define MAX_ATOMIC_DATA_SIZE			(32 * 1024)	/*< maximum sending bytes */
+
+#ifdef	ENABLE_OPENSSL
+struct	SslConn {
+	SSL	*ssl;
+	SSL_CTX	*ctx;
+};
+#endif
 
 /**
  * Initialize & create new HTTP client.
@@ -221,6 +248,7 @@ Q_HTTPCLIENT *qHttpClient(const char *hostname, int port) {
 	client->port = port;
 
 	// member methods
+	client->setSsl		= _setSsl;
 	client->setTimeout	= _setTimeout;
 	client->setKeepalive	= _setKeepalive;
 	client->setUseragent	= _setUseragent;
@@ -234,7 +262,12 @@ Q_HTTPCLIENT *qHttpClient(const char *hostname, int port) {
 
 	client->sendRequest	= _sendRequest;
 	client->readResponse	= _readResponse;
-	client->readContent	= _readContent;
+
+	client->gets		= _gets;
+	client->read		= _read;
+	client->write		= _write;
+	client->recvfile	= _recvfile;
+	client->sendfile	= _sendfile;
 
 	client->close		= _close;
 	client->free		= _free;
@@ -245,6 +278,38 @@ Q_HTTPCLIENT *qHttpClient(const char *hostname, int port) {
 	_setUseragent(client, _Q_PRGNAME "/" _Q_VERSION);
 
 	return client;
+}
+
+/**
+ * Q_HTTPCLIENT->setSsl(): Sets connection to HTTPS connection
+ *
+ * @param client	Q_HTTPCLIENT object pointer
+ *
+ * @code
+ *   httpClient->setSsl(httpClient);
+ * @endcode
+ */
+static bool _setSsl(Q_HTTPCLIENT *client) {
+#ifdef	ENABLE_OPENSSL
+	static bool initialized = false;
+
+	if(client->socket >= 0) return false; // must be set before making a connection.
+	if(initialized == true || client->ssl != NULL) return true; // already initialized.
+
+	// init openssl
+	initialized = true;
+	SSL_load_error_strings();
+	SSL_library_init();
+
+	// allocate ssl structure
+	client->ssl = malloc(sizeof(struct SslConn));
+	if(client->ssl == NULL) return false;
+	memset(client->ssl, 0, sizeof(struct SslConn));
+
+	return true;
+#else
+	return false;
+#endif
 }
 
 /**
@@ -310,6 +375,7 @@ static void _setUseragent(Q_HTTPCLIENT *client, const char *useragent) {
  */
 static bool _open(Q_HTTPCLIENT *client) {
 	if(client->socket >= 0) {
+		// check if connection is still alive
 		if(qIoWaitWritable(client->socket, 0) > 0) return true;
 		_close(client);
 	}
@@ -332,7 +398,7 @@ static bool _open(Q_HTTPCLIENT *client) {
 	int status = connect(sockfd, (struct sockaddr *)&client->addr, sizeof(client->addr));
 	if(status < 0 && (errno != EINPROGRESS || qIoWaitWritable(sockfd, client->timeoutms) <= 0) ) {
 	 	DEBUG("connection failed.");
-		close(client->socket);
+		close(sockfd);
 		return false;
 	}
 
@@ -341,11 +407,52 @@ static bool _open(Q_HTTPCLIENT *client) {
 		fcntl(sockfd, F_SETFL, sockflag);
 	}
 
+	// store socket descriptor
+	client->socket = sockfd;
+
 	// set socket option
 	_setSocketOption(sockfd);
 
-	// store socket descriptor
-	client->socket = sockfd;
+#ifdef ENABLE_OPENSSL
+	// set SSL option
+	if(client->ssl != NULL) {
+		// get ssl context using SSL 2 or 3
+		struct SslConn *ssl = client->ssl;
+		ssl->ctx = SSL_CTX_new(SSLv23_client_method());
+		if(ssl->ctx == NULL) {
+			DEBUG("OpenSSL: %s", ERR_reason_error_string(ERR_get_error()));
+			_close(client);
+			return false;
+		}
+
+	 	// get ssl handle
+		ssl->ssl = SSL_new(ssl->ctx);
+		if(ssl->ssl == NULL) {
+			DEBUG("OpenSSL: %s", ERR_reason_error_string(ERR_get_error()));
+			_close(client);
+			return false;
+		}
+
+		// map ssl handle with socket
+		if(SSL_set_fd(ssl->ssl, client->socket) != 1) {
+			DEBUG("OpenSSL: %s", ERR_reason_error_string(ERR_get_error()));
+			_close(client);
+			return false;
+		}
+
+		// set options
+		SSL_set_connect_state(ssl->ssl);
+
+		// handshake
+		if(SSL_connect(ssl->ssl) != 1) {
+			DEBUG("OpenSSL: %s", ERR_reason_error_string(ERR_get_error()));
+			_close(client);
+			return false;
+		}
+
+		DEBUG("ssl initialized");
+	}
+#endif
 
 	return true;
 }
@@ -425,7 +532,7 @@ static bool _head(Q_HTTPCLIENT *client, const char *uri, int *rescode,
 
 	// throw out content
 	if(clength > 0) {
-		if(_readContent(client, NULL, clength) != clength) {
+		if(_read(client, NULL, clength) != clength) {
 			_close(client);
 		}
 	}
@@ -551,7 +658,7 @@ static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize,
 	if(resno != HTTP_CODE_OK) {
 		// throw out content
 		if(clength > 0) {
-			if(_readContent(client, NULL, clength) != clength) {
+			if(_read(client, NULL, clength) != clength) {
 				_close(client);
 			}
 		}
@@ -576,7 +683,7 @@ static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize,
 			if(clength - recv < MAX_ATOMIC_DATA_SIZE) recvsize = clength - recv;
 			else recvsize = MAX_ATOMIC_DATA_SIZE;
 
-			ssize_t ret = qIoSend(fd, client->socket, recvsize, client->timeoutms);
+			ssize_t ret = _recvfile(client, fd, recvsize);
 			if(ret <= 0) break; // Connection closed by peer
 			recv += ret;
 			if(savesize != NULL) *savesize = recv;
@@ -599,7 +706,7 @@ static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize,
 		do {
 			// read chunk size
 			char buf[64];
-			if(qIoGets(buf, sizeof(buf), client->socket, client->timeoutms) <= 0) break;
+			if(_gets(client, buf, sizeof(buf)) <= 0) break;
 
 			// parse chunk size
 			unsigned int recvsize;	// this time chunk size
@@ -614,14 +721,15 @@ static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize,
 
 			// save chunk
 			if(recvsize > 0) {
-				ssize_t ret = qIoSend(fd, client->socket, recvsize, client->timeoutms);
+				ssize_t ret = _recvfile(client, fd, recvsize);
 				if(ret != recvsize) break;
 				recv += ret;
+				DEBUG("%zd %zd", recv, ret);
 				if(savesize != NULL) *savesize = recv;
 			}
 
 			// read tailing CRLF
-			if(qIoGets(buf, sizeof(buf), client->socket, client->timeoutms) <= 0) break;
+			if(_gets(client, buf, sizeof(buf)) <= 0) break;
 
 			// call back
 			if(callback != NULL && callback(userdata, recv) == false) {
@@ -772,7 +880,7 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
 		if(rescode != NULL) *rescode = resno;
 
 		if(clength > 0) {
-			if(_readContent(client, NULL, clength) != clength) {
+			if(_read(client, NULL, clength) != clength) {
 				_close(client);
 			}
 		}
@@ -798,7 +906,7 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
 			if(length - sent < MAX_ATOMIC_DATA_SIZE) sendsize = length - sent;
 			else sendsize = MAX_ATOMIC_DATA_SIZE;
 
-			ssize_t ret = qIoSend(client->socket, fd, sendsize, client->timeoutms);
+			ssize_t ret = _sendfile(client, fd, sendsize);
 			if(ret <= 0) break; // Connection closed by peer
 			sent += ret;
 
@@ -834,7 +942,7 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
 	}
 
 	if(clength > 0) {
-		if(_readContent(client, NULL, clength) != clength) {
+		if(_read(client, NULL, clength) != clength) {
 			_close(client);
 		}
 	}
@@ -906,7 +1014,7 @@ static void *_cmd(Q_HTTPCLIENT *client, const char *method, const char *uri,
 	if(clength > 0) {
 		content = malloc(clength + 1);
 		if(content != NULL) {
-			if(_readContent(client, content, clength) != clength) {
+			if(_read(client, content, clength) != clength) {
 				free(content);
 				content = NULL;
 			} else {
@@ -1001,7 +1109,7 @@ static bool _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *u
 	char *final = outBuf->toArray(outBuf, &towrite);
 	ssize_t written = 0;
 	if(final != NULL) {
-		written = qIoWrite(client->socket, final, towrite, -1);
+		written = _write(client, final, towrite);
 		free(final);
 	}
 
@@ -1032,13 +1140,13 @@ static bool _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *u
  *   int rescode = httpClient->readResponse(client, resheaders, &clength);
  *   if(clength > 0) {
  *     // read & throw out a content. don't need content
- *     httpClient->readContent(client, NULL, clength);
+ *     httpClient->_read(client, NULL, clength);
  *   }
  * @endcode
  *
  * @note
  * Data of content body must be read by a application side, if you want to use Keep-Alive session.
- * Please refer Q_HTTPCLIENT->readContent().
+ * Please refer Q_HTTPCLIENT->_read().
  */
 static int _readResponse(Q_HTTPCLIENT *client, Q_LISTTBL *resheaders, off_t *contentlength) {
 	if(contentlength != NULL) {
@@ -1047,7 +1155,7 @@ static int _readResponse(Q_HTTPCLIENT *client, Q_LISTTBL *resheaders, off_t *con
 
 	// read response
 	char buf[1024];
-	if(qIoGets(buf, sizeof(buf), client->socket, client->timeoutms) <= 0) return HTTP_NO_RESPONSE;
+	if(_gets(client, buf, sizeof(buf)) <= 0) return HTTP_NO_RESPONSE;
 
 	// parse response code
 	if(strncmp(buf, "HTTP/", CONST_STRLEN("HTTP/"))) return HTTP_NO_RESPONSE;
@@ -1057,7 +1165,7 @@ static int _readResponse(Q_HTTPCLIENT *client, Q_LISTTBL *resheaders, off_t *con
 	if(rescode == 0) return HTTP_NO_RESPONSE;
 
 	// read headers
-	while(qIoGets(buf, sizeof(buf), client->socket, client->timeoutms) > 0) {
+	while(_gets(client, buf, sizeof(buf)) > 0) {
 		if(buf[0] == '\0') break;
 
 		// parse header
@@ -1098,7 +1206,63 @@ static int _readResponse(Q_HTTPCLIENT *client, Q_LISTTBL *resheaders, off_t *con
 }
 
 /**
- * Q_HTTPCLIENT->readContent(): Reads contents from the stream.
+ * Q_HTTPCLIENT->gets(): Reads a text line from a HTTP/HTTPS stream.
+ *
+ * @param	client		Q_HTTPCLIENT object pointer
+ * @param	buf		data buffer pointer
+ * @param	bufsize		buffer size
+ *
+ * @return	the number of bytes read from file descriptor if successful, otherwise returns -1.
+ *
+ * @note	Be sure the return value does not mean the length of actual stored data.
+ *		It means how many bytes are readed from the file descriptor,
+ *		so the new-line characters will be counted, but not be stored.
+ */
+static ssize_t _gets(Q_HTTPCLIENT *client, char *buf, size_t bufsize) {
+#ifdef ENABLE_OPENSSL
+	if(client->ssl == NULL) {
+		return qIoGets(client->socket, buf, bufsize, client->timeoutms);
+	} else {
+		if(bufsize <= 1) return -1;
+
+		struct SslConn *ssl = client->ssl;
+		ssize_t readcnt = 0;
+		char *ptr;
+
+		for (ptr = buf; readcnt < (bufsize - 1); ptr++) {
+			// wait readable
+			//if(_waitReadable(client) <= 0) break;
+			if(qIoWaitReadable(client->socket, client->timeoutms) <= 0) break;
+
+			int rsize = SSL_read(ssl->ssl, ptr, 1);
+			if(rsize != 1) {
+				unsigned long sslerr = ERR_get_error();
+				if(sslerr == SSL_ERROR_WANT_READ) {
+					continue;
+				}
+
+				DEBUG("OpenSSL: %s (%d)", ERR_reason_error_string(sslerr), rsize);
+				break;
+			}
+
+			readcnt++;
+			if (*ptr == '\r') ptr--;
+			else if (*ptr == '\n') break;
+		}
+
+		*ptr = '\0';
+		DEBUG("SSL_read: %s (%zd)", buf, readcnt);
+
+		if(readcnt > 0) return readcnt;
+		return -1;
+	}
+#else
+	return qIoGets(client->socket, buf, bufsize, client->timeoutms);
+#endif
+}
+
+/**
+ * Q_HTTPCLIENT->read(): Reads data from a HTTP/HTTPS stream.
  *
  * @param client	Q_HTTPCLIENT object pointer.
  * @param buf		a buffer pointer for storing content. (can be NULL, then read & throw out content)
@@ -1107,37 +1271,176 @@ static int _readResponse(Q_HTTPCLIENT *client, Q_LISTTBL *resheaders, off_t *con
  * @return	number of bytes readed
  *
  * @code
- *   off_t clength;
+ *   off_t clength = 0;
  *   int resno = client->readResponse(client, NULL, &clength);
  *   if(clength > 0) {
  *     void *buf = malloc(clength);
- *     client->readContent(client, buf, clength);
+ *     client->read(client, buf, clength);
  *   }
  * @endcode
  */
-static off_t _readContent(Q_HTTPCLIENT *client, void *buf, off_t length) {
-	off_t rsize = 0; // total read
+static ssize_t _read(Q_HTTPCLIENT *client, void *buf, size_t nbytes) {
+#ifdef ENABLE_OPENSSL
+	if(client->ssl == NULL) {
+		return qIoRead(client->socket, buf, nbytes, client->timeoutms);
+	} else {
+		if(nbytes == 0) return 0;
 
-	if(length > 0) {
-		if(buf != NULL) {
-			rsize = qIoRead(buf, client->socket, length, client->timeoutms);
-		} else {
-			unsigned char thrash[1024 * 4];
-			while(rsize < length) {
-				size_t chunksize; // this time reading size
-				if(length - rsize <= sizeof(thrash)) chunksize = length - rsize;
-				else chunksize = sizeof(thrash);
+		struct SslConn *ssl = client->ssl;
+		ssize_t total  = 0;
+		while(total < nbytes) {
+			if(qIoWaitReadable(client->socket, client->timeoutms) <= 0) break;
 
-				// read
-				ssize_t rchunk = qIoRead(thrash, client->socket, chunksize, client->timeoutms);
-				if (rchunk <= 0) break;
-
-				rsize += rchunk;
+			int rsize = 0;
+			if(buf != NULL) {
+				rsize = SSL_read(ssl->ssl, buf + total, nbytes - total);
+			} else {
+				char trash[1024];
+				int toread = nbytes - total;
+				if(toread > sizeof(trash)) toread = sizeof(trash);
+				rsize = SSL_read(ssl->ssl, trash, toread);
 			}
+			if(rsize <= 0) {
+				DEBUG("OpenSSL: %s (%d)", ERR_reason_error_string(ERR_get_error()), rsize);
+				unsigned long sslerr = ERR_get_error();
+				if(sslerr == SSL_ERROR_WANT_READ) {
+					usleep(1);
+					continue;
+				}
+				break;
+			}
+			total += rsize;
+		}
+
+		DEBUG("SSL_read: %zd", total);
+		if(total > 0) return total;
+		return -1;
+	}
+#else
+	return qIoRead(client->socket, buf, nbytes, client->timeoutms);
+#endif
+}
+
+/**
+ * Q_HTTPCLIENT->write(): Writes data to a HTTP/HTTPS stream.
+ *
+ * @param client	Q_HTTPCLIENT object pointer.
+ * @param buf		a data pointer.
+ * @param length	content size to write.
+ *
+ * @return	number of bytes written.
+ */
+static ssize_t _write(Q_HTTPCLIENT *client, const void *buf, size_t nbytes) {
+#ifdef ENABLE_OPENSSL
+	if(client->ssl == NULL) {
+		return qIoWrite(client->socket, buf, nbytes, -1);
+	} else {
+		if(nbytes == 0) return 0;
+
+		struct SslConn *ssl = client->ssl;
+		ssize_t total  = 0;
+		while(total < nbytes) {
+			errno = 0;
+			int wsize = SSL_write(ssl->ssl, buf + total, nbytes - total);
+			if(wsize <= 0) {
+				DEBUG("OpenSSL: %s (%d)",  ERR_reason_error_string(ERR_get_error()), wsize);
+				unsigned long sslerr = ERR_get_error();
+				if(sslerr == SSL_ERROR_WANT_WRITE) {
+					usleep(1);
+					continue;
+				}
+				break;
+			}
+			total += wsize;
+		}
+
+		DEBUG("SSL_write: %zd/%zu", total, nbytes);
+		if(total > 0) return total;
+		return -1;
+	}
+#else
+	return qIoWrite(client->socket, buf, nbytes, -1);
+#endif
+}
+
+/**
+ * Q_HTTPCLIENT->recvfile(): Reads data from a HTTP/HTTPS stream and save into a file descriptor.
+ *
+ * @param	client		Q_HTTPCLIENT object pointer.
+ * @param	fd		output file descriptor
+ * @param	nbytes		the number of bytes to read and save.
+ *
+ * @return	the number of bytes written if successful, otherwise returns -1.
+ */
+static off_t _recvfile(Q_HTTPCLIENT *client, int fd, off_t nbytes) {
+	if(nbytes == 0) return 0;
+
+	unsigned char buf[MAX_ATOMIC_DATA_SIZE];
+
+	off_t total = 0; // total size sent
+	while(total < nbytes) {
+		size_t chunksize; // this time sending size
+		if(nbytes - total <= sizeof(buf)) chunksize = nbytes - total;
+		else chunksize = sizeof(buf);
+
+		// read
+		ssize_t rsize = _read(client, buf, chunksize);
+		if (rsize <= 0) break;
+
+		// write
+		ssize_t wsize = qIoWrite(fd, buf, rsize, -1);
+		DEBUG("FILE write: %zd", wsize);
+		if(wsize <= 0) break;
+
+		total += wsize;
+		if(rsize != wsize) {
+			DEBUG("size mismatch. read:%zd, write:%zd", rsize, wsize);
+			break;
 		}
 	}
 
-	return rsize;
+	if(total > 0) return total;
+	return -1;
+}
+
+/**
+ * Q_HTTPCLIENT->sendfile(): Send file data to a HTTP/HTTPS stream.
+ *
+ * @param	client		Q_HTTPCLIENT object pointer.
+ * @param	fd		input file descriptor
+ * @param	nbytes		the number of bytes to read and send.
+ *
+ * @return	the number of bytes sent if successful, otherwise returns -1.
+ */
+static off_t _sendfile(Q_HTTPCLIENT *client, int fd, off_t nbytes) {
+	if(nbytes == 0) return 0;
+
+	unsigned char buf[MAX_ATOMIC_DATA_SIZE];
+
+	off_t total = 0; // total size sent
+	while(total < nbytes) {
+		size_t chunksize; // this time sending size
+		if(nbytes - total <= sizeof(buf)) chunksize = nbytes - total;
+		else chunksize = sizeof(buf);
+
+		// read
+		ssize_t rsize = qIoRead(fd, buf, chunksize, -1);
+		DEBUG("FILE read: %zd", rsize);
+		if (rsize <= 0) break;
+
+		// write
+		ssize_t wsize = _write(client, buf, rsize);
+		if(wsize <= 0) break;
+
+		total += wsize;
+		if(rsize != wsize) {
+			DEBUG("size mismatch. read:%zd, write:%zd", rsize, wsize);
+			break;
+		}
+	}
+
+	if(total > 0) return total;
+	return -1;
 }
 
 /**
@@ -1153,16 +1456,36 @@ static off_t _readContent(Q_HTTPCLIENT *client, void *buf, off_t length) {
  */
 static bool _close(Q_HTTPCLIENT *client) {
 	if(client->socket < 0) return false;
-	int socket = client->socket;
-	client->socket = -1;
-	client->connclose = false;
+
+#ifdef ENABLE_OPENSSL
+	// release ssl connection
+	if(client->ssl != NULL) {
+		struct SslConn *ssl = client->ssl;
+
+		if(ssl->ssl != NULL) {
+			SSL_shutdown(ssl->ssl);
+			SSL_free(ssl->ssl);
+			ssl->ssl = NULL;
+		}
+
+		if(ssl->ctx != NULL) {
+			SSL_CTX_free(ssl->ctx);
+			ssl->ctx = NULL;
+		}
+	}
+#endif
 
 	// shutdown connection
-	if(MAX_SHUTDOWN_WAIT >= 0 && shutdown(socket, SHUT_WR) == 0) {
+	if(client->ssl == NULL
+	&& MAX_SHUTDOWN_WAIT >= 0 && shutdown(client->socket, SHUT_WR) == 0) {
 		char buf[1024];
-		while(qIoRead(buf, socket, sizeof(buf), MAX_SHUTDOWN_WAIT) > 0);
+		while(qIoRead(client->socket, buf, sizeof(buf), MAX_SHUTDOWN_WAIT) > 0);
 	}
-	close(socket);
+
+	// close connection
+	close(client->socket);
+	client->socket = -1;
+	client->connclose = false;
 
 	return true;
 }
@@ -1184,6 +1507,7 @@ static void _free(Q_HTTPCLIENT *client) {
 		client->close(client);
 	}
 
+	if(client->ssl != NULL) free(client->ssl);
 	if(client->hostname != NULL) free(client->hostname);
 	if(client->useragent != NULL) free(client->useragent);
 

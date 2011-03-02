@@ -121,33 +121,59 @@ AC_TYPE_OFF_T
 ## Checks for library functions.
 #AC_CHECK_FUNCS([socket sendfile])
 
-Q_ARG_ENABLE([debug], [enable debugging output (development mode)], [-DBUILD_DEBUG])
+##
+## --enable section
+##
+
+Q_ARG_ENABLE([threadsafe], [Enable thread-safe feature. When it's enabled, user applications are needed to be linked with the pthread library. (ex: -lpthread)], [-DENABLE_THREADSAFE])
+if test "$enableval" = yes; then
+	AC_CHECK_LIB([pthread], [main], [], AC_MSG_ERROR([Can't find pthread library.]))
+fi
+
+Q_ARG_ENABLE([lfs], [Enable large file supports.], [-DENABLE_LFS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64])
+Q_ARG_DISABLE([ipc], [Disable all IPC APIs in src/ipc directory.], [-DDISABLE_IPC])
+Q_ARG_DISABLE([extensions], [Disable all extension APIs in src/extensions directory.], [-DDISABLE_EXTENSIONS])
+
+Q_ARG_ENABLE([debug], [Enable debugging output. This will print out internal debugging messages to stdout.], [-DBUILD_DEBUG])
 if test "$enableval" = yes; then
 	CFLAGS="$CFLAGS -g -O2"
 else
 	CFLAGS="$CFLAGS -g -O2"
 fi
 
-Q_ARG_ENABLE([threadsafe], [enable thread-safe feature], [-DENABLE_THREADSAFE])
-if test "$enableval" = yes; then
-	AC_CHECK_LIB([pthread], [main], [], AC_MSG_ERROR([Can't find pthread library.]))
-fi
+##
+## --with section
+##
 
-Q_ARG_ENABLE([lfs], [enable large file supports], [-DENABLE_LFS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64])
+AC_ARG_WITH([openssl],[AS_HELP_STRING([--with-openssl], [This will enable HTTPS support in Q_HTTPCLIENT extension API. When it's enabled, user applications are needed to be linked with the openssl library. (ex: -lssl)])],[withval=yes],[withval=no])
+if test "$withval" = yes; then
+	if test "$with_openssl" = yes; then
+		with_openssl="/usr/include"
+	fi
 
-AC_ARG_ENABLE([mysql],[AS_HELP_STRING([--enable-mysql=/MYSQL_INCLUDE_DIR_PATH/], [enable MySQL database supports])],[enableval=yes],[enableval=no])
-if test "$enableval" = yes; then
-	AC_CHECK_FILE([$enable_mysql/mysql.h],[enableval=yes],[enableval=no])
-	if test "$enableval" = yes; then
-		AC_MSG_NOTICE(['mysql' feature is enabled])
-		CPPFLAGS="$CPPFLAGS -DENABLE_MYSQL -I$enable_mysql"
+	AC_CHECK_FILE([$with_openssl/openssl/ssl.h],[withval=yes],[withval=no])
+	if test "$withval" = yes; then
+		AC_MSG_NOTICE([HTTPS support in Q_HTTPCLIENT API is enabled])
+		CPPFLAGS="$CPPFLAGS -DENABLE_OPENSSL -I$with_openssl"
 	else
-		AC_MSG_FAILURE([can't find 'mysql.h' header file in '$enable_mysql' directory. can't enable mysql support.])
+		AC_MSG_FAILURE([can't find '$with_openssl/openssl/ssl.h' header. Use --with-openssl=/PATH/ to specify the directory PATH where the 'opendir' directory is located.])
 	fi
 fi
 
-Q_ARG_DISABLE([ipc], [disable IPC APIs], [-DDISABLE_IPC])
-Q_ARG_DISABLE([extensions], [disable extension APIs], [-DDISABLE_EXTENSIONS])
+AC_ARG_WITH([mysql],[AS_HELP_STRING([--with-mysql], [This will enable MySQL database support in Q_DB extension API. When it's enabled, user applications are needed to be linked with the mysql library. (ex: -lmysql)])],[withval=yes],[withval=no])
+if test "$withval" = yes; then
+	if test "$with_mysql" = yes; then
+		with_mysql="/usr/include/mysql"
+	fi
+
+	AC_CHECK_FILE([$with_mysql/mysql.h],[withval=yes],[withval=no])
+	if test "$withval" = yes; then
+		AC_MSG_NOTICE([MySQL support in Q_DB API is enabled])
+		CPPFLAGS="$CPPFLAGS -DENABLE_MYSQL -I$with_mysql"
+	else
+		AC_MSG_FAILURE([can't find 'mysql.h' header. Use --with-mysql=/PATH/ to specify the directory PATH where the 'mysql.h' is located.])
+	fi
+fi
 
 AC_MSG_NOTICE([CFLAGS $CFLAGS])
 AC_MSG_NOTICE([CPPFLAGS $CPPFLAGS])

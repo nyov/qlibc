@@ -874,13 +874,27 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-debug          enable debugging output (development mode)
-  --enable-threadsafe     enable thread-safe feature
-  --enable-lfs            enable large file supports
-  --enable-mysql=/MYSQL_INCLUDE_DIR_PATH/
-                          enable MySQL database supports
-  --disable-ipc           disable IPC APIs
-  --disable-extensions    disable extension APIs
+  --enable-threadsafe     Enable thread-safe feature. When it's enabled, user
+                          applications are needed to be linked with the
+                          pthread library. (ex: -lpthread)
+  --enable-lfs            Enable large file supports.
+  --disable-ipc           Disable all IPC APIs in src/ipc directory.
+  --disable-extensions    Disable all extension APIs in src/extensions
+                          directory.
+  --enable-debug          Enable debugging output. This will print out
+                          internal debugging messages to stdout.
+
+Optional Packages:
+  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
+  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-openssl          This will enable HTTPS support in Q_HTTPCLIENT
+                          extension API. When it's enabled, user applications
+                          are needed to be linked with the openssl library.
+                          (ex: -lssl)
+  --with-mysql            This will enable MySQL database support in Q_DB
+                          extension API. When it's enabled, user applications
+                          are needed to be linked with the mysql library. (ex:
+                          -lmysql)
 
 Some influential environment variables:
   CC          C compiler command
@@ -3824,25 +3838,9 @@ fi
 ## Checks for library functions.
 #AC_CHECK_FUNCS([socket sendfile])
 
-
-	# Check whether --enable-debug or --disable-debug was given.
-if test "${enable_debug+set}" = set; then
-  enableval="$enable_debug"
-
-else
-  enableval=no
-fi;
-	if test "$enableval" = yes; then
-		{ echo "$as_me:$LINENO: 'debug' feature is enabled" >&5
-echo "$as_me: 'debug' feature is enabled" >&6;}
-		CPPFLAGS="$CPPFLAGS -DBUILD_DEBUG"
-	fi
-
-if test "$enableval" = yes; then
-	CFLAGS="$CFLAGS -g -O2"
-else
-	CFLAGS="$CFLAGS -g -O2"
-fi
+##
+## --enable section
+##
 
 
 	# Check whether --enable-threadsafe or --disable-threadsafe was given.
@@ -3948,52 +3946,6 @@ echo "$as_me: 'lfs' feature is enabled" >&6;}
 	fi
 
 
-# Check whether --enable-mysql or --disable-mysql was given.
-if test "${enable_mysql+set}" = set; then
-  enableval="$enable_mysql"
-  enableval=yes
-else
-  enableval=no
-fi;
-if test "$enableval" = yes; then
-	as_ac_File=`echo "ac_cv_file_$enable_mysql/mysql.h" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $enable_mysql/mysql.h" >&5
-echo $ECHO_N "checking for $enable_mysql/mysql.h... $ECHO_C" >&6
-if eval "test \"\${$as_ac_File+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "$enable_mysql/mysql.h"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
-if test `eval echo '${'$as_ac_File'}'` = yes; then
-  enableval=yes
-else
-  enableval=no
-fi
-
-	if test "$enableval" = yes; then
-		{ echo "$as_me:$LINENO: 'mysql' feature is enabled" >&5
-echo "$as_me: 'mysql' feature is enabled" >&6;}
-		CPPFLAGS="$CPPFLAGS -DENABLE_MYSQL -I$enable_mysql"
-	else
-		{ { echo "$as_me:$LINENO: error: can't find 'mysql.h' header file in '$enable_mysql' directory. can't enable mysql support.
-See \`config.log' for more details." >&5
-echo "$as_me: error: can't find 'mysql.h' header file in '$enable_mysql' directory. can't enable mysql support.
-See \`config.log' for more details." >&2;}
-   { (exit 1); exit 1; }; }
-	fi
-fi
-
-
 	# Check whether --enable-ipc or --disable-ipc was given.
 if test "${enable_ipc+set}" = set; then
   enableval="$enable_ipc"
@@ -4021,6 +3973,130 @@ echo "$as_me: 'extensions' feature is disabled" >&6;}
 		CPPFLAGS="$CPPFLAGS -DDISABLE_EXTENSIONS"
 	fi
 
+
+
+	# Check whether --enable-debug or --disable-debug was given.
+if test "${enable_debug+set}" = set; then
+  enableval="$enable_debug"
+
+else
+  enableval=no
+fi;
+	if test "$enableval" = yes; then
+		{ echo "$as_me:$LINENO: 'debug' feature is enabled" >&5
+echo "$as_me: 'debug' feature is enabled" >&6;}
+		CPPFLAGS="$CPPFLAGS -DBUILD_DEBUG"
+	fi
+
+if test "$enableval" = yes; then
+	CFLAGS="$CFLAGS -g -O2"
+else
+	CFLAGS="$CFLAGS -g -O2"
+fi
+
+##
+## --with section
+##
+
+
+# Check whether --with-openssl or --without-openssl was given.
+if test "${with_openssl+set}" = set; then
+  withval="$with_openssl"
+  withval=yes
+else
+  withval=no
+fi;
+if test "$withval" = yes; then
+	if test "$with_openssl" = yes; then
+		with_openssl="/usr/include"
+	fi
+
+	as_ac_File=`echo "ac_cv_file_$with_openssl/openssl/ssl.h" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for $with_openssl/openssl/ssl.h" >&5
+echo $ECHO_N "checking for $with_openssl/openssl/ssl.h... $ECHO_C" >&6
+if eval "test \"\${$as_ac_File+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "$with_openssl/openssl/ssl.h"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
+if test `eval echo '${'$as_ac_File'}'` = yes; then
+  withval=yes
+else
+  withval=no
+fi
+
+	if test "$withval" = yes; then
+		{ echo "$as_me:$LINENO: HTTPS support in Q_HTTPCLIENT API is enabled" >&5
+echo "$as_me: HTTPS support in Q_HTTPCLIENT API is enabled" >&6;}
+		CPPFLAGS="$CPPFLAGS -DENABLE_OPENSSL -I$with_openssl"
+	else
+		{ { echo "$as_me:$LINENO: error: can't find '$with_openssl/openssl/ssl.h' header. Use --with-openssl=/PATH/ to specify the directory PATH where the 'opendir' directory is located.
+See \`config.log' for more details." >&5
+echo "$as_me: error: can't find '$with_openssl/openssl/ssl.h' header. Use --with-openssl=/PATH/ to specify the directory PATH where the 'opendir' directory is located.
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }
+	fi
+fi
+
+
+# Check whether --with-mysql or --without-mysql was given.
+if test "${with_mysql+set}" = set; then
+  withval="$with_mysql"
+  withval=yes
+else
+  withval=no
+fi;
+if test "$withval" = yes; then
+	if test "$with_mysql" = yes; then
+		with_mysql="/usr/include/mysql"
+	fi
+
+	as_ac_File=`echo "ac_cv_file_$with_mysql/mysql.h" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for $with_mysql/mysql.h" >&5
+echo $ECHO_N "checking for $with_mysql/mysql.h... $ECHO_C" >&6
+if eval "test \"\${$as_ac_File+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "$with_mysql/mysql.h"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
+if test `eval echo '${'$as_ac_File'}'` = yes; then
+  withval=yes
+else
+  withval=no
+fi
+
+	if test "$withval" = yes; then
+		{ echo "$as_me:$LINENO: MySQL support in Q_DB API is enabled" >&5
+echo "$as_me: MySQL support in Q_DB API is enabled" >&6;}
+		CPPFLAGS="$CPPFLAGS -DENABLE_MYSQL -I$with_mysql"
+	else
+		{ { echo "$as_me:$LINENO: error: can't find 'mysql.h' header. Use --with-mysql=/PATH/ to specify the directory PATH where the 'mysql.h' is located.
+See \`config.log' for more details." >&5
+echo "$as_me: error: can't find 'mysql.h' header. Use --with-mysql=/PATH/ to specify the directory PATH where the 'mysql.h' is located.
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }
+	fi
+fi
 
 { echo "$as_me:$LINENO: CFLAGS $CFLAGS" >&5
 echo "$as_me: CFLAGS $CFLAGS" >&6;}
