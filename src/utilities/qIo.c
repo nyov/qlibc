@@ -54,7 +54,6 @@
  *
  * @note
  * The argument timeoutms can be used to set maximum wait time for a socket descriptor.
- * In terms of general file descriptor, timeoutms may normally 0.
  */
 int qIoWaitReadable(int fd, int timeoutms) {
 	struct pollfd fds[1];
@@ -93,14 +92,14 @@ int qIoWaitWritable(int fd, int timeoutms) {
 /**
  * Read from a file descriptor.
  *
- * @param	buf		data buffer pointer to write to
  * @param	fd		file descriptor
+ * @param	buf		data buffer pointer to write to
  * @param	nbytes		the number of bytes to read from file descriptor & write into buffer
  * @param	timeoutms	wait timeout milliseconds. 0 for no wait, -1 for infinite wait
  *
  * @return	the number of bytes read if successful, otherwise returns -1.
  */
-ssize_t qIoRead(void *buf, int fd, size_t nbytes, int timeoutms) {
+ssize_t qIoRead(int fd, void *buf, size_t nbytes, int timeoutms) {
 	if(nbytes == 0) return 0;
 
 	ssize_t total  = 0;
@@ -178,7 +177,7 @@ off_t qIoSend(int outfd, int infd, off_t nbytes, int timeoutms) {
 		else chunksize = sizeof(buf);
 
 		// read
-		ssize_t rsize = qIoRead(buf, infd, chunksize, timeoutms);
+		ssize_t rsize = qIoRead(infd, buf, chunksize, timeoutms);
 		DEBUG("read %zd", rsize);
 		if (rsize <= 0) break;
 
@@ -202,9 +201,9 @@ off_t qIoSend(int outfd, int infd, off_t nbytes, int timeoutms) {
  * Read a line from a file descriptor into the buffer pointed to until either a terminating newline or EOF.
  * New-line characters(CR, LF ) will not be stored into buffer.
  *
+ * @param	fd		file descriptor
  * @param	buf		data buffer pointer
  * @param	bufsize		buffer size
- * @param	fd		file descriptor
  * @param	timeoutms	wait timeout milliseconds
  *
  * @return	the number of bytes read from file descriptor if successful, otherwise returns -1.
@@ -213,7 +212,7 @@ off_t qIoSend(int outfd, int infd, off_t nbytes, int timeoutms) {
  *		It means how many bytes are readed from the file descriptor,
  *		so the new-line characters will be counted, but not be stored.
  */
-ssize_t qIoGets(char *buf, size_t bufsize, int fd, int timeoutms) {
+ssize_t qIoGets(int fd, char *buf, size_t bufsize, int timeoutms) {
 	if(bufsize <= 1) return -1;
 
 	ssize_t readcnt = 0;
