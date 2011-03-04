@@ -412,7 +412,7 @@ static bool _open(Q_HTTPCLIENT *client) {
 	// try to connect
 	int status = connect(sockfd, (struct sockaddr *)&client->addr, sizeof(client->addr));
 	if(status < 0 && (errno != EINPROGRESS || qIoWaitWritable(sockfd, client->timeoutms) <= 0) ) {
-	 	DEBUG("connection failed.");
+	 	DEBUG("connection failed. (%d)", errno);
 		close(sockfd);
 		return false;
 	}
@@ -747,7 +747,8 @@ static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize,
 			if(_gets(client, buf, sizeof(buf)) <= 0) break;
 
 			// call back
-			if(callback != NULL && callback(userdata, recv) == false) {
+			if(recvsize > 0
+			&& callback != NULL && callback(userdata, recv) == false) {
 				_close(client);
 				return false;
 			}
@@ -763,12 +764,6 @@ static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize,
 	// close connection
 	if(client->keepalive == false || client->connclose == true) {
 		_close(client);
-	}
-
-	// call back for closing connection
-	if(callback != NULL && callback(userdata, recv) == false) {
-		_close(client);
-		return false;
 	}
 
 	return true;
