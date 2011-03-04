@@ -35,23 +35,13 @@
  * Example code for simple HTTP GET operation.
  *
  * @code
- *   #define HTTPS       (false)
- *   #define REMOTE_HOST "www.qdecoder.org"
- *   #define REMOTE_PORT (80)
  *   #define REMOTE_URL  "/robots.txt"
  *   #define SAVEFILE    "/tmp/robots.txt"
  *
  *   int main(void) {
  *     // create new HTTP client
- *     Q_HTTPCLIENT *httpClient = qHttpClient(REMOTE_HOST, REMOTE_PORT);
+ *     Q_HTTPCLIENT *httpClient = qHttpClient("https://secure.qdecoder.org", 0);
  *     if(httpClient == NULL) return -1;
- *
- *     // set SSL if required.
- *     if(HTTPS == true && httpClient->setSsl(httpClient) == false) {
- *       httpClient->free(httpClient);
- *       printf("\n");
- *       return -1;
- *     }
  *
  *     // open file for writing
  *     int nFd = open(SAVEFILE, O_CREAT | O_TRUNC | O_WRONLY, 0644);
@@ -176,6 +166,7 @@ static void	_free(Q_HTTPCLIENT *client);
 
 // internal usages
 static bool	_setSocketOption(int socket);
+static bool	_parseUri(const char *uri, bool *protocol, char *hostname, size_t namesize, int *port);
 
 #endif
 
@@ -220,15 +211,38 @@ struct	SslConn {
 /**
  * Initialize & create new HTTP client.
  *
- * @param hostname	remote IP or FQDN domain name
- * @param port		remote port number
+ * @param destname	remote address, one of IP address, FQDN domain name and URI.
+ * @param port		remote port number. (can be 0 when destname is URI)
  *
  * @return		HTTP client object if succcessful, otherwise returns NULL.
  *
+ * @code
+ *   Q_HTTPCLIENT *client = qHttpClient("1.2.3.4", 80);
+ *   Q_HTTPCLIENT *client = qHttpClient("www.qdecoder.org", 80);
+ *   Q_HTTPCLIENT *client = qHttpClient("http://www.qdecoder.org", 0);
+ *   Q_HTTPCLIENT *client = qHttpClient("http://www.qdecoder.org:80", 0);
+ *   Q_HTTPCLIENT *client = qHttpClient("https://www.qdecoder.org", 0);
+ *   Q_HTTPCLIENT *client = qHttpClient("https://www.qdecoder.org:443", 0);
+ * @endcode
+ *
  * @note
- * Keep-alive feature is turned of by default. Turn it on by calling setKeepalive().
+ * Keep-alive feature is turned off by default. Turn it on by calling setKeepalive().
+ * If destname is URI string starting with "https://", setSsl() will be called internally.
  */
-Q_HTTPCLIENT *qHttpClient(const char *hostname, int port) {
+Q_HTTPCLIENT *qHttpClient(const char *destname, int port) {
+	bool ishttps = false;
+	char hostname[256];
+	if(port == 0 || strstr(hostname, "://") != NULL) {
+		if(_parseUri(destname, &ishttps, hostname, sizeof(hostname), &port) == false) {
+			DEBUG("Can't parse URI %s", destname);
+			return NULL;
+		}
+
+		DEBUG("https: %d, hostname: %s, port:%d\n", ishttps, hostname, port);
+	} else {
+		qStrCpy(hostname, sizeof(hostname), destname);
+	}
+
 	// get remote address
 	struct sockaddr_in addr;
 	if(qSocketGetAddr(&addr, hostname, port) == false) {
@@ -244,8 +258,8 @@ Q_HTTPCLIENT *qHttpClient(const char *hostname, int port) {
 	client->socket = -1;
 
 	memcpy((void*)&client->addr, (void*)&addr, sizeof(client->addr));
-	client->hostname = strdup(hostname);
-	client->port = port;
+	client->hostname	= strdup(hostname);
+	client->port		= port;
 
 	// member methods
 	client->setSsl		= _setSsl;
@@ -276,6 +290,7 @@ Q_HTTPCLIENT *qHttpClient(const char *hostname, int port) {
 	_setTimeout(client, 0);
 	_setKeepalive(client, false);
 	_setUseragent(client, _Q_PRGNAME "/" _Q_VERSION);
+	if(ishttps == true) _setSsl(client);
 
 	return client;
 }
@@ -471,7 +486,7 @@ static bool _open(Q_HTTPCLIENT *client) {
  * @code
  *   main() {
  *     // create new HTTP client
- *     Q_HTTPCLIENT *httpClient = qHttpClient("www.qdecoder.org", 80);
+ *     Q_HTTPCLIENT *httpClient = qHttpClient("http://www.qdecoder.org", 0);
  *     if(httpClient == NULL) return;
  *
  *     // set additional custom headers
@@ -575,7 +590,7 @@ static bool _head(Q_HTTPCLIENT *client, const char *uri, int *rescode,
  *
  *   main() {
  *     // create new HTTP client
- *     Q_HTTPCLIENT *httpClient = qHttpClient("www.qdecoder.org", 80);
+ *     Q_HTTPCLIENT *httpClient = qHttpClient("http://www.qdecoder.org", 0);
  *     if(httpClient == NULL) return;
  *
  *     // open file
@@ -788,7 +803,7 @@ static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize,
  *
  *   main() {
  *     // create new HTTP client
- *     Q_HTTPCLIENT *httpClient = qHttpClient("www.qdecoder.org", 80);
+ *     Q_HTTPCLIENT *httpClient = qHttpClient("http://www.qdecoder.org", 0);
  *     if(httpClient == NULL) return;
  *
  *     // open file
@@ -1538,6 +1553,35 @@ static bool _setSocketOption(int socket) {
 	}
 
 	return ret;
+}
+
+static bool _parseUri(const char *uri, bool *protocol, char *hostname, size_t namesize, int *port) {
+
+	if(!strncasecmp(uri, "http://", CONST_STRLEN("http://"))) {
+		*protocol = false;
+		*port = 80;
+	} else if(!strncasecmp(uri, "https://", CONST_STRLEN("https://"))) {
+		*protocol = true;
+		*port = 443;
+	} else {
+		return false;
+	}
+
+	char *t1 = strstr(uri, "://");
+	t1 += 3;
+	char *t2 = strstr(t1, "/");
+	if(t2 == NULL) t2 = (char*)uri + strlen(uri);
+
+	if(t2 - t1 + 1 > namesize) return false;
+	qStrCpyn(hostname, namesize, t1, t2 - t1);
+
+	t1 = strstr(hostname, ":");
+	if(t1 != NULL) {
+		*t1 = '\0';
+		*port = atoi(t1 + 1);
+	}
+
+	return true;
 }
 #endif /* _DOXYGEN_SKIP */
 
