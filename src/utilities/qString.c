@@ -646,23 +646,6 @@ bool qStrIsEmail(const char *email) {
 }
 
 /**
- * Test for an URL formatted string
- *
- * @param url		URL formatted string
- *
- * @return		true if successful, otherwise returns false
- */
-bool qStrIsUrl(const char *url) {
-	if (!strncmp(url, "http://", CONST_STRLEN("http://"))) return true;
-	else if (!strncmp(url, "https://", CONST_STRLEN("https://"))) return true;
-	else if (!strncmp(url, "ftp://", CONST_STRLEN("ftp://"))) return true;
-	else if (!strncmp(url, "telnet://", CONST_STRLEN("telnet://"))) return true;
-	else if (!strncmp(url, "mailto:", CONST_STRLEN("mailto:"))) return true;
-	else if (!strncmp(url, "news:", CONST_STRLEN("news:"))) return true;
-	return false;
-}
-
-/**
  * Test for an IPv4 address string
  *
  * @param url		IPv4 address string

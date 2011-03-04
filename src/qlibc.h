@@ -594,7 +594,6 @@ extern	char*		qStrDupBetween(const char *str, const char *start, const char *end
 extern	char*		qStrUnique(const char *seed);
 extern	bool		qStrTest(int (*testfunc)(int), const char *str);
 extern	bool		qStrIsEmail(const char *email);
-extern	bool		qStrIsUrl(const char *url);
 extern	bool		qStrIsIpv4Addr(const char *str);
 extern	char*		qStrConvEncoding(const char *fromstr, const char *fromcode, const char *tocode, float mag);
 
