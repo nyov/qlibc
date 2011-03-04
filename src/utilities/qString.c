@@ -256,10 +256,25 @@ char *qStrReplace(const char *mode, char *srcstr, const char *tokstr, const char
 char *qStrCpy(char *dst, size_t size, const char *src) {
 	if(dst == NULL || size == 0 || src == NULL) return dst;
 
-	size_t copylen = strlen(src);
-	if(copylen >= size) copylen = size - 1;
-	memmove((void*)dst, (void*)src, copylen);
-	dst[copylen] = '\0';
+	size_t nbytes = strlen(src);
+	return qStrCpyn(dst, size, src, nbytes);
+}
+
+/**
+ * Copy src string to dst no more than n bytes. The dst string arrary will be always terminated by NULL character.
+ *
+ * @param dst		a pointer of the string to be copied
+ * @param size		the size of dst character arrary
+ * @param src		a pointer of source string
+ *
+ * @return		always returns a pointer of dst
+ */
+char *qStrCpyn(char *dst, size_t size, const char *src, size_t nbytes) {
+	if(dst == NULL || size == 0 || src == NULL) return dst;
+
+	if(nbytes >= size) nbytes = size - 1;
+	memmove((void*)dst, (void*)src, nbytes);
+	dst[nbytes] = '\0';
 
 	return dst;
 }
