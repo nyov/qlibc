@@ -1241,8 +1241,7 @@ static ssize_t _gets(Q_HTTPCLIENT *client, char *buf, size_t bufsize) {
 
 		for (ptr = buf; readcnt < (bufsize - 1); ptr++) {
 			// wait readable
-			//if(_waitReadable(client) <= 0) break;
-			if(qIoWaitReadable(client->socket, client->timeoutms) <= 0) break;
+			//if(qIoWaitReadable(client->socket, client->timeoutms) <= 0) break;
 
 			int rsize = SSL_read(ssl->ssl, ptr, 1);
 			if(rsize != 1) {
@@ -1299,7 +1298,7 @@ static ssize_t _read(Q_HTTPCLIENT *client, void *buf, size_t nbytes) {
 		struct SslConn *ssl = client->ssl;
 		ssize_t total  = 0;
 		while(total < nbytes) {
-			if(qIoWaitReadable(client->socket, client->timeoutms) <= 0) break;
+			//if(qIoWaitReadable(client->socket, client->timeoutms) <= 0) break;
 
 			int rsize = 0;
 			if(buf != NULL) {
