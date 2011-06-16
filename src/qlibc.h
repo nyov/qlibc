@@ -37,7 +37,7 @@
 #define _QLIBC_H
 
 #define _Q_PRGNAME			"qlibc"
-#define _Q_VERSION			"1.0.4"
+#define _Q_VERSION			"1.0.6"
 
 #ifdef __cplusplus
 extern "C" {
