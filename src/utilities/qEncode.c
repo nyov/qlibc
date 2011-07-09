@@ -143,11 +143,12 @@ char *qUrlEncode(const void *bin, size_t size) {
 	char *pBinPt = (char*)bin;
 	const char *pBinEnd = (bin + size - 1);
 	for (; pBinPt <= pBinEnd; pBinPt++) {
-		if(URLCHARTBL[(int)(*pBinPt)] != 0) {
+		unsigned char c = *pBinPt;
+		if(URLCHARTBL[c] != 0) {
 			*pszEncPt++ = *pBinPt;
 		} else {
-			unsigned char cUpper4 = (*pBinPt >> 4);
-			unsigned char cLower4 = (*pBinPt & 0x0F);
+			unsigned char cUpper4 = (c >> 4);
+			unsigned char cLower4 = (c & 0x0F);
 
 			*pszEncPt++ = '%';
 			*pszEncPt++ = (cUpper4 < 0x0A) ? (cUpper4 + '0') : ((cUpper4 - 0x0A) + 'a');
@@ -298,7 +299,7 @@ size_t qBase64Decode(char *str) {
 	int nIdxOfFour = 0;
 	char cLastByte = 0;
 	for(pEncPt = str; *pEncPt != '\0'; pEncPt++) {
-		char cByte = B64MAPTBL[(int)(*pEncPt)];
+		char cByte = B64MAPTBL[(unsigned char)(*pEncPt)];
 		if(cByte == 64) continue;
 
 		if(nIdxOfFour == 0) {
@@ -409,7 +410,7 @@ size_t qHexDecode(char *str) {
 
 	char *pEncPt, *pBinPt = str;
 	for(pEncPt = str; *pEncPt != '\0'; pEncPt += 2) {
-		*pBinPt++ = (HEXMAPTBL[(int)(*pEncPt)] << 4) + HEXMAPTBL[(int)(*(pEncPt+1))];
+		*pBinPt++ = (HEXMAPTBL[(unsigned char)(*pEncPt)] << 4) + HEXMAPTBL[(unsigned char)(*(pEncPt+1))];
 	}
 	*pBinPt = '\0';
 
