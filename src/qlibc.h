@@ -37,7 +37,7 @@
 #define _QLIBC_H
 
 #define _Q_PRGNAME			"qlibc"
-#define _Q_VERSION			"1.0.6"
+#define _Q_VERSION			"1.0.7"
 
 #ifdef __cplusplus
 extern "C" {
@@ -727,7 +727,7 @@ struct _Q_HTTPCLIENT {
 	bool		(*head)			(Q_HTTPCLIENT *client, const char *uri, int *rescode, Q_LISTTBL *reqheaders, Q_LISTTBL *resheaders);
 	bool		(*get)			(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize, int *rescode, Q_LISTTBL *reqheaders, Q_LISTTBL *resheaders, bool (*callback)(void *userdata, off_t recvbytes), void *userdata);
 	bool		(*put)			(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, int *retcode, Q_LISTTBL *userheaders, Q_LISTTBL *resheaders, bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
-	void*		(*cmd)			(Q_HTTPCLIENT *client, const char *method, const char *uri, int *rescode, size_t *contentslength, Q_LISTTBL *reqheaders, Q_LISTTBL *resheaders);
+	void*		(*cmd)			(Q_HTTPCLIENT *client, const char *method, const char *uri, void *data, size_t size, int *rescode, size_t *contentslength, Q_LISTTBL *reqheaders, Q_LISTTBL *resheaders);
 
 	bool		(*sendRequest)		(Q_HTTPCLIENT *client, const char *method, const char *uri, Q_LISTTBL *reqheaders);
 	int		(*readResponse)		(Q_HTTPCLIENT *client, Q_LISTTBL *resheaders, off_t *contentlength);

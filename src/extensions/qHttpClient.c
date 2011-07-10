@@ -149,6 +149,7 @@ static bool	_put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
 		Q_LISTTBL *reqheaders, Q_LISTTBL *resheaders,
 		bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
 static void*	_cmd(Q_HTTPCLIENT *client, const char *method, const char *uri,
+		void *data, size_t size,
 		int *rescode, size_t *contentslength,
 		Q_LISTTBL *reqheaders, Q_LISTTBL *resheaders);
 
@@ -533,9 +534,9 @@ static bool _head(Q_HTTPCLIENT *client, const char *uri, int *rescode,
 	reqheaders->putStr(reqheaders,  "Accept", "*/*", true);
 
 	// send request
-	bool sendRet = _sendRequest(client, "HEAD", uri, reqheaders);
+	bool sendret = _sendRequest(client, "HEAD", uri, reqheaders);
 	if(freeReqHeaders == true) reqheaders->free(reqheaders);
-	if(sendRet == false) {
+	if(sendret == false) {
 		_close(client);
 		return false;
 	}
@@ -657,9 +658,9 @@ static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize,
 	reqheaders->putStr(reqheaders,  "Accept", "*/*", true);
 
 	// send request
-	bool sendRet = _sendRequest(client, "GET", uri, reqheaders);
+	bool sendret = _sendRequest(client, "GET", uri, reqheaders);
 	if(freeReqHeaders == true) reqheaders->free(reqheaders);
-	if(sendRet == false) {
+	if(sendret == false) {
 		_close(client);
 		return false;
 	}
@@ -866,12 +867,12 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
 	reqheaders->putStr(reqheaders,  "Expect", "100-continue", true);
 
 	// send request
-	bool sendRet =_sendRequest(client, "PUT", uri, reqheaders);
+	bool sendret =_sendRequest(client, "PUT", uri, reqheaders);
 	if(freeReqHeaders == true) {
 		reqheaders->free(reqheaders);
 		reqheaders = NULL;
 	}
-	if(sendRet == false) {
+	if(sendret == false) {
 		_close(client);
 		return false;
 	}
@@ -972,6 +973,8 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
  * @param client	Q_HTTPCLIENT object pointer.
  * @param method	method name.
  * @param uri		remote URL for uploading file. ("/path" or "http://.../path")
+ * @param data		data to send. (can be NULL)
+ * @param size		data size.
  * @param rescode	if not NULL, remote response code will be stored. (can be NULL)
  * @param contentslength if not NULL, the contents length will be stored. (can be NULL)
  * @param reqheaders	Q_LISTTBL pointer which contains additional user request headers. (can be NULL)
@@ -983,6 +986,7 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
  *   int nResCode;
  *   size_t nContentsLength;
  *   void *contents = httpClient->cmd(httpClient, "DELETE" "/img/qdecoder.png",
+ *                                      NULL, 0
  *                                      &nRescode, &nContentsLength
  *                                      NULL, NULL);
  *   if(contents == NULL) {
@@ -998,10 +1002,11 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
  * @note
  * This store server's response into memory so if you expect server responses large amount of data,
  * consider to use sendRequest() and readResponse() instead of using this.
- * The returning malloced content will be allocated +1 byte than actual content size
+ * The returning malloced content will be allocated +1 byte than actual content size 'contentslength'
  * and will be null terminated.
  */
 static void *_cmd(Q_HTTPCLIENT *client, const char *method, const char *uri,
+		void *data, size_t size,
 		int *rescode, size_t *contentslength,
 		Q_LISTTBL *reqheaders, Q_LISTTBL *resheaders) {
 
@@ -1010,40 +1015,60 @@ static void *_cmd(Q_HTTPCLIENT *client, const char *method, const char *uri,
 	if(contentslength != NULL) *contentslength = 0;
 
 	// send request
-	if(_sendRequest(client, method, uri, reqheaders) == false) {
+	bool freeReqHeaders = false;
+	if(reqheaders == NULL && data != NULL && size > 0) {
+		reqheaders = qListtbl();
+		reqheaders->putStrf(reqheaders, true, "Content-Length", "%jd", size);
+		freeReqHeaders = true;
+	}
+
+	bool sendret = _sendRequest(client, method, uri, reqheaders);
+	if(freeReqHeaders == true) {
+		reqheaders->free(reqheaders);
+		reqheaders = NULL;
+	}
+	if(sendret == false) {
 		_close(client);
 		return NULL;
 	}
 
+	// send data
+	if(data != NULL && size > 0) {
+		ssize_t written = _write(client, data, size);
+		if(written != size) {
+			_close(client);
+			return NULL;
+		}
+	}
+
+	// read response
 	off_t clength = 0;
 	int resno = _readResponse(client, resheaders, &clength);
 	if(rescode != NULL) *rescode = resno;
+	if(contentslength != NULL) *contentslength = clength;
 
 	// malloc data
 	void *content = NULL;
 	if(clength > 0) {
 		content = malloc(clength + 1);
 		if(content != NULL) {
-			if(_read(client, content, clength) != clength) {
+			if(_read(client, content, clength) == clength) {
+				*(char*)(content + clength) = '\0';
+			} else {
 				free(content);
 				content = NULL;
-			} else {
-				*(char*)(content + clength) = '\0';
+				_close(client);
 			}
 		}
+	} else {
+		// succeed. to distinguish between ok and error
+		content = strdup("");
 	}
 
 	// close connection
 	if(client->keepalive == false || client->connclose == true) {
 		_close(client);
 	}
-
-	if(content == NULL) {
-		content = strdup("");
-		clength = strlen(content);
-	}
-
-	if(contentslength != NULL) *contentslength = clength;
 
 	return content;
 }
