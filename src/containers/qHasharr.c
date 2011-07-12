@@ -82,7 +82,7 @@
  *   tbl->putStr(tbl, "e3", "c");
  *
  *   // debug print out
- *   tbl->debug(tbl, stdout, true);
+ *   tbl->debug(tbl, stdout);
  *
  *   char *e2 = tbl->getStr(tbl, "e2");
  *   if(e2 != NULL) {
@@ -313,6 +313,7 @@ static bool _put(Q_HASHARR *tbl, const char *key, const void *value, size_t size
 		// in case of -2, adjust link of mother
 		if(tbl->slots[idx].count == -2) {
 			tbl->slots[ tbl->slots[idx].hash ].link = idx;
+			if (tbl->slots[idx].link != -1) tbl->slots[ tbl->slots[idx].link ].hash = idx;
 		}
 
 		// store data
@@ -502,7 +503,7 @@ static bool _getNext(Q_HASHARR *tbl, Q_NOBJ_T *obj, int *idx) {
 		return NULL;
 	}
 
-	for (; *idx <= tbl->maxslots; (*idx)++) {
+	for (; *idx < tbl->maxslots; (*idx)++) {
 		if (tbl->slots[*idx].count == 0 || tbl->slots[*idx].count == -2) continue;
 
 		size_t keylen = tbl->slots[*idx].data.pair.keylen;
@@ -562,7 +563,6 @@ static bool _remove(Q_HASHARR *tbl, const char *key) {
 	if (tbl->slots[idx].count == 1) {
 		// just remove
 		_removeData(tbl, idx);
-
 		DEBUG("hasharr: rem %s (idx=%d,tot=%d)", key, idx, tbl->usedslots);
 	} else if (tbl->slots[idx].count > 1) { // leading slot and has dup
 		// find dup
@@ -574,15 +574,17 @@ static bool _remove(Q_HASHARR *tbl, const char *key) {
 				errno = EFAULT;
 				return false;
 			}
-			if (tbl->slots[idx2].count == -1 && tbl->slots[idx2].hash == idx) break;
+			if (tbl->slots[idx2].count == -1 && tbl->slots[idx2].hash == hash) break;
 		}
 
 		// move to leading slot
 		int backupcount = tbl->slots[idx].count;
 		_removeData(tbl, idx); // remove leading data
 		_copySlot(tbl, idx, idx2); // copy slot
-		tbl->slots[idx].count = backupcount - 1; // adjust collision counter
 		_removeSlot(tbl, idx2); // remove moved slot
+
+		tbl->slots[idx].count = backupcount - 1; // adjust collision counter
+		if(tbl->slots[idx].link != -1) tbl->slots[tbl->slots[idx].link].hash = idx;
 
 		DEBUG("hasharr: rem(lead) %s (idx=%d,tot=%d)", key, idx, tbl->usedslots);
 	} else { // in case of -1. used for collision resolution
@@ -596,7 +598,6 @@ static bool _remove(Q_HASHARR *tbl, const char *key) {
 
 		// remove data
 		_removeData(tbl, idx);
-
 		DEBUG("hasharr: rem(dup) %s (idx=%d,tot=%d)", key, idx, tbl->usedslots);
 	}
 
@@ -711,35 +712,27 @@ static int _getIdx(Q_HASHARR *tbl, const char *key, unsigned int hash) {
 	if (tbl->slots[hash].count > 0) {
 		int count, idx;
 		for (count = 0, idx = hash; count < tbl->slots[hash].count; ) {
-			// find same hash
-			while(true) {
-				if (idx >= tbl->maxslots) idx = 0;
+			if (tbl->slots[idx].hash == hash
+			&& (tbl->slots[idx].count > 0 || tbl->slots[idx].count == -1)) {
+				// same hash
+				count++;
 
-				if (tbl->slots[idx].count != -2 && tbl->slots[idx].hash == hash) {
-					// found same hash
-					count++;
-					break;
-				}
-
-				idx++;
-				if(idx == hash) return -1;
-			}
-
-			// is same key?
-			size_t keylen = strlen(key);
-			if (keylen == tbl->slots[idx].data.pair.keylen) {	// first check key length
-				if (keylen <= _Q_HASHARR_KEYSIZE) {
-					// original key is stored
-					if(!memcmp(key, tbl->slots[idx].data.pair.key, keylen)) return idx;
-				} else {
-					// key is truncated, compare MD5 also.
-					unsigned char *keymd5 = qHashMd5(key, keylen);
-					if (!memcmp(key, tbl->slots[idx].data.pair.key, _Q_HASHARR_KEYSIZE)
-					&& !memcmp(keymd5, tbl->slots[idx].data.pair.keymd5, 16)) {
+				// is same key?
+				size_t keylen = strlen(key);
+				if (keylen == tbl->slots[idx].data.pair.keylen) {	// first check key length
+					if (keylen <= _Q_HASHARR_KEYSIZE) {
+						// original key is stored
+						if(!memcmp(key, tbl->slots[idx].data.pair.key, keylen)) return idx;
+					} else {
+						// key is truncated, compare MD5 also.
+						unsigned char *keymd5 = qHashMd5(key, keylen);
+						if (!memcmp(key, tbl->slots[idx].data.pair.key, _Q_HASHARR_KEYSIZE)
+						&& !memcmp(keymd5, tbl->slots[idx].data.pair.keymd5, 16)) {
+							free(keymd5);
+							return idx;
+						}
 						free(keymd5);
-						return idx;
 					}
-					free(keymd5);
 				}
 			}
 
@@ -749,6 +742,8 @@ static int _getIdx(Q_HASHARR *tbl, const char *key, unsigned int hash) {
 
 			// check loop
 			if(idx == hash) break;
+
+			continue;
 		}
 	}
 
@@ -827,7 +822,7 @@ static bool _putData(Q_HASHARR *tbl, int idx, unsigned int hash, const char *key
 			}
 
 			// clear & set
-			memset((void *)(&tbl->slots[tmpidx]), 0, sizeof(Q_HASHARR));
+			memset((void *)(&tbl->slots[tmpidx]), 0, sizeof(struct _Q_HASHARR_SLOT));
 
 			tbl->slots[tmpidx].count = -2;		// extended data block
 			tbl->slots[tmpidx].hash = newidx;	// prev link
@@ -851,6 +846,9 @@ static bool _putData(Q_HASHARR *tbl, int idx, unsigned int hash, const char *key
 			// first slot
 			if(copysize > _Q_HASHARR_VALUESIZE) copysize = _Q_HASHARR_VALUESIZE;
 			memcpy(tbl->slots[newidx].data.pair.value, value + savesize, copysize);
+
+			// increase stored key counter
+			tbl->num++;
 		}
 		tbl->slots[newidx].size = copysize;
 		savesize += copysize;
@@ -858,9 +856,6 @@ static bool _putData(Q_HASHARR *tbl, int idx, unsigned int hash, const char *key
 		// increase used slot counter
 		tbl->usedslots++;
 	}
-
-	// increase stored key counter
-	tbl->num++;
 
 	return true;
 }
@@ -906,13 +901,13 @@ static bool _removeData(Q_HASHARR *tbl, int idx) {
 		int link = tbl->slots[idx].link;
 		_removeSlot(tbl, idx);
 
-		if(link == -1) {
-			// decrease stored key counter
-			tbl->num--;
-			break;
-		}
+		if(link == -1) break;
+
 		idx = link;
 	}
+
+	// decrease stored key counter
+	tbl->num--;
 
 	return true;
 }
