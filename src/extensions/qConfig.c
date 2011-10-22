@@ -52,16 +52,35 @@
  * @return	a pointer of Q_LISTTBL in case of successful, otherwise(file not found) returns NULL
  *
  * @code
- *   [server.conf]
+ *   # This is "config.conf" file.
  *   # A line which starts with # character is comment
- *   @INCLUDE default.conf
- *   revision = 43                   => set static value.
- *   log  = ${prefix}/log2           => get the value of previous defined key 'prefix'.
- *   user = ${%USER}                 => get environment variable.
- *   host = ${!/bin/hostname -s}     => run external command and put it's output.
- *   id = ${user}@${host}
  *
- *   [default.conf]
+ *   @INCLUDE config.def             => include 'config.def' file.
+ *
+ *   # this is global section
+ *   prefix=/tmp                     => set static value. 'prefix' is the key for this entry.
+ *   log=${prefix}/log               => get the value from previously defined key 'prefix'.
+ *   user=${%USER}                   => get environment variable.
+ *   host=${!/bin/hostname -s}       => run external command and put it's output.
+ *   id=${user}@${host}
+ *
+ *   # now entering into 'system' section
+ *   [system]                        => a key 'system.' with value 'system' will be inserted.
+ *   ostype=${%OSTYPE}               => 'system.ostype' is the key for this entry.
+ *   machtype=${%MACHTYPE}           => 'system.machtype' is the key for this entry.
+ *
+ *   # entering into 'daemon' section
+ *   [daemon]
+ *   port=1234
+ *   name=${user}_${host}_${system.ostype}_${system.machtype}
+ *
+ *   # go back to root
+ *   []
+ *   rev=822
+ * @endcode
+ *
+ * @code
+ *   # This is "config.def" file.
  *   prefix = /usr/local
  *   bin = ${prefix}/bin
  *   log = ${prefix}/log
@@ -70,29 +89,36 @@
  * @endcode
  *
  * @code
- *   Q_LISTTBL *tbl = qConfigParseFile(NULL, "server.conf", '=');
+ *   Q_LISTTBL *tbl = qConfigParseFile(NULL, "config.conf", '=');
+ *   tbl->debug(tbl, stdout);
  *
- *   [List-table 'tbl' internal]
- *   previx = /usr/local
- *   bin = /usr/local/bin
- *   log = /usr/local/log2
- *   user = bar
- *   host = arena
- *   revision = 43
- *   id = bar@arena
+ *   [Output]
+ *   bin=/usr/local/bin? (15)
+ *   prefix=/tmp? (5)
+ *   log=/tmp/log? (9)
+ *   user=seungyoung.kim? (9)
+ *   host=eng22? (6)
+ *   id=seungyoung.kim@eng22? (15)
+ *   system.=system? (7)
+ *   system.ostype=linux? (6)
+ *   system.machtype=x86_64? (7)
+ *   daemon.=daemon? (7)
+ *   daemon.port=1234? (5)
+ *   daemon.name=seungyoung.kim_eng22_linux_x86_64? (28)
+ *   rev=822? (4)
  * @endcode
  */
 Q_LISTTBL *qConfigParseFile(Q_LISTTBL *tbl, const char *filepath, char sepchar) {
 	char *str = qFileLoad(filepath, NULL);
 	if (str == NULL) return NULL;
 
-	/* processing include directive */
+	// process include directive
 	char *strp = str;;
 	while ((strp = strstr(strp, _INCLUDE_DIRECTIVE)) != NULL) {
 		if (strp == str || strp[-1] == '\n') {
 			char buf[PATH_MAX];
 
-			/* parse filename */
+			// parse filename
 			char *tmpp;
 			for (tmpp = strp + CONST_STRLEN(_INCLUDE_DIRECTIVE); *tmpp != '\n' && *tmpp != '\0'; tmpp++);
 			int len = tmpp - (strp + CONST_STRLEN(_INCLUDE_DIRECTIVE));
@@ -106,7 +132,7 @@ Q_LISTTBL *qConfigParseFile(Q_LISTTBL *tbl, const char *filepath, char sepchar) 
 			buf[len] = '\0';
 			qStrTrim(buf);
 
-			/* get full file path */
+			// get full file path
 			if (!(buf[0] == '/' || buf[0] == '\\')) {
 				char tmp[PATH_MAX];
 				char *dir = qFileGetDir(filepath);
@@ -122,7 +148,7 @@ Q_LISTTBL *qConfigParseFile(Q_LISTTBL *tbl, const char *filepath, char sepchar) 
 				strcpy(buf, tmp);
 			}
 
-			/* read file */
+			// read file
 			char *incdata;
 			if (strlen(buf) == 0 || (incdata = qFileLoad(buf, NULL)) == NULL) {
 				DEBUG("Can't process '%s%s' directive.", _INCLUDE_DIRECTIVE, buf);
@@ -130,7 +156,7 @@ Q_LISTTBL *qConfigParseFile(Q_LISTTBL *tbl, const char *filepath, char sepchar) 
 				return NULL;
 			}
 
-			/* replace */
+			// replace
 			strncpy(buf, strp, CONST_STRLEN(_INCLUDE_DIRECTIVE) + len);
 			buf[CONST_STRLEN(_INCLUDE_DIRECTIVE) + len] = '\0';
 			strp = qStrReplace("sn", str, buf, incdata);
@@ -142,7 +168,7 @@ Q_LISTTBL *qConfigParseFile(Q_LISTTBL *tbl, const char *filepath, char sepchar) 
 		}
 	}
 
-	/* decode */
+	// parse
 	tbl = qConfigParseStr(tbl, str, sepchar);
 	free(str);
 
@@ -172,9 +198,10 @@ Q_LISTTBL *qConfigParseStr(Q_LISTTBL *tbl, const char *str, char sepchar) {
 		if(tbl == NULL) return NULL;
 	}
 
+	char *section = NULL;
 	char *org, *buf, *offset;
 	for (org = buf = offset = strdup(str); *offset != '\0'; ) {
-		/* get one line into buf */
+		// get one line into buf
 		for (buf = offset; *offset != '\n' && *offset != '\0'; offset++);
 		if (*offset != '\0') {
 			*offset = '\0';
@@ -182,14 +209,40 @@ Q_LISTTBL *qConfigParseStr(Q_LISTTBL *tbl, const char *str, char sepchar) {
 		}
 		qStrTrim(buf);
 
-		/* skip blank or comment line */
+		// skip blank or comment line
 		if ((buf[0] == '#') || (buf[0] == '\0')) continue;
 
-		/* parse & store */
+		// section header
+		if ((buf[0] == '[') && (buf[strlen(buf) - 1] == ']')) {
+			// extract section name
+			if(section != NULL) free(section);
+			section = strdup(buf + 1);
+			section[strlen(section) - 1] = '\0';
+			qStrTrim(section);
+
+			// remove section if section name is empty. ex) []
+			if(section[0] == '\0') {
+				free(section);
+				section = NULL;
+				continue;
+			}
+
+			// in order to put 'section.=section'
+			sprintf(buf, "%c%s", sepchar, section);
+		}
+
+		// parse & store
 		char *value = strdup(buf);
 		char *name  = _q_makeword(value, sepchar);
 		qStrTrim(value);
 		qStrTrim(name);
+
+		// put section name as a prefix
+		if(section != NULL) {
+			char *newname = qStrDupf("%s.%s", section, name);
+			free(name);
+			name = newname;
+		}
 
 		// get parsed string
 		char *newvalue = tbl->parseStr(tbl, value);
@@ -202,6 +255,7 @@ Q_LISTTBL *qConfigParseStr(Q_LISTTBL *tbl, const char *str, char sepchar) {
 		free(value);
 	}
 	free(org);
+	if(section != NULL) free(section);
 
 	return tbl;
 }

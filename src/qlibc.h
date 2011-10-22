@@ -37,12 +37,13 @@
 #define _QLIBC_H
 
 #define _Q_PRGNAME			"qlibc"
-#define _Q_VERSION			"1.0.8"
+#define _Q_VERSION			"1.0.9"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <limits.h>

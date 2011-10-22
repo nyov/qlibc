@@ -34,7 +34,7 @@ CFLAGS	= @CFLAGS@
 CPPFLAGS= -I../src/ @CPPFLAGS@
 LIBS	= ../src/libqlibc.a @LIBS@
 
-TARGETS	= list listtbl hashtbl hasharr vector vector_obj queue stack
+TARGETS	= list listtbl hashtbl hasharr vector vector_obj queue stack config
 
 ## Main
 all:	${TARGETS}
@@ -62,6 +62,9 @@ queue: queue.o
 
 stack: stack.o
 	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ stack.o ${LIBS}
+
+config: config.o
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ config.o ${LIBS}
 
 ## Clear Module
 clean:
