@@ -57,7 +57,6 @@
  *
  *   @INCLUDE config.def             => include 'config.def' file.
  *
- *   # this is global section
  *   prefix=/tmp                     => set static value. 'prefix' is the key for this entry.
  *   log=${prefix}/log               => get the value from previously defined key 'prefix'.
  *   user=${%USER}                   => get environment variable.
@@ -74,7 +73,7 @@
  *   port=1234
  *   name=${user}_${host}_${system.ostype}_${system.machtype}
  *
- *   # go back to root
+ *   # escape section (go back to root)
  *   []
  *   rev=822
  * @endcode
