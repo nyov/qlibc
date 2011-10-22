@@ -63,17 +63,17 @@
  *   host=${!/bin/hostname -s}       => run external command and put it's output.
  *   id=${user}@${host}
  *
- *   # now entering into 'system' section
+ *   # now entering into 'system' section.
  *   [system]                        => a key 'system.' with value 'system' will be inserted.
  *   ostype=${%OSTYPE}               => 'system.ostype' is the key for this entry.
  *   machtype=${%MACHTYPE}           => 'system.machtype' is the key for this entry.
  *
- *   # entering into 'daemon' section
+ *   # entering into 'daemon' section.
  *   [daemon]
  *   port=1234
  *   name=${user}_${host}_${system.ostype}_${system.machtype}
  *
- *   # escape section (go back to root)
+ *   # escape section. (go back to root)
  *   []
  *   rev=822
  * @endcode
