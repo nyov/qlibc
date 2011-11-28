@@ -489,8 +489,7 @@ static bool _getNext(Q_LIST *list, Q_DLOBJ_T *obj, bool newmem) {
 	_lock(list);
 
 	Q_DLOBJ_T *cont = NULL;
-
-	if(obj->prev == NULL && obj->next == NULL && obj->size == 0) cont = list->first;
+	if(obj->size == 0) cont = list->first;
 	else cont = obj->next;
 
 	if(cont == NULL) {
