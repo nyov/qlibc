@@ -211,6 +211,9 @@ Q_LIST *qList(void) {
  * @param max	maximum number of elements. 0 means no limit.
  *
  * @return	previous maximum number.
+ *
+ * @note
+ * The default maximum number of elements is unlimited.
  */
 static size_t _setSize(Q_LIST *list, size_t max) {
 	_lock(list);
@@ -487,7 +490,7 @@ static bool _getNext(Q_LIST *list, Q_DLOBJ_T *obj, bool newmem) {
 
 	Q_DLOBJ_T *cont = NULL;
 
-	if(obj->prev == NULL && obj->next == NULL) cont = list->first;
+	if(obj->prev == NULL && obj->next == NULL && obj->size == 0) cont = list->first;
 	else cont = obj->next;
 
 	if(cont == NULL) {
