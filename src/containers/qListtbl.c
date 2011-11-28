@@ -580,8 +580,7 @@ static bool _getNext(Q_LISTTBL *tbl, Q_NDLOBJ_T *obj, const char *name, bool new
 	_lock(tbl);
 
 	Q_NDLOBJ_T *cont = NULL;
-
-	if(obj->prev == NULL && obj->next == NULL && obj->size == 0) cont = tbl->first;
+	if(obj->size == 0) cont = tbl->first;
 	else cont = obj->next;
 
 	if(cont == NULL) {
