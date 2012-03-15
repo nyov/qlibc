@@ -1,46 +1,47 @@
-/*
+/******************************************************************************
  * qLibc - http://www.qdecoder.org
  *
- * Copyright 2010 qDecoder Project. All rights reserved.
+ * Copyright (c) 2010-2012 Seungyoung Kim.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * modification, are permitted provided that the following conditions are met:
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY QDECODER PROJECT ``AS IS'' AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE QDECODER PROJECT BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************
  * $Id$
- */
+ ******************************************************************************/
 
 /**
- * qlibc Header file
+ * qlibc header file
  *
- * @file	qlibc.h
+ * @file qlibc.h
  */
 
 #ifndef _QLIBC_H
 #define _QLIBC_H
 
-#define _Q_PRGNAME			"qlibc"
-#define _Q_VERSION			"1.0.10"
+#define _Q_PRGNAME "qlibc"   /*!< qlibc human readable name */
+#define _Q_VERSION "2.0.0"  /*!< qlibc version number string */
 
 #ifdef __cplusplus
-extern "C" {
+//extern "C" {
 #endif
 
 #include <stdio.h>
@@ -51,330 +52,307 @@ extern "C" {
 #include <netinet/in.h>
 
 /******************************************************************************
- * COMMON STRUCTURE DEFINITIONS
- *****************************************************************************/
+ * COMMON DATA STRUCTURES
+ ******************************************************************************/
 
-typedef struct _Q_MUTEX_T	Q_MUTEX_T;
-typedef struct _Q_NOBJ_T	Q_NOBJ_T;
-typedef struct _Q_DLOBJ_T	Q_DLOBJ_T;
-typedef struct _Q_NDLOBJ_T	Q_NDLOBJ_T;
-typedef struct _Q_NHLOBJ_T	Q_NHLOBJ_T;
+typedef struct qmutex_t qmutex_t;    /*!< qlibc pthread mutex type*/
+typedef struct qnobj_t qnobj_t;     /*!< named-object type*/
+typedef struct qdlobj_t qdlobj_t;    /*!< doubly-linked-object type*/
+typedef struct qdlnobj_t qdlnobj_t;  /*!< doubly-linked-named-object type*/
+typedef struct qhnobj_t qhnobj_t;    /*!< hashed-named-object type*/
 
 /**
- * Variable type for mutex lock management
+ * qlibc pthread mutex data structure.
  */
-struct _Q_MUTEX_T {
-	pthread_mutex_t	mutex;		/*!< pthread mutex */
-	pthread_t	owner;		/*!< mutex owner thread id */
-	int		count;		/*!< recursive lock counter */
+struct qmutex_t {
+    pthread_mutex_t mutex;  /*!< pthread mutex */
+    pthread_t owner;        /*!< mutex owner thread id */
+    int count;              /*!< recursive lock counter */
 };
 
 /**
- * Variable type for Named-OBJect.
+ * named-object data structure.
  */
-struct _Q_NOBJ_T {
-	char*		name;		/*!< object name */
-	void*		data;		/*!< data object */
-	size_t		size;		/*!< object size */
+struct qnobj_t {
+    char *name;         /*!< object name */
+    void *data;         /*!< data */
+    size_t size;        /*!< data size */
 };
 
 /**
- * Variable type for Doubly-Linked-OBJect.
+ * doubly-linked-object data structure.
  */
-struct _Q_DLOBJ_T {
-	void*		data;		/*!< data object */
-	size_t		size;		/*!< object size */
+struct qdlobj_t {
+    void *data;         /*!< data */
+    size_t size;        /*!< data size */
 
-	Q_DLOBJ_T*	prev;		/*!< previous link pointer */
-	Q_DLOBJ_T*	next;		/*!< next link pointer */
+    qdlobj_t *prev;     /*!< previous link */
+    qdlobj_t *next;     /*!< next link */
 };
 
 /**
- * Variable type for Named-Doubly-Linked-OBJect.
+ * doubly-linked-named-object data structure.
  */
-struct _Q_NDLOBJ_T {
-	char*		name;		/*!< object name */
-	void*		data;		/*!< data object */
-	size_t		size;		/*!< object size */
+struct qdlnobj_t {
+    char *name;         /*!< object name */
+    void *data;         /*!< data */
+    size_t size;        /*!< data size */
 
-	Q_NDLOBJ_T*	prev;		/*!< previous link pointer */
-	Q_NDLOBJ_T*	next;		/*!< next link pointer */
+    qdlnobj_t *prev;    /*!< previous link */
+    qdlnobj_t *next;    /*!< next link */
 };
 
 /**
- * Variable type for Named-Hash-Linked-OBJect.
+ * hashed-named-object data structure.
  */
-struct _Q_NHLOBJ_T {
-	uint32_t	hash;		/*!< FNV32 hash value of object name */
-	char*		name;		/*!< object name */
-	void*		data;		/*!< data object */
-	size_t		size;		/*!< object size */
+struct qhnobj_t {
+    uint32_t hash;      /*!< FNV32 hash value of object name */
+    char *name;         /*!< object name */
+    void *data;         /*!< data */
+    size_t size;        /*!< data size */
 
-	Q_NHLOBJ_T*	next;		/*!< next link pointer */
+    qhnobj_t *next;     /*!< for chaining next collision object */
 };
 
-/* =========================================================================
- *
- * CONTAINER SECTION
- *
- * ========================================================================= */
-
-/* -------------------------------------------------------------------------
- * Q_LIST Container - "Linked-List" implementation.
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * qList.c
- * ------------------------------------------------------------------------- */
+/******************************************************************************
+ * Doubly Linked-list Container
+ * qlist.c
+ ******************************************************************************/
+typedef struct qlist_t qlist_t;
 
 /**
- * Q_LIST types and definitions.
+ * qlist container
  */
-typedef	struct _Q_LIST		Q_LIST;
+struct qlist_t {
+    /* capsulated member functions */
+    bool (*add_first)(qlist_t *list, const void *data, size_t size);
+    bool (*add_last)(qlist_t *list, const void *data, size_t size);
+    bool (*add_at)(qlist_t *list, int index, const void *data, size_t size);
 
-/**
- * Q_LIST constructor.
- */
-extern	Q_LIST*		qList(void);	/*!< Q_LIST constructor */
+    void *(*get_first)(qlist_t *list, size_t *size, bool newmem);
+    void *(*get_last)(qlist_t *list, size_t *size, bool newmem);
+    void *(*get_at)(qlist_t *list, int index, size_t *size, bool newmem);
+    bool (*get_next)(qlist_t *list, qdlobj_t *obj, bool newmem);
 
-/**
- * Q_LIST container details.
- */
-struct _Q_LIST {
-	/* public member methods */
-	size_t		(*setSize)	(Q_LIST *list, size_t max);
+    void *(*pop_first)(qlist_t *list, size_t *size);
+    void *(*pop_last)(qlist_t *list, size_t *size);
+    void *(*pop_at)(qlist_t *list, int index, size_t *size);
 
-	bool		(*addFirst)	(Q_LIST *list, const void *data, size_t size);
-	bool		(*addLast)	(Q_LIST *list, const void *data, size_t size);
-	bool		(*addAt)	(Q_LIST *list, int index, const void *data, size_t size);
+    bool (*remove_first)(qlist_t *list);
+    bool (*remove_last)(qlist_t *list);
+    bool (*remove_at)(qlist_t *list, int index);
 
-	void*		(*getFirst)	(Q_LIST *list, size_t *size, bool newmem);
-	void*		(*getLast)	(Q_LIST *list, size_t *size, bool newmem);
-	void*		(*getAt)	(Q_LIST *list, int index, size_t *size, bool newmem);
-	bool		(*getNext)	(Q_LIST *list, Q_DLOBJ_T *obj, bool newmem);
+    void (*reverse)(qlist_t *list);
+    void (*clear)(qlist_t *list);
 
-	void*		(*popFirst)	(Q_LIST *list, size_t *size);
-	void*		(*popLast)	(Q_LIST *list, size_t *size);
-	void*		(*popAt)	(Q_LIST *list, int index, size_t *size);
+    size_t (*set_size)(qlist_t *list, size_t max);
+    size_t (*size)(qlist_t *list);
+    size_t (*datasize)(qlist_t *list);
 
-	bool		(*removeFirst)	(Q_LIST *list);
-	bool		(*removeLast)	(Q_LIST *list);
-	bool		(*removeAt)	(Q_LIST *list, int index);
+    void *(*to_array)(qlist_t *list, size_t *size);
+    char *(*to_string)(qlist_t *list);
+    bool (*debug)(qlist_t *list, FILE *out);
 
-	size_t		(*size)		(Q_LIST *list);
-	size_t		(*datasize)	(Q_LIST *list);
-	void		(*reverse)	(Q_LIST *list);
-	void		(*clear)	(Q_LIST *list);
+    void (*lock)(qlist_t *list);
+    void (*unlock)(qlist_t *list);
 
-	void*		(*toArray)	(Q_LIST *list, size_t *size);
-	char*		(*toString)	(Q_LIST *list);
-	bool		(*debug)	(Q_LIST *list, FILE *out);
+    void (*terminate)(qlist_t *list);
 
-	void		(*lock)		(Q_LIST *list);
-	void		(*unlock)	(Q_LIST *list);
+    /* private variables - do not access directly */
+    qmutex_t qmutex;  /*!< activated if compiled with --enable-threadsafe */
+    size_t num;       /*!< number of elements */
+    size_t max;       /*!< maximum number of elements. 0 means no limit */
+    size_t datasum;   /*!< total sum of data size, does not include name size */
 
-	void		(*free)		(Q_LIST *list);
-
-	/* private variables */
-	Q_MUTEX_T	qmutex;		/*!< activated if compiled with --enable-threadsafe option */
-	size_t		num;		/*!< number of elements */
-	size_t		max;		/*!< maximum number of elements. 0 means no limit */
-	size_t		datasum;	/*!< total sum of data size, does not include name size */
-
-	Q_DLOBJ_T*	first;		/*!< first object pointer */
-	Q_DLOBJ_T*	last;		/*!< last object pointer */
+    qdlobj_t *first;  /*!< first object pointer */
+    qdlobj_t *last;   /*!< last object pointer */
 };
 
-/* -------------------------------------------------------------------------
- * Q_LISTTBL Container - "Linked-List-Table" implementation.
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * qListtbl.c
- * ----------------------------------------------------------------------- */
+/* public functions */
+extern qlist_t *qlist(void); /*!< qlist constructor */
+
+/******************************************************************************
+ * Key-Value Table in Linked-list Container
+ * qlisttbl.c
+ ******************************************************************************/
+typedef struct qlisttbl_t qlisttbl_t;
 
 /**
- * Q_LISTTBL types and definitions.
+ * qlisttbl container
  */
-typedef struct _Q_LISTTBL	Q_LISTTBL;
+struct qlisttbl_t {
+    /* capsulated member functions */
+    bool (*put)(qlisttbl_t *tbl, const char *name, const void *data,
+                size_t size, bool replace);
+    bool (*put_first)(qlisttbl_t *tbl, const char *name, const void *data,
+                      size_t size, bool replace);
+    bool (*put_last)(qlisttbl_t *tbl, const char *name, const void *data,
+                     size_t size, bool replace);
 
-/**
- * Q_LISTTBL constructor.
- */
-extern	Q_LISTTBL*		qListtbl(void);	/*!< Q_LISTTBL constructor */
+    bool (*put_str)(qlisttbl_t *tbl, const char *name, const char *str,
+                    bool replace);
+    bool (*put_strf)(qlisttbl_t *tbl, bool replace, const char *name,
+                     const char *format, ...);
+    bool (*put_int)(qlisttbl_t *tbl, const char *name, int num, bool replace);
 
-/**
- * Q_LISTTBL container details.
- */
-struct _Q_LISTTBL {
-	/* public member methods */
-	bool		(*setPutDirection)	(Q_LISTTBL *tbl, bool first);
+    void *(*get)(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem);
+    void *(*get_last)(qlisttbl_t *tbl, const char *name, size_t *size,
+                      bool newmem);
+    char *(*get_str)(qlisttbl_t *tbl, const char *name, bool newmem);
+    int  (*get_int)(qlisttbl_t *tbl, const char *name);
 
-	bool		(*put)		(Q_LISTTBL *tbl, const char *name, const void *data, size_t size, bool replace);
-	bool		(*putFirst)	(Q_LISTTBL *tbl, const char *name, const void *data, size_t size, bool replace);
-	bool		(*putLast)	(Q_LISTTBL *tbl, const char *name, const void *data, size_t size, bool replace);
+    void *(*caseget)(qlisttbl_t *tbl, const char *name, size_t *size,
+                     bool newmem);
+    char *(*caseget_str)(qlisttbl_t *tbl, const char *name, bool newmem);
+    int  (*caseget_int)(qlisttbl_t *tbl, const char *name);
 
-	bool		(*putStr)	(Q_LISTTBL *tbl, const char *name, const char *str, bool replace);
-	bool		(*putStrf)	(Q_LISTTBL *tbl, bool replace, const char *name, const char *format, ...);
-	bool		(*putInt)	(Q_LISTTBL *tbl, const char *name, int num, bool replace);
+    bool (*get_next)(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
+                     bool newmem);
 
-	void*		(*get)		(Q_LISTTBL *tbl, const char *name, size_t *size, bool newmem);
-	void*		(*getLast)	(Q_LISTTBL *tbl, const char *name, size_t *size, bool newmem);
-	char*		(*getStr)	(Q_LISTTBL *tbl, const char *name, bool newmem);
-	int		(*getInt)	(Q_LISTTBL *tbl, const char *name);
+    bool (*remove)(qlisttbl_t *tbl, const char *name);
 
-	void*		(*getCase)	(Q_LISTTBL *tbl, const char *name, size_t *size, bool newmem);
-	char*		(*getCaseStr)	(Q_LISTTBL *tbl, const char *name, bool newmem);
-	int		(*getCaseInt)	(Q_LISTTBL *tbl, const char *name);
+    bool (*set_putdir)(qlisttbl_t *tbl, bool first);
+    size_t (*size)(qlisttbl_t *tbl);
+    void (*reverse)(qlisttbl_t *tbl);
+    void (*clear)(qlisttbl_t *tbl);
 
-	bool		(*getNext)	(Q_LISTTBL *tbl, Q_NDLOBJ_T *obj, const char *name, bool newmem);
+    char *(*parse_str)(qlisttbl_t *tbl, const char *str);
+    bool (*save)(qlisttbl_t *tbl, const char *filepath, char sepchar,
+                 bool encode);
+    size_t (*load)(qlisttbl_t *tbl, const char *filepath, char sepchar,
+                   bool decode);
+    bool (*debug)(qlisttbl_t *tbl, FILE *out);
 
-	bool		(*remove)	(Q_LISTTBL *tbl, const char *name);
+    void (*lock)(qlisttbl_t *tbl);
+    void (*unlock)(qlisttbl_t *tbl);
 
-	size_t 		(*size)		(Q_LISTTBL *tbl);
-	void		(*reverse)	(Q_LISTTBL *tbl);
-	void		(*clear)	(Q_LISTTBL *tbl);
+    void (*terminate)(qlisttbl_t *tbl);
 
-	char*		(*parseStr)	(Q_LISTTBL *tbl, const char *str);
-	bool		(*save)		(Q_LISTTBL *tbl, const char *filepath, char sepchar, bool encode);
-	size_t		(*load)		(Q_LISTTBL *tbl, const char *filepath, char sepchar, bool decode);
-	bool		(*debug)	(Q_LISTTBL *tbl, FILE *out);
+    /* private variables - do not access directly */
+    qmutex_t qmutex; /*!< activated if compiled with --enable-threadsafe */
 
-	void		(*lock)		(Q_LISTTBL *tbl);
-	void		(*unlock)	(Q_LISTTBL *tbl);
+    size_t num;   /*!< number of elements */
+    bool putdir;  /*!< object appending direction for put(). false:put_last */
 
-	void		(*free)		(Q_LISTTBL *tbl);
-
-	/* private variables */
-	Q_MUTEX_T	qmutex;		/*!< activated if compiled with --enable-threadsafe option */
-
-	size_t		num;		/*!< number of elements */
-	bool		putdir;		/*!< object adding direction. true for adding from the beginning. default is false. */
-
-	Q_NDLOBJ_T*	first;		/*!< first object pointer */
-	Q_NDLOBJ_T*	last;		/*!< last object pointer */
+    qdlnobj_t *first;  /*!< first object pointer */
+    qdlnobj_t *last;   /*!< last object pointer */
 };
 
-/* -------------------------------------------------------------------------
- * Q_HASHTBL Container - dynamic hash table implementation.
- * qHashtbl.c
- * ------------------------------------------------------------------------- */
+/* public functions */
+extern qlisttbl_t *qlisttbl(void); /*!< qlisttbl constructor */
+
+/******************************************************************************
+ * Dynamic Hash Table Container
+ * qhashtbl.c
+ ******************************************************************************/
+typedef struct qhashtbl_t qhashtbl_t;
 
 /**
- * Q_HASHTBL types and definitions.
+ * qhashtbl container
  */
-typedef struct _Q_HASHTBL	Q_HASHTBL;
+struct qhashtbl_t {
+    /* capsulated member functions */
+    bool (*put)(qhashtbl_t *tbl, const char *name, const void *data,
+                size_t size);
+    bool (*put_str)(qhashtbl_t *tbl, const char *name, const char *str);
+    bool (*put_strf)(qhashtbl_t *tbl, const char *name, const char *format, ...);
+    bool (*put_int)(qhashtbl_t *tbl, const char *name, int num);
 
-/**
- * Q_HASHTBL constructor.
- */
-extern	Q_HASHTBL*	qHashtbl(size_t range);	/*!< Q_HASHTBL constructor */
+    void *(*get)(qhashtbl_t *tbl, const char *name, size_t *size, bool newmem);
+    char *(*get_str)(qhashtbl_t *tbl, const char *name, bool newmem);
+    int (*get_int)(qhashtbl_t *tbl, const char *name);
 
-/**
- * Q_HASHTBL container details.
- */
-struct _Q_HASHTBL {
-	/* public member methods */
-	bool		(*put)		(Q_HASHTBL *tbl, const char *name, const void *data, size_t size);
-	bool		(*putStr)	(Q_HASHTBL *tbl, const char *name, const char *str);
-	bool		(*putStrf)	(Q_HASHTBL *tbl, const char *name, const char *format, ...);
-	bool		(*putInt)	(Q_HASHTBL *tbl, const char *name, int num);
+    bool (*get_next)(qhashtbl_t *tbl, qhnobj_t *obj, bool newmem);
 
-	void*		(*get)		(Q_HASHTBL *tbl, const char *name, size_t *size, bool newmem);
-	char*		(*getStr)	(Q_HASHTBL *tbl, const char *name, bool newmem);
-	int		(*getInt)	(Q_HASHTBL *tbl, const char *name);
+    bool (*remove)(qhashtbl_t *tbl, const char *name);
 
-	bool		(*getNext)	(Q_HASHTBL *tbl, Q_NHLOBJ_T *obj, bool newmem);
+    size_t (*size)(qhashtbl_t *tbl);
+    void (*clear)(qhashtbl_t *tbl);
+    bool (*debug)(qhashtbl_t *tbl, FILE *out);
 
-	bool		(*remove)	(Q_HASHTBL *tbl, const char *name);
+    void (*lock)(qhashtbl_t *tbl);
+    void (*unlock)(qhashtbl_t *tbl);
 
-	size_t 		(*size)		(Q_HASHTBL *tbl);
-	void		(*clear)	(Q_HASHTBL *tbl);
-	bool		(*debug)	(Q_HASHTBL *tbl, FILE *out);
+    void (*terminate)(qhashtbl_t *tbl);
 
-	void		(*lock)		(Q_HASHTBL *tbl);
-	void		(*unlock)	(Q_HASHTBL *tbl);
-
-	void		(*free)		(Q_HASHTBL *tbl);
-
-	/* private variables */
-	Q_MUTEX_T	qmutex;		/*!< activated if compiled with --enable-threadsafe option */
-
-	size_t		num;		/*!< number of objects in this table */
-	size_t		range;		/*!< hash range, vertical number of slots */
-	Q_NHLOBJ_T**	slots;		/*!< slot pointer container */
+    /* private variables - do not access directly */
+    qmutex_t qmutex;    /*!< activated if compiled with --enable-threadsafe */
+    size_t num;         /*!< number of objects in this table */
+    size_t range;       /*!< hash range, vertical number of slots */
+    qhnobj_t **slots;   /*!< slot pointer container */
 };
 
-/* -------------------------------------------------------------------------
- * Q_HASHARR Container - static hash table implementation.
- * qHasharr.c
- * ------------------------------------------------------------------------- */
+/* public functions */
+extern qhashtbl_t *qhashtbl(size_t range);  /*!< qhashtbl constructor */
 
-/**
- * Q_HASHARR types and definitions.
- */
-#define _Q_HASHARR_KEYSIZE		(16)		/*!< maximum key size. */
-#define _Q_HASHARR_VALUESIZE		(32)		/*!< maximum value size in a slot. */
-typedef struct _Q_HASHARR		Q_HASHARR;
+/******************************************************************************
+ * Static Hash Table Container - works in fixed size memory
+ * qhasharr.c
+ ******************************************************************************/
+#define _Q_HASHARR_KEYSIZE (16)    /*!< knob for maximum key size. */
+#define _Q_HASHARR_VALUESIZE (32)  /*!< knob for maximum data size in a slot. */
+typedef struct qhasharr_t qhasharr_t;
 
 /**
  * Q_HASHARR constructor and memory size calculator.
  */
-extern	Q_HASHARR*	qHasharr(void *memory, size_t memsize);	/*!< Q_HASHARR constructor */
-extern	size_t		qHasharrSize(int max);
+extern qhasharr_t *qhasharr(void *memory, size_t memsize);
+extern size_t qhasharr_calculate_memsize(int max);
 
 /**
- * Q_HASHARR slot details.
+ * qhasharr internal data slot structure
  */
 struct _Q_HASHARR_SLOT {
-	short		count;				/*!< hash collision counter. 0 indicates empty slot, -1 is used for collision resolution, -2 is used for indicating linked block */
-	uint32_t	hash;				/*!< key hash. we use FNV32 */
+    short  count;   /*!< hash collision counter. 0 indicates empty slot, -1 is used for collision resolution, -2 is used for indicating linked block */
+    uint32_t  hash;   /*!< key hash. we use FNV32 */
 
-	uint8_t		size;				/*!< value size in this slot*/
-	int		link;				/*!< next link */
+    uint8_t  size;   /*!< value size in this slot*/
+    int link;   /*!< next link */
 
-	union {
-		/*!< key/value data */
-		struct _Q_HASHARR_SLOT_KEYVAL {
-			unsigned char	value[_Q_HASHARR_VALUESIZE];	/*!< value */
+    union {
+        /*!< key/value data */
+        struct _Q_HASHARR_SLOT_KEYVAL {
+            unsigned char value[_Q_HASHARR_VALUESIZE]; /*!< value */
 
-			char		key[_Q_HASHARR_KEYSIZE];	/*!< key string, it can be truncated */
-			uint16_t	keylen;				/*!< original key length */
-			unsigned char	keymd5[16];			/*!< md5 hash of the key */
-		} pair;
+            char key[_Q_HASHARR_KEYSIZE]; /*!< key string, it can be truncated */
+            uint16_t  keylen;   /*!< original key length */
+            unsigned char keymd5[16];   /*!< md5 hash of the key */
+        } pair;
 
-		/*!< extended data block, only used when the count value is -2 */
-		struct _Q_HASHARR_SLOT_EXT {
-			unsigned char value[sizeof(struct _Q_HASHARR_SLOT_KEYVAL)];	/*!< value */
-		} ext;
-	} data;
+        /*!< extended data block, used only when the count value is -2 */
+        struct _Q_HASHARR_SLOT_EXT {
+            unsigned char value[sizeof(struct _Q_HASHARR_SLOT_KEYVAL)]; /*!< value */
+        } ext;
+    } data;
 };
 
 /**
- * Q_HASHARR container details.
+ * qhasharr container
  */
-struct _Q_HASHARR {
-	/* public member methods */
-	bool		(*put)		(Q_HASHARR *tbl, const char *key, const void *value, size_t size);
-	bool		(*putStr)	(Q_HASHARR *tbl, const char *key, const char *str);
-	bool		(*putStrf)	(Q_HASHARR *tbl, const char *key, const char *format, ...);
-	bool		(*putInt)	(Q_HASHARR *tbl, const char *key, int num);
+struct qhasharr_t {
+    /* capsulated member functions */
+    bool (*put)(qhasharr_t *tbl, const char *key, const void *value, size_t size);
+    bool (*put_str)(qhasharr_t *tbl, const char *key, const char *str);
+    bool (*put_strf)(qhasharr_t *tbl, const char *key, const char *format, ...);
+    bool (*put_int)(qhasharr_t *tbl, const char *key, int num);
 
-	void*		(*get)		(Q_HASHARR *tbl, const char *key, size_t *size);
-	char*		(*getStr)	(Q_HASHARR *tbl, const char *key);
-	int		(*getInt)	(Q_HASHARR *tbl, const char *key);
-	bool		(*getNext)	(Q_HASHARR *tbl, Q_NOBJ_T *obj, int *idx);
+    void *(*get)(qhasharr_t *tbl, const char *key, size_t *size);
+    char *(*get_str)(qhasharr_t *tbl, const char *key);
+    int  (*get_int)(qhasharr_t *tbl, const char *key);
+    bool (*get_next)(qhasharr_t *tbl, qnobj_t *obj, int *idx);
 
-	bool		(*remove)	(Q_HASHARR *tbl, const char *key);
+    bool (*remove)(qhasharr_t *tbl, const char *key);
 
-	int		(*size)		(Q_HASHARR *tbl, int *maxslots, int *usedslots);
-	void		(*clear)	(Q_HASHARR *tbl);
-	bool		(*debug)	(Q_HASHARR *tbl, FILE *out);
+    int  (*size)(qhasharr_t *tbl, int *maxslots, int *usedslots);
+    void (*clear)(qhasharr_t *tbl);
+    bool (*debug)(qhasharr_t *tbl, FILE *out);
 
-	/* private variables */
-	Q_MUTEX_T	qmutex;		/*!< activated if compiled with --enable-threadsafe option */
-
-	int		maxslots;	/*!< number of maximum slots */
-	int		usedslots;	/*!< number of used slots */
-	int		num;		/*!< number of stored keys */
-
-	struct _Q_HASHARR_SLOT	*slots;	/*!< data area pointer */
+    /* private variables - do not access directly */
+    qmutex_t  qmutex; /*!< activated if compiled with --enable-threadsafe */
+    int maxslots; /*!< number of maximum slots */
+    int usedslots; /*!< number of used slots */
+    int num; /*!< number of stored keys */
+    struct _Q_HASHARR_SLOT  *slots; /*!< data area pointer */
 };
 
 /* -------------------------------------------------------------------------
@@ -385,114 +363,114 @@ struct _Q_HASHARR {
 /**
  * Q_VECTOR types and definitions.
  */
-typedef struct _Q_VECTOR	Q_VECTOR;
+typedef struct _Q_VECTOR  Q_VECTOR;
 
 /**
  * Q_VECTOR constructor.
  */
-extern	Q_VECTOR*	qVector(void);
+extern Q_VECTOR *qVector(void);
 
 /**
  * Q_VECTOR container details.
  */
 struct _Q_VECTOR {
-	/* public member methods */
-	bool		(*add)		(Q_VECTOR *vector, const void *data, size_t size);
-	bool		(*addStr)	(Q_VECTOR *vector, const char *str);
-	bool		(*addStrf)	(Q_VECTOR *vector, const char *format, ...);
+    /* capsulated member functions */
+    bool (*add) (Q_VECTOR *vector, const void *data, size_t size);
+    bool (*addStr) (Q_VECTOR *vector, const char *str);
+    bool (*addStrf) (Q_VECTOR *vector, const char *format, ...);
 
-	void*		(*toArray)	(Q_VECTOR *vector, size_t *size);
-	char*		(*toString)	(Q_VECTOR *vector);
+    void *(*toArray) (Q_VECTOR *vector, size_t *size);
+    char *(*toString) (Q_VECTOR *vector);
 
-	size_t		(*size)		(Q_VECTOR *vector);
-	size_t		(*datasize)	(Q_VECTOR *vector);
-	void		(*clear)	(Q_VECTOR *vector);
-	bool		(*debug)	(Q_VECTOR *vector, FILE *out);
+    size_t (*size) (Q_VECTOR *vector);
+    size_t (*datasize) (Q_VECTOR *vector);
+    void (*clear) (Q_VECTOR *vector);
+    bool (*debug) (Q_VECTOR *vector, FILE *out);
 
-	void		(*free)		(Q_VECTOR *vector);
+    void (*free) (Q_VECTOR *vector);
 
-	/* private variables */
-	Q_LIST		*list;		/*!< data container */
+    /* private variables - do not access directly */
+    qlist_t *list; /*!< data container */
 };
 
 /* -------------------------------------------------------------------------
- * Q_QUEUE Container -  queue implementation.
+ * Q_QUEUE Container - queue implementation.
  * qHasharr.c
  * ------------------------------------------------------------------------- */
-typedef struct _Q_QUEUE		Q_QUEUE;
+typedef struct _Q_QUEUE Q_QUEUE;
 /*
  * qQueue.c
  */
-extern	Q_QUEUE*	qQueue();
+extern Q_QUEUE *qQueue();
 
 /**
  * Structure for array-based circular-queue data structure.
  */
 struct _Q_QUEUE {
-	/* public member methods */
-	size_t		(*setSize)	(Q_QUEUE *stack, size_t max);
+    /* capsulated member functions */
+    size_t (*setSize) (Q_QUEUE *stack, size_t max);
 
-	bool		(*push)		(Q_QUEUE *stack, const void *data, size_t size);
-	bool		(*pushStr)	(Q_QUEUE *stack, const char *str);
-	bool		(*pushInt)	(Q_QUEUE *stack, int num);
+    bool (*push) (Q_QUEUE *stack, const void *data, size_t size);
+    bool (*pushStr) (Q_QUEUE *stack, const char *str);
+    bool (*pushInt) (Q_QUEUE *stack, int num);
 
-	void*		(*pop)		(Q_QUEUE *stack, size_t *size);
-	char*		(*popStr)	(Q_QUEUE *stack);
-	int		(*popInt)	(Q_QUEUE *stack);
-	void*		(*popAt)	(Q_QUEUE *stack, int index, size_t *size);
+    void *(*pop) (Q_QUEUE *stack, size_t *size);
+    char *(*popStr) (Q_QUEUE *stack);
+    int (*popInt) (Q_QUEUE *stack);
+    void *(*popAt) (Q_QUEUE *stack, int index, size_t *size);
 
-	void*		(*get)		(Q_QUEUE *stack, size_t *size, bool newmem);
-	char*		(*getStr)	(Q_QUEUE *stack);
-	int		(*getInt)	(Q_QUEUE *stack);
-	void*		(*getAt)	(Q_QUEUE *stack, int index, size_t *size, bool newmem);
+    void *(*get) (Q_QUEUE *stack, size_t *size, bool newmem);
+    char *(*getStr) (Q_QUEUE *stack);
+    int (*getInt) (Q_QUEUE *stack);
+    void *(*getAt) (Q_QUEUE *stack, int index, size_t *size, bool newmem);
 
-	size_t		(*size)		(Q_QUEUE *stack);
-	void		(*clear)	(Q_QUEUE *stack);
-	bool		(*debug)	(Q_QUEUE *stack, FILE *out);
-	void		(*free)		(Q_QUEUE *stack);
+    size_t (*size) (Q_QUEUE *stack);
+    void (*clear) (Q_QUEUE *stack);
+    bool (*debug) (Q_QUEUE *stack, FILE *out);
+    void (*free) (Q_QUEUE *stack);
 
-	/* private variables */
-	Q_LIST		*list;		/*!< data container */
+    /* private variables - do not access directly */
+    qlist_t  *list; /*!< data container */
 };
 
 /* -------------------------------------------------------------------------
- * Q_STACK Container -  stack implementation.
+ * LIFO stack container
  * qHasharr.c
  * ------------------------------------------------------------------------- */
-typedef struct _Q_STACK		Q_STACK;
+typedef struct qstack_tr qstack_t;
 /*
  * qQueue.c
  */
-extern	Q_STACK*	qStack();
+extern qstack_t *qStack();
 
 /**
  * Structure for array-based circular-queue data structure.
  */
-struct _Q_STACK {
-	/* public member methods */
-	size_t		(*setSize)	(Q_STACK *stack, size_t max);
+struct qstack_tr {
+    /* capsulated member functions */
+    size_t (*set_size) (qstack_t *stack, size_t max);
 
-	bool		(*push)		(Q_STACK *stack, const void *data, size_t size);
-	bool		(*pushStr)	(Q_STACK *stack, const char *str);
-	bool		(*pushInt)	(Q_STACK *stack, int num);
+    bool (*push) (qstack_t *stack, const void *data, size_t size);
+    bool (*push_str) (qstack_t *stack, const char *str);
+    bool (*push_int) (qstack_t *stack, int num);
 
-	void*		(*pop)		(Q_STACK *stack, size_t *size);
-	char*		(*popStr)	(Q_STACK *stack);
-	int		(*popInt)	(Q_STACK *stack);
-	void*		(*popAt)	(Q_STACK *stack, int index, size_t *size);
+    void *(*pop) (qstack_t *stack, size_t *size);
+    char *(*popStr) (qstack_t *stack);
+    int (*popInt) (qstack_t *stack);
+    void *(*popAt) (qstack_t *stack, int index, size_t *size);
 
-	void*		(*get)		(Q_STACK *stack, size_t *size, bool newmem);
-	char*		(*getStr)	(Q_STACK *stack);
-	int		(*getInt)	(Q_STACK *stack);
-	void*		(*getAt)	(Q_STACK *stack, int index, size_t *size, bool newmem);
+    void *(*get) (qstack_t *stack, size_t *size, bool newmem);
+    char *(*getStr) (qstack_t *stack);
+    int (*getInt) (qstack_t *stack);
+    void *(*getAt) (qstack_t *stack, int index, size_t *size, bool newmem);
 
-	size_t		(*size)		(Q_STACK *stack);
-	void		(*clear)	(Q_STACK *stack);
-	bool		(*debug)	(Q_STACK *stack, FILE *out);
-	void		(*free)		(Q_STACK *stack);
+    size_t (*size) (qstack_t *stack);
+    void (*clear) (qstack_t *stack);
+    bool (*debug) (qstack_t *stack, FILE *out);
+    void (*free) (qstack_t *stack);
 
-	/* private variables */
-	Q_LIST		*list;		/*!< data container */
+    /* private variables - do not access directly */
+    qlist_t  *list; /*!< data container */
 };
 
 /* =========================================================================
@@ -504,118 +482,118 @@ struct _Q_STACK {
 /*
  * qCount.c
  */
-extern	int		qCountRead(const char *filepath);
-extern	bool		qCountSave(const char *filepath, int number);
-extern	int		qCountUpdate(const char *filepath, int number);
+extern int qCountRead(const char *filepath);
+extern bool qCountSave(const char *filepath, int number);
+extern int qCountUpdate(const char *filepath, int number);
 
 /*
  * qEncode.c
  */
-extern	Q_LISTTBL*	qParseQueries(Q_LISTTBL *tbl, const char *query, char equalchar, char sepchar, int *count);
-extern	char*		qUrlEncode(const void *bin, size_t size);
-extern	size_t		qUrlDecode(char *str);
-extern	char*		qBase64Encode(const void *bin, size_t size);
-extern	size_t		qBase64Decode(char *str);
-extern	char*		qHexEncode(const void *bin, size_t size);
-extern	size_t		qHexDecode(char *str);
+extern qlisttbl_t *qParseQueries(qlisttbl_t *tbl, const char *query, char equalchar, char sepchar, int *count);
+extern char *qUrlEncode(const void *bin, size_t size);
+extern size_t qUrlDecode(char *str);
+extern char *qBase64Encode(const void *bin, size_t size);
+extern size_t qBase64Decode(char *str);
+extern char *qHexEncode(const void *bin, size_t size);
+extern size_t qHexDecode(char *str);
 
 /*
  * qFile.c
  */
-extern	bool		qFileLock(int fd);
-extern	bool		qFileUnlock(int fd);
-extern	bool		qFileExist(const char *filepath);
-extern	void*		qFileLoad(const char *filepath, size_t *nbytes);
-extern	void*		qFileRead(FILE *fp, size_t *nbytes);
-extern	ssize_t		qFileSave(const char *filepath, const void *buf, size_t size, bool append);
-extern	bool		qFileMkdir(const char *dirpath, mode_t mode, bool recursive);
+extern bool qFileLock(int fd);
+extern bool qFileUnlock(int fd);
+extern bool qFileExist(const char *filepath);
+extern void *qFileLoad(const char *filepath, size_t *nbytes);
+extern void *qFileRead(FILE *fp, size_t *nbytes);
+extern ssize_t qFileSave(const char *filepath, const void *buf, size_t size, bool append);
+extern bool qFileMkdir(const char *dirpath, mode_t mode, bool recursive);
 
-extern	char*		qFileGetName(const char *filepath);
-extern	char*		qFileGetDir(const char *filepath);
-extern	char*		qFileGetExt(const char *filepath);
-extern	off_t		qFileGetSize(const char *filepath);
+extern char *qFileGetName(const char *filepath);
+extern char *qFileGetDir(const char *filepath);
+extern char *qFileGetExt(const char *filepath);
+extern off_t qFileGetSize(const char *filepath);
 
-extern	bool		qFileCheckPath(const char *path);
-extern	char*		qFileCorrectPath(char *path);
-extern	char*		qFileGetAbsPath(char *buf, size_t bufsize, const char *path);
+extern bool qFileCheckPath(const char *path);
+extern char *qFileCorrectPath(char *path);
+extern char *qFileGetAbsPath(char *buf, size_t bufsize, const char *path);
 
 /*
  * qHash.c
  */
-extern	unsigned char*	qHashMd5(const void *data, size_t nbytes);
-extern	char*		qHashMd5Str(const void *data, size_t nbytes);
-extern	char*		qHashMd5File(const char *filepath, size_t *nbytes);
-extern	uint32_t	qHashFnv32(const void *data, size_t nbytes);
-extern	uint64_t	qHashFnv64(const void *data, size_t nbytes);
+extern unsigned char *qHashMd5(const void *data, size_t nbytes);
+extern char *qHashMd5Str(const void *data, size_t nbytes);
+extern char *qHashMd5File(const char *filepath, size_t *nbytes);
+extern uint32_t  qHashFnv32(const void *data, size_t nbytes);
+extern uint64_t  qHashFnv64(const void *data, size_t nbytes);
 
 /*
  * qIo.c
  */
-extern	int		qIoWaitReadable(int fd, int timeoutms);
-extern	int		qIoWaitWritable(int fd, int timeoutms);
-extern	ssize_t		qIoRead(int fd, void *buf, size_t nbytes, int timeoutms);
-extern	ssize_t		qIoWrite(int fd, const void *data, size_t nbytes, int timeoutms);
-extern	off_t		qIoSend(int outfd, int infd, off_t nbytes, int timeoutms);
-extern	ssize_t		qIoGets(int fd, char *buf, size_t bufsize, int timeoutms);
-extern	ssize_t		qIoPuts(int fd, const char *str, int timeoutms);
-extern	ssize_t		qIoPrintf(int fd, int timeoutms, const char *format, ...);
+extern int qIoWaitReadable(int fd, int timeoutms);
+extern int qIoWaitWritable(int fd, int timeoutms);
+extern ssize_t qIoRead(int fd, void *buf, size_t nbytes, int timeoutms);
+extern ssize_t qIoWrite(int fd, const void *data, size_t nbytes, int timeoutms);
+extern off_t qIoSend(int outfd, int infd, off_t nbytes, int timeoutms);
+extern ssize_t qIoGets(int fd, char *buf, size_t bufsize, int timeoutms);
+extern ssize_t qIoPuts(int fd, const char *str, int timeoutms);
+extern ssize_t qIoPrintf(int fd, int timeoutms, const char *format, ...);
 
 /*
  * qLibc.c
  */
-extern	const char*	qLibcVersion(void);
-extern	bool		qLibcThreadsafe(void);
-extern	bool		qLibcLfs(void);
+extern const char *qlibc_version(void);
+extern bool qlibc_is_threadsafe(void);
+extern bool qlibc_is_lfs(void);
 
 /*
  * qSocket.c
  */
-extern	int		qSocketOpen(const char *hostname, int port, int timeoutms);
-extern	bool		qSocketClose(int sockfd, int timeoutms);
-extern	bool		qSocketGetAddr(struct sockaddr_in *addr, const char *hostname, int port);
+extern int qSocketOpen(const char *hostname, int port, int timeoutms);
+extern bool qSocketClose(int sockfd, int timeoutms);
+extern bool qSocketGetAddr(struct sockaddr_in *addr, const char *hostname, int port);
 
 /*
  * qString.c
  */
-extern	char*		qStrTrim(char *str);
-extern	char*		qStrTrimTail(char *str);
-extern	char*		qStrUnchar(char *str, char head, char tail);
-extern	char*		qStrReplace(const char *mode, char *srcstr, const char *tokstr, const char *word);
-extern	char*		qStrCpy(char *dst, size_t size, const char *src);
-extern	char*		qStrCpyn(char *dst, size_t size, const char *src, size_t nbytes);
-extern	char*		qStrDupf(const char *format, ...);
-extern	char*		qStrGets(char *buf, size_t size, char **offset);
-extern	char*		qStrUpper(char *str);
-extern	char*		qStrLower(char *str);
-extern	char*		qStrRev(char *str);
-extern	char*		qStrTok(char *str, const char *delimiters, char *retstop, int *offset);
-extern	Q_LIST*		qStrTokenizer(const char *str, const char *delimiters);
-extern	char*		qStrCommaNumber(int number);
-extern	char*		qStrCatf(char *str, const char *format, ...);
-extern	char*		qStrDupBetween(const char *str, const char *start, const char *end);
-extern	char*		qStrUnique(const char *seed);
-extern	bool		qStrTest(int (*testfunc)(int), const char *str);
-extern	bool		qStrIsEmail(const char *email);
-extern	bool		qStrIsIpv4Addr(const char *str);
-extern	char*		qStrConvEncoding(const char *fromstr, const char *fromcode, const char *tocode, float mag);
+extern char *qStrTrim(char *str);
+extern char *qStrTrimTail(char *str);
+extern char *qStrUnchar(char *str, char head, char tail);
+extern char *qStrReplace(const char *mode, char *srcstr, const char *tokstr, const char *word);
+extern char *qStrCpy(char *dst, size_t size, const char *src);
+extern char *qStrCpyn(char *dst, size_t size, const char *src, size_t nbytes);
+extern char *qStrDupf(const char *format, ...);
+extern char *qStrGets(char *buf, size_t size, char **offset);
+extern char *qStrUpper(char *str);
+extern char *qStrLower(char *str);
+extern char *qStrRev(char *str);
+extern char *qStrTok(char *str, const char *delimiters, char *retstop, int *offset);
+extern qlist_t *qStrTokenizer(const char *str, const char *delimiters);
+extern char *qStrCommaNumber(int number);
+extern char *qStrCatf(char *str, const char *format, ...);
+extern char *qStrDupBetween(const char *str, const char *start, const char *end);
+extern char *qStrUnique(const char *seed);
+extern bool qStrTest(int (*testfunc)(int), const char *str);
+extern bool qStrIsEmail(const char *email);
+extern bool qStrIsIpv4Addr(const char *str);
+extern char *qStrConvEncoding(const char *fromstr, const char *fromcode, const char *tocode, float mag);
 
 /*
  * qSystem.c
  */
-extern	const char*	qSysGetEnv(const char *envname, const char *nullstr);
-extern	char*		qSysCmd(const char *cmd);
-extern	bool		qSysGetIp(char *buf, size_t bufsize);
+extern const char *qSysGetEnv(const char *envname, const char *nullstr);
+extern char *qSysCmd(const char *cmd);
+extern bool qSysGetIp(char *buf, size_t bufsize);
 
 /*
  * qTime.c
  */
-extern	char*		qTimeGetLocalStrf(char *buf, int size, time_t utctime, const char *format);
-extern	char*		qTimeGetLocalStr(time_t utctime);
-extern	const char*	qTimeGetLocalStaticStr(time_t utctime);
-extern	char*		qTimeGetGmtStrf(char *buf, int size, time_t utctime, const char *format);
-extern	char*		qTimeGetGmtStr(time_t utctime);
-extern	const char*	qTimeGetGmtStaticStr(time_t utctime);
-extern	time_t		qTimeParseGmtStr(const char *gmtstr);
+extern char *qTimeGetLocalStrf(char *buf, int size, time_t utctime, const char *format);
+extern char *qTimeGetLocalStr(time_t utctime);
+extern const char *qTimeGetLocalStaticStr(time_t utctime);
+extern char *qTimeGetGmtStrf(char *buf, int size, time_t utctime, const char *format);
+extern char *qTimeGetGmtStr(time_t utctime);
+extern const char *qTimeGetGmtStaticStr(time_t utctime);
+extern time_t  qTimeParseGmtStr(const char *gmtstr);
 
 
 /* =========================================================================
@@ -627,22 +605,22 @@ extern	time_t		qTimeParseGmtStr(const char *gmtstr);
 /*
  * qSem.c
  */
-extern	int		qSemInit(const char *keyfile, int keyid, int nsems, bool recreate);
-extern	int		qSemGetId(const char *keyfile, int keyid);
-extern	bool		qSemEnter(int semid, int semno);
-extern	bool		qSemEnterNowait(int semid, int semno);
-extern	bool		qSemEnterForce(int semid, int semno, int maxwaitms, bool *forceflag);
-extern	bool		qSemLeave(int semid, int semno);
-extern	bool		qSemCheck(int semid, int semno);
-extern	bool		qSemFree(int semid);
+extern int qSemInit(const char *keyfile, int keyid, int nsems, bool recreate);
+extern int qSemGetId(const char *keyfile, int keyid);
+extern bool qSemEnter(int semid, int semno);
+extern bool qSemEnterNowait(int semid, int semno);
+extern bool qSemEnterForce(int semid, int semno, int maxwaitms, bool *forceflag);
+extern bool qSemLeave(int semid, int semno);
+extern bool qSemCheck(int semid, int semno);
+extern bool qSemFree(int semid);
 
 /*
  * qShm.c
  */
-extern	int		qShmInit(const char *keyfile, int keyid, size_t size, bool recreate);
-extern	int		qShmGetId(const char *keyfile, int keyid);
-extern	void*		qShmGet(int shmid);
-extern	bool		qShmFree(int shmid);
+extern int qShmInit(const char *keyfile, int keyid, size_t size, bool recreate);
+extern int qShmGetId(const char *keyfile, int keyid);
+extern void *qShmGet(int shmid);
+extern bool qShmFree(int shmid);
 
 /* =========================================================================
  *
@@ -654,8 +632,8 @@ extern	bool		qShmFree(int shmid);
  * Configuration Parser.
  * qConfig.c
  * ------------------------------------------------------------------------- */
-extern	Q_LISTTBL*	qConfigParseFile(Q_LISTTBL *tbl, const char *filepath, char sepchar);
-extern	Q_LISTTBL*	qConfigParseStr(Q_LISTTBL *tbl, const char *str, char sepchar);
+extern qlisttbl_t *qConfigParseFile(qlisttbl_t *tbl, const char *filepath, char sepchar);
+extern qlisttbl_t *qConfigParseStr(qlisttbl_t *tbl, const char *str, char sepchar);
 
 /* -------------------------------------------------------------------------
  * Q_LOG - Rotating file logger.
@@ -665,37 +643,37 @@ extern	Q_LISTTBL*	qConfigParseStr(Q_LISTTBL *tbl, const char *str, char sepchar)
 /**
  * Q_LOG types and definitions.
  */
-typedef struct _Q_LOG	Q_LOG;
+typedef struct _Q_LOG  Q_LOG;
 
 /**
  * Q_LOG constructor.
  */
- extern	Q_LOG*		qLog(const char *filepathfmt, mode_t mode, int rotateinterval, bool flush);
+extern Q_LOG *qLog(const char *filepathfmt, mode_t mode, int rotateinterval, bool flush);
 
 /**
  * Q_LOG details.
  */
 struct _Q_LOG {
-	/* public member methods */
-	bool	(*write)		(Q_LOG *log, const char *str);
-	bool	(*writef)		(Q_LOG *log, const char *format, ...);
-	bool	(*duplicate)		(Q_LOG *log, FILE *outfp, bool flush);
-	bool	(*flush)		(Q_LOG *log);
-	bool	(*free)			(Q_LOG *log);
+    /* capsulated member functions */
+    bool (*write) (Q_LOG *log, const char *str);
+    bool (*writef) (Q_LOG *log, const char *format, ...);
+    bool (*duplicate) (Q_LOG *log, FILE *outfp, bool flush);
+    bool (*flush) (Q_LOG *log);
+    bool (*free) (Q_LOG *log);
 
-	/* private variables */
-	Q_MUTEX_T	qmutex;		/*!< activated if compiled with --enable-threadsafe option */
+    /* private variables - do not access directly */
+    qmutex_t  qmutex; /*!< activated if compiled with --enable-threadsafe */
 
-	char	filepathfmt[PATH_MAX];	/*!< file file naming format like /somepath/daily-%Y%m%d.log */
-	char	filepath[PATH_MAX];	/*!< generated system path of log file */
-	FILE	*fp;			/*!< file pointer of logpath */
-	mode_t	mode;			/*!< file mode */
-	int	rotateinterval;		/*!< log file will be rotate in this interval seconds */
-	int	nextrotate;		/*!< next rotate universal time, seconds */
-	bool	logflush;		/*!< flag for immediate flushing */
+    char filepathfmt[PATH_MAX]; /*!< file file naming format like /somepath/daily-%Y%m%d.log */
+    char filepath[PATH_MAX]; /*!< generated system path of log file */
+    FILE *fp;   /*!< file pointer of logpath */
+    mode_t  mode;   /*!< file mode */
+    int rotateinterval; /*!< log file will be rotate in this interval seconds */
+    int nextrotate; /*!< next rotate universal time, seconds */
+    bool logflush; /*!< flag for immediate flushing */
 
-	FILE	*outfp;			/*!< stream pointer for duplication */
-	bool	outflush;		/*!< flag for immediate flushing for duplicated stream */
+    FILE *outfp;   /*!< stream pointer for duplication */
+    bool outflush; /*!< flag for immediate flushing for duplicated stream */
 };
 
 /* -------------------------------------------------------------------------
@@ -706,55 +684,55 @@ struct _Q_LOG {
 /**
  * Q_HTTPCLIENT types and definitions.
  */
-typedef struct _Q_HTTPCLIENT	Q_HTTPCLIENT;
+typedef struct _Q_HTTPCLIENT  Q_HTTPCLIENT;
 
 /**
  * Q_HTTPCLIENT constructor.
  */
-extern	Q_HTTPCLIENT*	qHttpClient(const char *hostname, int port);
+extern Q_HTTPCLIENT *qHttpClient(const char *hostname, int port);
 
 /**
  * Q_HTTPCLIENT details.
  */
 struct _Q_HTTPCLIENT {
-	/* public member methods */
-	bool		(*setSsl)		(Q_HTTPCLIENT *client);
-	void		(*setTimeout)		(Q_HTTPCLIENT *client, int timeoutms);
-	void		(*setKeepalive)		(Q_HTTPCLIENT *client, bool keepalive);
-	void		(*setUseragent)		(Q_HTTPCLIENT *client, const char *useragent);
+    /* capsulated member functions */
+    bool (*setSsl) (Q_HTTPCLIENT *client);
+    void (*setTimeout) (Q_HTTPCLIENT *client, int timeoutms);
+    void (*setKeepalive) (Q_HTTPCLIENT *client, bool keepalive);
+    void (*setUseragent) (Q_HTTPCLIENT *client, const char *useragent);
 
-	bool		(*open)			(Q_HTTPCLIENT *client);
+    bool (*open) (Q_HTTPCLIENT *client);
 
-	bool		(*head)			(Q_HTTPCLIENT *client, const char *uri, int *rescode, Q_LISTTBL *reqheaders, Q_LISTTBL *resheaders);
-	bool		(*get)			(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize, int *rescode, Q_LISTTBL *reqheaders, Q_LISTTBL *resheaders, bool (*callback)(void *userdata, off_t recvbytes), void *userdata);
-	bool		(*put)			(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, int *retcode, Q_LISTTBL *userheaders, Q_LISTTBL *resheaders, bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
-	void*		(*cmd)			(Q_HTTPCLIENT *client, const char *method, const char *uri, void *data, size_t size, int *rescode, size_t *contentslength, Q_LISTTBL *reqheaders, Q_LISTTBL *resheaders);
+    bool (*head) (Q_HTTPCLIENT *client, const char *uri, int *rescode, qlisttbl_t *reqheaders, qlisttbl_t *resheaders);
+    bool (*get) (Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize, int *rescode, qlisttbl_t *reqheaders, qlisttbl_t *resheaders, bool (*callback)(void *userdata, off_t recvbytes), void *userdata);
+    bool (*put) (Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, int *retcode, qlisttbl_t *userheaders, qlisttbl_t *resheaders, bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
+    void *(*cmd) (Q_HTTPCLIENT *client, const char *method, const char *uri, void *data, size_t size, int *rescode, size_t *contentslength, qlisttbl_t *reqheaders, qlisttbl_t *resheaders);
 
-	bool		(*sendRequest)		(Q_HTTPCLIENT *client, const char *method, const char *uri, Q_LISTTBL *reqheaders);
-	int		(*readResponse)		(Q_HTTPCLIENT *client, Q_LISTTBL *resheaders, off_t *contentlength);
+    bool (*sendRequest) (Q_HTTPCLIENT *client, const char *method, const char *uri, qlisttbl_t *reqheaders);
+    int (*readResponse) (Q_HTTPCLIENT *client, qlisttbl_t *resheaders, off_t *contentlength);
 
-	ssize_t		(*gets)			(Q_HTTPCLIENT *client, char *buf, size_t bufsize);
-	ssize_t		(*read)			(Q_HTTPCLIENT *client, void *buf, size_t nbytes);
-	ssize_t		(*write)		(Q_HTTPCLIENT *client, const void *buf, size_t nbytes);
-	off_t		(*recvfile)		(Q_HTTPCLIENT *client, int fd, off_t nbytes);
-	off_t		(*sendfile)		(Q_HTTPCLIENT *client, int fd, off_t nbytes);
+    ssize_t (*gets) (Q_HTTPCLIENT *client, char *buf, size_t bufsize);
+    ssize_t (*read) (Q_HTTPCLIENT *client, void *buf, size_t nbytes);
+    ssize_t (*write) (Q_HTTPCLIENT *client, const void *buf, size_t nbytes);
+    off_t (*recvfile) (Q_HTTPCLIENT *client, int fd, off_t nbytes);
+    off_t (*sendfile) (Q_HTTPCLIENT *client, int fd, off_t nbytes);
 
-	bool		(*close)		(Q_HTTPCLIENT *client);
-	void		(*free)			(Q_HTTPCLIENT *client);
+    bool (*close) (Q_HTTPCLIENT *client);
+    void (*free) (Q_HTTPCLIENT *client);
 
-	/* private variables */
-	int		socket;			/*!< socket descriptor */
-	void		*ssl;			/*!< will be used if SSL has been enabled at compile time */
+    /* private variables - do not access directly */
+    int socket;   /*!< socket descriptor */
+    void *ssl;   /*!< will be used if SSL has been enabled at compile time */
 
-	struct sockaddr_in addr;
-	char		*hostname;
-	int		port;
+    struct sockaddr_in addr;
+    char *hostname;
+    int port;
 
-	int		timeoutms;		/*< wait timeout miliseconds*/
-	bool		keepalive;		/*< keep-alive flag */
-	char*		useragent;		/*< user-agent name */
+    int timeoutms; /*< wait timeout miliseconds*/
+    bool keepalive; /*< keep-alive flag */
+    char *useragent; /*< user-agent name */
 
-	bool		connclose;		/*< response keep-alive flag for a last request */
+    bool connclose; /*< response keep-alive flag for a last request */
 };
 
 /* -------------------------------------------------------------------------
@@ -765,63 +743,63 @@ struct _Q_HTTPCLIENT {
 /**
  * Q_DB & Q_DBRESULT types and definitions.
  */
-typedef struct _Q_DB		Q_DB;
-typedef struct _Q_DBRESULT	Q_DBRESULT;
+typedef struct _Q_DB  Q_DB;
+typedef struct _Q_DBRESULT  Q_DBRESULT;
 
 /* Database Support*/
 #ifdef _mysql_h
-#define _Q_ENABLE_MYSQL		(1)
-#endif	/* _mysql_h */
+#define _Q_ENABLE_MYSQL  (1)
+#endif /* _mysql_h */
 
 /**
  * Q_DB constructor.
  */
-extern	Q_DB*		qDb(const char *dbtype, const char *addr, int port, const char *database, const char *username, const char *password, bool autocommit);
+extern Q_DB *qDb(const char *dbtype, const char *addr, int port, const char *database, const char *username, const char *password, bool autocommit);
 
 /**
  * Q_DB details.
  */
 struct _Q_DB {
-	/* public member methods */
-	bool		(*open)			(Q_DB *db);
-	bool		(*close)		(Q_DB *db);
+    /* capsulated member functions */
+    bool (*open) (Q_DB *db);
+    bool (*close) (Q_DB *db);
 
-	int		(*executeUpdate)	(Q_DB *db, const char *query);
-	int		(*executeUpdatef)	(Q_DB *db, const char *format, ...);
+    int (*executeUpdate) (Q_DB *db, const char *query);
+    int (*executeUpdatef) (Q_DB *db, const char *format, ...);
 
-	Q_DBRESULT*	(*executeQuery)		(Q_DB *db, const char *query);
-	Q_DBRESULT*	(*executeQueryf)	(Q_DB *db, const char *format, ...);
+    Q_DBRESULT *(*executeQuery) (Q_DB *db, const char *query);
+    Q_DBRESULT *(*executeQueryf) (Q_DB *db, const char *format, ...);
 
-	bool		(*beginTran)		(Q_DB *db);
-	bool		(*endTran)		(Q_DB *db, bool commit);
-	bool		(*commit)		(Q_DB *db);
-	bool		(*rollback)		(Q_DB *db);
+    bool (*beginTran) (Q_DB *db);
+    bool (*endTran) (Q_DB *db, bool commit);
+    bool (*commit) (Q_DB *db);
+    bool (*rollback) (Q_DB *db);
 
-	bool		(*setFetchType)		(Q_DB *db, bool use);
-	bool		(*getConnStatus)	(Q_DB *db);
-	bool		(*ping)			(Q_DB *db);
-	const char*	(*getError)		(Q_DB *db, unsigned int *errorno);
-	bool		(*free)			(Q_DB *db);
+    bool (*setFetchType) (Q_DB *db, bool use);
+    bool (*getConnStatus) (Q_DB *db);
+    bool (*ping) (Q_DB *db);
+    const char *(*getError) (Q_DB *db, unsigned int *errorno);
+    bool (*free) (Q_DB *db);
 
-	/* private variables */
-	Q_MUTEX_T	qmutex;		/*!< activated if compiled with --enable-threadsafe option */
+    /* private variables - do not access directly */
+    qmutex_t  qmutex; /*!< activated if compiled with --enable-threadsafe */
 
-	bool connected;			/*!< if opened true, if closed false */
+    bool connected;   /*!< if opened true, if closed false */
 
-	struct {
-		char*	dbtype;
-		char*	addr;
-		int	port;
-		char*	username;
-		char*	password;
-		char*	database;
-		bool	autocommit;
-		bool	fetchtype;
-	} info;				/*!< database connection infomation */
+    struct {
+        char *dbtype;
+        char *addr;
+        int port;
+        char *username;
+        char *password;
+        char *database;
+        bool autocommit;
+        bool fetchtype;
+    } info;   /*!< database connection infomation */
 
-	/* private variables for mysql database */
+    /* private variables for mysql database */
 #ifdef _Q_ENABLE_MYSQL
-	MYSQL		*mysql;
+    MYSQL  *mysql;
 #endif
 };
 
@@ -829,34 +807,34 @@ struct _Q_DB {
  * Q_DBRESULT details.
  */
 struct _Q_DBRESULT {
-	/* public member methods */
-	const char*	(*getStr)		(Q_DBRESULT *result, const char *field);
-	const char*	(*getStrAt)		(Q_DBRESULT *result, int idx);
-	int		(*getInt)		(Q_DBRESULT *result, const char *field);
-	int		(*getIntAt)		(Q_DBRESULT *result, int idx);
-	bool		(*getNext)		(Q_DBRESULT *result);
+    /* capsulated member functions */
+    const char *(*getStr) (Q_DBRESULT *result, const char *field);
+    const char *(*getStrAt) (Q_DBRESULT *result, int idx);
+    int (*getInt) (Q_DBRESULT *result, const char *field);
+    int (*getIntAt) (Q_DBRESULT *result, int idx);
+    bool (*getNext) (Q_DBRESULT *result);
 
-	int     	(*getCols)		(Q_DBRESULT *result);
-	int     	(*getRows)		(Q_DBRESULT *result);
-	int     	(*getRow)		(Q_DBRESULT *result);
+    int (*getCols) (Q_DBRESULT *result);
+    int (*getRows) (Q_DBRESULT *result);
+    int (*getRow) (Q_DBRESULT *result);
 
-	bool		(*free)			(Q_DBRESULT *result);
+    bool (*free) (Q_DBRESULT *result);
 
-	/* private variables */
+    /* private variables - do not access directly */
 
-	/* private variables for mysql database */
+    /* private variables for mysql database */
 #ifdef _Q_ENABLE_MYSQL
-	bool		fetchtype;
-	MYSQL_RES	*rs;
-	MYSQL_FIELD	*fields;
-	MYSQL_ROW	row;
-	int		cols;
-	int		cursor;
+    bool fetchtype;
+    MYSQL_RES  *rs;
+    MYSQL_FIELD  *fields;
+    MYSQL_ROW  row;
+    int cols;
+    int cursor;
 #endif
 };
 
 #ifdef __cplusplus
-}
+//}
 #endif
 
 #endif /*_QLIBC_H */

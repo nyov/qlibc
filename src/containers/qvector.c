@@ -1,31 +1,32 @@
-/*
+/******************************************************************************
  * qLibc - http://www.qdecoder.org
  *
- * Copyright 2010 qDecoder Project. All rights reserved.
+ * Copyright (c) 2010-2012 Seungyoung Kim.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * modification, are permitted provided that the following conditions are met:
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY QDECODER PROJECT ``AS IS'' AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE QDECODER PROJECT BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************
  * $Id$
- */
+ ******************************************************************************/
 
 /**
  * @file qVector.c Vector implementation.
@@ -151,7 +152,7 @@ Q_VECTOR *qVector(void) {
 	}
 
 	memset((void *)vector, 0, sizeof(Q_VECTOR));
-	vector->list = qList();
+	vector->list = qlist();
 	if(vector->list == NULL) {
 		free(vector);
 		errno = ENOMEM;
@@ -188,7 +189,7 @@ Q_VECTOR *qVector(void) {
  *	- ENOMEM	: Memory allocation failure.
  */
 static bool _add(Q_VECTOR *vector, const void *data, size_t size) {
-	return vector->list->addLast(vector->list, data, size);
+	return vector->list->add_last(vector->list, data, size);
 }
 
 /**
@@ -203,7 +204,7 @@ static bool _add(Q_VECTOR *vector, const void *data, size_t size) {
  *	- ENOMEM	: Memory allocation failure.
  */
 static bool _addStr(Q_VECTOR *vector, const char *str) {
-	return vector->list->addLast(vector->list, str, strlen(str));
+	return vector->list->add_last(vector->list, str, strlen(str));
 }
 
 /**
@@ -243,7 +244,7 @@ static bool _addStrf(Q_VECTOR *vector, const char *format, ...) {
  *	- ENOMEM	: Memory allocation failure.
  */
 static void *_toArray(Q_VECTOR *vector, size_t *size) {
-	return vector->list->toArray(vector->list, size);
+	return vector->list->to_array(vector->list, size);
 }
 
 /**
@@ -260,7 +261,7 @@ static void *_toArray(Q_VECTOR *vector, size_t *size) {
  * Return string is always terminated by '\0'.
  */
  static char *_toString(Q_VECTOR *vector) {
-	return vector->list->toString(vector->list);
+	return vector->list->to_string(vector->list);
 }
 
 /**
@@ -314,6 +315,6 @@ static bool _debug(Q_VECTOR *vector, FILE *out) {
  * @param vector	Q_VECTOR container pointer.
  */
 static void _free(Q_VECTOR *vector) {
-	vector->list->free(vector->list);
+	vector->list->terminate(vector->list);
 	free(vector);
 }

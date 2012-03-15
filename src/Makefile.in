@@ -60,11 +60,11 @@ RM		= @RM@
 
 ## Objects List
 OBJ		= \
-		containers/qList.o		\
-		containers/qListtbl.o		\
-		containers/qHashtbl.o		\
-		containers/qHasharr.o		\
-		containers/qVector.o		\
+		containers/qlist.o		\
+		containers/qlisttbl.o		\
+		containers/qhashtbl.o		\
+		containers/qhasharr.o		\
+		containers/qvector.o		\
 		containers/qQueue.o		\
 		containers/qStack.o		\
 						\

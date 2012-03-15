@@ -42,7 +42,7 @@
  *
  * @return		a pointer of version string
  */
-const char *qLibcVersion(void) {
+const char *qlibc_version(void) {
 	return _Q_VERSION;
 }
 
@@ -51,7 +51,7 @@ const char *qLibcVersion(void) {
  *
  * @return		true if it's thread-safe, otherwise returns false.
  */
-bool qLibcThreadsafe(void) {
+bool qlibc_is_threadsafe(void) {
 #ifdef ENABLE_THREADSAFE
 	return true;
 #else
@@ -64,7 +64,7 @@ bool qLibcThreadsafe(void) {
  *
  * @return		true if it supports large file, otherwise returns false.
  */
-bool qLibcLfs(void) {
+bool qlibc_is_lfs(void) {
 #ifdef ENABLE_LFS
 	return true;
 #else
