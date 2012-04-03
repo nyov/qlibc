@@ -65,31 +65,30 @@ OBJ		= \
 		containers/qhashtbl.o		\
 		containers/qhasharr.o		\
 		containers/qvector.o		\
-		containers/qQueue.o		\
-		containers/qStack.o		\
+		containers/qqueue.o		\
+		containers/qstack.o		\
 						\
-		utilities/qCount.o		\
-		utilities/qEncode.o		\
-		utilities/qFile.o		\
-		utilities/qHash.o		\
-		utilities/qIo.o			\
-		utilities/qLibc.o		\
-		utilities/qSocket.o		\
-		utilities/qString.o		\
-		utilities/qSystem.o		\
-		utilities/qTime.o		\
+		utilities/qcount.o		\
+		utilities/qencode.o		\
+		utilities/qfile.o		\
+		utilities/qhash.o		\
+		utilities/qio.o			\
+		utilities/qlibc.o		\
+		utilities/qsocket.o		\
+		utilities/qstring.o		\
+		utilities/qsystem.o		\
+		utilities/qtime.o		\
 						\
-		ipc/qSem.o			\
-		ipc/qShm.o			\
+		ipc/qsem.o			\
+		ipc/qshm.o			\
 						\
-		extensions/qConfig.o		\
-		extensions/qLog.o		\
-		extensions/qHttpClient.o	\
-		extensions/qDatabase.o		\
+		extensions/qconfig.o		\
+		extensions/qlog.o		\
+		extensions/qhttpclient.o	\
+		extensions/qdatabase.o		\
 						\
-		internal/qInternal.o		\
+		internal/qinternal.o		\
 		internal/md5/md5c.o
-
 
 ## Make Library
 all: qlibc

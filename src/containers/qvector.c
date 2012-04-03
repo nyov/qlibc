@@ -29,81 +29,83 @@
  ******************************************************************************/
 
 /**
- * @file qVector.c Vector implementation.
+ * @file qvector.c Vector implementation.
  *
- * Q_VECTOR container is a vector implementation. It implements a growable array of objects
- * and it extends container Q_LIST that allow a linked-list to be treated as a vector.
+ * qvector container is a vector implementation. It implements a growable array
+ * of objects and it extends container Q_LIST that allow a linked-list to be
+ * treated as a vector.
  *
  * @code
- *   [Code sample - Object]
- *   Q_VECTOR *vector = qVector();
+ *  [Code sample - Object]
+ *  qvector_t *vector = qvector();
  *
- *   // add elements
- *   vector->addStr(vector, "AB");      // no need to supply size
- *   vector->addStrf(vector, "%d", 12); // for formatted string
- *   vector->addStr(vector, "CD");
+ *  // add elements
+ *  vector->add_str(vector, "AB");      // no need to supply size
+ *  vector->add_strf(vector, "%d", 12); // for formatted string
+ *  vector->add_str(vector, "CD");
  *
- *   // get the chunk as a string
- *   char *final = vector->toString(vector);
+ *  // get the chunk as a string
+ *  char *final = vector->to_string(vector);
  *
- *   // print out
- *   printf("Number of elements = %zu\n", vector->size(vector));
- *   printf("Final string = %s\n", final);
+ *  // print out
+ *  printf("Number of elements = %zu\n", vector->size(vector));
+ *  printf("Final string = %s\n", final);
  *
- *   // release
- *   free(final);
- *   vector->free(vector);
+ *  // release
+ *  free(final);
+ *  vector->terminate(vector);
  *
- *   [Result]
- *   Number of elements = 3
- *   Final string = AB12CD
+ *  [Result]
+ *  Number of elements = 3
+ *  Final string = AB12CD
  * @endcode
  *
  * @code
- *   [Code sample - Object]
- *   // sample object
- *   struct sampleobj {
- *     int num;
- *     char str[10];
- *   };
+ *  [Code sample - Object]
+ *  // sample object
+ *  struct sampleobj {
+ *    int num;
+ *    char str[10];
+ *  };
  *
- *   // get new vector
- *   Q_VECTOR *vector = qVector();
+ *  // get new vector
+ *  qvector_t *vector = qvector();
  *
- *   // add objects
- *   int i;
- *   struct sampleobj obj;
- *   for(i = 0; i < 3; i++) {
- *     // filling object with sample data
- *     obj.num  = i;
- *     sprintf(obj.str, "hello%d", i);
+ *  // add objects
+ *  int i;
+ *  struct sampleobj obj;
+ *  for(i = 0; i < 3; i++) {
+ *    // filling object with sample data
+ *    obj.num  = i;
+ *    sprintf(obj.str, "hello%d", i);
  *
- *     // stack
- *     vector->add(vector, (void *)&obj, sizeof(struct sampleobj));
- *   }
+ *    // stack
+ *    vector->add(vector, (void *)&obj, sizeof(struct sampleobj));
+ *  }
  *
- *   // final
- *   struct sampleobj *final = (struct sampleobj *)vector->toArray(vector, NULL);
+ *  // final
+ *  struct sampleobj *final = (struct sampleobj *)vector->to_array(vector, NULL);
  *
- *   // print out
- *   printf("Number of Objects = %zu\n", vector->size(vector));
- *   for(i = 0; i < vector->size(vector); i++) {
- *     printf("Object%d %d, %s\n", i+1, final[i].num, final[i].str);
- *   }
+ *  // print out
+ *  printf("Number of Objects = %zu\n", vector->size(vector));
+ *  for(i = 0; i < vector->size(vector); i++) {
+ *    printf("Object%d %d, %s\n", i+1, final[i].num, final[i].str);
+ *  }
  *
- *   // release
- *   free(final);
- *   vector->free(vector);
+ *  // release
+ *  free(final);
+ *  vector->terminate(vector);
  *
- *   [Result]
- *   Number of Objects = 3
- *   Object1 0, hello0
- *   Object2 1, hello1
- *   Object3 2, hello2
+ *  [Result]
+ *  Number of Objects = 3
+ *  Object1 0, hello0
+ *  Object2 1, hello1
+ *  Object3 2, hello2
  * @endcode
  *
  * @note
- * Use "--enable-threadsafe" configure script option to use under multi-threaded environments.
+ *  Use "--enable-threadsafe" configure script option to use under
+ *  multi-threaded environments.
  */
 
 #include <stdio.h>
@@ -119,202 +121,217 @@
  * Member method protos
  */
 #ifndef _DOXYGEN_SKIP
-static bool _add(Q_VECTOR *vector, const void *object, size_t size);
-static bool _addStr(Q_VECTOR *vector, const char *str);
-static bool _addStrf(Q_VECTOR *vector, const char *format, ...);
-static void *_toArray(Q_VECTOR *vector, size_t *size);
-static char *_toString(Q_VECTOR *vector);
-static size_t _size(Q_VECTOR *vector);
-static size_t _datasize(Q_VECTOR *vector);
-static void _clear(Q_VECTOR *vector);
-static bool _debug(Q_VECTOR *vector, FILE *out);
-static void _free(Q_VECTOR *vector);
+static bool add(qvector_t *vector, const void *object, size_t size);
+static bool add_str(qvector_t *vector, const char *str);
+static bool add_strf(qvector_t *vector, const char *format, ...);
+static void *to_array(qvector_t *vector, size_t *size);
+static char *to_string(qvector_t *vector);
+static size_t size(qvector_t *vector);
+static size_t datasize(qvector_t *vector);
+static void clear(qvector_t *vector);
+static bool debug(qvector_t *vector, FILE *out);
+static void terminate(qvector_t *vector);
 #endif
 
 /**
  * Initialize vector.
  *
- * @return		Q_VECTOR container pointer.
- * @retval	errno	will be set in error condition.
- *	- ENOMEM	: Memory allocation failure.
+ * @return qvector_t container pointer.
+ * @retval errno will be set in error condition.
+ *  - ENOMEM    : Memory allocation failure.
  *
  * @code
- *   // allocate memory
- *   Q_VECTOR *vector = qVector();
- *   vector->free(vector);
+ *  // allocate memory
+ *  qvector_t *vector = qvector();
+ *  vector->terminate(vector);
  * @endcode
  */
-Q_VECTOR *qVector(void) {
-	Q_VECTOR *vector = (Q_VECTOR *)malloc(sizeof(Q_VECTOR));
-	if(vector == NULL) {
-		errno = ENOMEM;
-		return NULL;
-	}
+qvector_t *qvector(void)
+{
+    qvector_t *vector = (qvector_t *)malloc(sizeof(qvector_t));
+    if (vector == NULL) {
+        errno = ENOMEM;
+        return NULL;
+    }
 
-	memset((void *)vector, 0, sizeof(Q_VECTOR));
-	vector->list = qlist();
-	if(vector->list == NULL) {
-		free(vector);
-		errno = ENOMEM;
-		return NULL;
-	}
+    memset((void *)vector, 0, sizeof(qvector_t));
+    vector->list = qlist();
+    if (vector->list == NULL) {
+        free(vector);
+        errno = ENOMEM;
+        return NULL;
+    }
 
-	// methods
-	vector->add		= _add;
-	vector->addStr		= _addStr;
-	vector->addStrf		= _addStrf;
+    // methods
+    vector->add         = add;
+    vector->add_str     = add_str;
+    vector->add_strf    = add_strf;
 
-	vector->toArray		= _toArray;
-	vector->toString	= _toString;
+    vector->to_array    = to_array;
+    vector->to_string   = to_string;
 
-	vector->size		= _size;
-	vector->datasize	= _datasize;
-	vector->clear		= _clear;
-	vector->debug		= _debug;
-	vector->free		= _free;
+    vector->size        = size;
+    vector->datasize    = datasize;
+    vector->clear       = clear;
+    vector->debug       = debug;
+    vector->terminate   = terminate;
 
-	return vector;
+    return vector;
 }
 
 /**
- * Q_VECTOR->add(): Stack object
+ * (qvector_t*)->add(): Stack object
  *
- * @param vector	Q_VECTOR container pointer.
- * @param object	a pointer of object data
- * @param size		size of object
+ * @param vector    qvector_t container pointer.
+ * @param object    a pointer of object data
+ * @param size        size of object
  *
- * @return		true if successful, otherwise returns false
- * @retval	errno	will be set in error condition.
- *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failure.
+ * @return true if successful, otherwise returns false
+ * @retval errno will be set in error condition.
+ *  - EINVAL    : Invalid argument.
+ *  - ENOMEM    : Memory allocation failure.
  */
-static bool _add(Q_VECTOR *vector, const void *data, size_t size) {
-	return vector->list->add_last(vector->list, data, size);
+static bool add(qvector_t *vector, const void *data, size_t size)
+{
+    return vector->list->add_last(vector->list, data, size);
 }
 
 /**
- * Q_VECTOR->addStr(): Stack string
+ * (qvector_t*)->add_str(): Stack string
  *
- * @param vector	Q_VECTOR container pointer.
- * @param str		a pointer of string
+ * @param vector    qvector_t container pointer.
+ * @param str        a pointer of string
  *
- * @return		true if successful, otherwise returns false
- * @retval	errno	will be set in error condition.
- *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failure.
+ * @return true if successful, otherwise returns false
+ * @retval errno will be set in error condition.
+ *  - EINVAL    : Invalid argument.
+ *  - ENOMEM    : Memory allocation failure.
  */
-static bool _addStr(Q_VECTOR *vector, const char *str) {
-	return vector->list->add_last(vector->list, str, strlen(str));
+static bool add_str(qvector_t *vector, const char *str)
+{
+    return vector->list->add_last(vector->list, str, strlen(str));
 }
 
 /**
- * Q_VECTOR->addStrf(): Stack formatted string
+ * (qvector_t*)->add_strf(): Stack formatted string
  *
- * @param vector	Q_VECTOR container pointer.
- * @param format	string format
+ * @param vector    qvector_t container pointer.
+ * @param format    string format
  *
- * @return		true if successful, otherwise returns false
- * @retval	errno	will be set in error condition.
- *	- EINVAL	: Invalid argument.
- *	- ENOMEM	: Memory allocation failure.
+ * @return true if successful, otherwise returns false
+ * @retval errno will be set in error condition.
+ *  - EINVAL    : Invalid argument.
+ *  - ENOMEM    : Memory allocation failure.
  */
-static bool _addStrf(Q_VECTOR *vector, const char *format, ...) {
-	char *str;
-	DYNAMIC_VSPRINTF(str, format);
-	if(str == NULL) {
-		errno = ENOMEM;
-		return false;
-	}
+static bool add_strf(qvector_t *vector, const char *format, ...)
+{
+    char *str;
+    DYNAMIC_VSPRINTF(str, format);
+    if (str == NULL) {
+        errno = ENOMEM;
+        return false;
+    }
 
-	bool ret = _addStr(vector, str);
-	free(str);
+    bool ret = add_str(vector, str);
+    free(str);
 
-	return ret;
+    return ret;
 }
 
 /**
- * Q_VECTOR->toArray(): Returns the serialized chunk containing all the elements in this vector.
+ * (qvector_t*)->to_array(): Returns the serialized chunk containing all the
+ * elements in this vector.
  *
- * @param vector	Q_VECTOR container pointer.
- * @param size		if size is not NULL, merged object size will be stored.
+ * @param vector    qvector_t container pointer.
+ * @param size        if size is not NULL, merged object size will be stored.
  *
- * @return	a pointer of finally merged elements(malloced), otherwise returns NULL
- * @retval	errno	will be set in error condition.
- *	- ENOENT	: Vector is empty.
- *	- ENOMEM	: Memory allocation failure.
+ * @return a pointer of finally merged elements(malloced), otherwise returns
+ *  NULL
+ * @retval errno will be set in error condition.
+ *  - ENOENT    : Vector is empty.
+ *  - ENOMEM    : Memory allocation failure.
  */
-static void *_toArray(Q_VECTOR *vector, size_t *size) {
-	return vector->list->to_array(vector->list, size);
+static void *to_array(qvector_t *vector, size_t *size)
+{
+    return vector->list->to_array(vector->list, size);
 }
 
 /**
- * Q_VECTOR->toString(): Returns a string representation of this vector, containing string representation of each element.
+ * (qvector_t*)->to_string(): Returns a string representation of this vector,
+ * containing string representation of each element.
  *
- * @param vector	Q_VECTOR container pointer.
+ * @param vector    qvector_t container pointer.
  *
- * @return	a pointer of finally merged strings(malloced), otherwise returns NULL
- * @retval	errno	will be set in error condition.
- *	- ENOENT	: Vector is empty.
- *	- ENOMEM	: Memory allocation failure.
+ * @return a pointer of finally merged strings(malloced), otherwise returns NULL
+ * @retval errno will be set in error condition.
+ *  - ENOENT    : Vector is empty.
+ *  - ENOMEM    : Memory allocation failure.
  *
  * @note
  * Return string is always terminated by '\0'.
  */
- static char *_toString(Q_VECTOR *vector) {
-	return vector->list->to_string(vector->list);
+static char *to_string(qvector_t *vector)
+{
+    return vector->list->to_string(vector->list);
 }
 
 /**
- * Q_VECTOR->size(): Returns the number of elements in this vector.
+ * (qvector_t*)->size(): Returns the number of elements in this vector.
  *
- * @param vector	Q_VECTOR container pointer.
+ * @param vector    qvector_t container pointer.
  *
- * @return		the number of elements in this vector.
+ * @return the number of elements in this vector.
  */
-static size_t _size(Q_VECTOR *vector) {
-	return vector->list->size(vector->list);
+static size_t size(qvector_t *vector)
+{
+    return vector->list->size(vector->list);
 }
 
 /**
- * Q_VECTOR->datasize(): Returns the sum of total element size in this vector.
+ * (qvector_t*)->datasize(): Returns the sum of total element size in this
+ * vector.
  *
- * @param vector	Q_VECTOR container pointer.
+ * @param vector    qvector_t container pointer.
  *
- * @return		tthe sum of total element size in this vector.
+ * @return the sum of total element size in this vector.
  */
-static size_t _datasize(Q_VECTOR *vector) {
-	return vector->list->datasize(vector->list);
+static size_t datasize(qvector_t *vector)
+{
+    return vector->list->datasize(vector->list);
 }
 
 /**
- * Q_VECTOR->clear(): Removes all of the elements from this vector.
+ * (qvector_t*)->clear(): Removes all of the elements from this vector.
  *
- * @param vector	Q_VECTOR container pointer.
+ * @param vector    qvector_t container pointer.
  */
-static void _clear(Q_VECTOR *vector) {
-	vector->list->clear(vector->list);
+static void clear(qvector_t *vector)
+{
+    vector->list->clear(vector->list);
 }
 
 /**
- * Q_VECTOR->debug(): Print out stored elements for debugging purpose.
+ * (qvector_t*)->debug(): Print out stored elements for debugging purpose.
  *
- * @param vector	Q_VECTOR container pointer.
- * @param out		output stream FILE descriptor such like stdout, stderr.
+ * @param vector    qvector_t container pointer.
+ * @param out       output stream FILE descriptor such like stdout, stderr.
  *
- * @return		true if successful, otherwise returns false.
- * @retval	errno	will be set in error condition.
- *	- EIO		: Invalid output stream.
+ * @return true if successful, otherwise returns false.
+ * @retval errno will be set in error condition.
+ *  - EIO   : Invalid output stream.
  */
-static bool _debug(Q_VECTOR *vector, FILE *out) {
-	return vector->list->debug(vector->list, out);
+static bool debug(qvector_t *vector, FILE *out)
+{
+    return vector->list->debug(vector->list, out);
 }
 
 /**
- * Q_VECTOR->free(): De-allocate vector
+ * (qvector_t*)->terminate(): De-allocate vector
  *
- * @param vector	Q_VECTOR container pointer.
+ * @param vector    qvector_t container pointer.
  */
-static void _free(Q_VECTOR *vector) {
-	vector->list->terminate(vector->list);
-	free(vector);
+static void terminate(qvector_t *vector)
+{
+    vector->list->terminate(vector->list);
+    free(vector);
 }
