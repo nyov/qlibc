@@ -51,7 +51,7 @@
  *
  * @return a pointer of environment variable
  */
-const char *qsys_get_env(const char *envname, const char *nullstr)
+const char *qsys_getenv(const char *envname, const char *nullstr)
 {
     const char *envstr = getenv(envname);
     if (envstr != NULL) return envstr;
@@ -67,7 +67,7 @@ const char *qsys_get_env(const char *envname, const char *nullstr)
  *
  * @note If the command does not report result but it is executed successfully, this will returns empty string(not null)
  */
-char *qsys_cmd(const char *cmd)
+char *qsyscmd(const char *cmd)
 {
     FILE *fp = popen(cmd, "r");
     if (fp == NULL) return NULL;
@@ -83,7 +83,7 @@ char *qsys_cmd(const char *cmd)
  *
  * @return malloced string pointer which contains IP address string if successful, otherwise returns NULL
  */
-bool qsys_get_ip(char *buf, size_t bufsize)
+bool qsys_getip(char *buf, size_t bufsize)
 {
     char szHostname[63+1];
     if (gethostname(szHostname, sizeof(szHostname)) != 0) return false;
@@ -94,6 +94,6 @@ bool qsys_get_ip(char *buf, size_t bufsize)
     char *pszLocalIp = inet_ntoa(*(struct in_addr *)*pHostEntry->h_addr_list);
     if (pszLocalIp == NULL) return false;
 
-    qstr_cpy(buf, bufsize, pszLocalIp);
+    qstrcpy(buf, bufsize, pszLocalIp);
     return true;
 }

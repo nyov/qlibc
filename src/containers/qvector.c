@@ -53,7 +53,7 @@
  *
  *  // release
  *  free(final);
- *  vector->terminate(vector);
+ *  vector->free(vector);
  *
  *  [Result]
  *  Number of elements = 3
@@ -94,7 +94,7 @@
  *
  *  // release
  *  free(final);
- *  vector->terminate(vector);
+ *  vector->free(vector);
  *
  *  [Result]
  *  Number of Objects = 3
@@ -115,7 +115,7 @@
 #include <string.h>
 #include <errno.h>
 #include "qlibc.h"
-#include "qInternal.h"
+#include "qinternal.h"
 
 /*
  * Member method protos
@@ -130,7 +130,7 @@ static size_t size(qvector_t *vector);
 static size_t datasize(qvector_t *vector);
 static void clear(qvector_t *vector);
 static bool debug(qvector_t *vector, FILE *out);
-static void terminate(qvector_t *vector);
+static void free_(qvector_t *vector);
 #endif
 
 /**
@@ -143,7 +143,7 @@ static void terminate(qvector_t *vector);
  * @code
  *  // allocate memory
  *  qvector_t *vector = qvector();
- *  vector->terminate(vector);
+ *  vector->free(vector);
  * @endcode
  */
 qvector_t *qvector(void)
@@ -174,7 +174,7 @@ qvector_t *qvector(void)
     vector->datasize    = datasize;
     vector->clear       = clear;
     vector->debug       = debug;
-    vector->terminate   = terminate;
+    vector->free        = free_;
 
     return vector;
 }
@@ -326,12 +326,12 @@ static bool debug(qvector_t *vector, FILE *out)
 }
 
 /**
- * (qvector_t*)->terminate(): De-allocate vector
+ * (qvector_t*)->free(): De-allocate vector
  *
  * @param vector    qvector_t container pointer.
  */
-static void terminate(qvector_t *vector)
+static void free_(qvector_t *vector)
 {
-    vector->list->terminate(vector->list);
+    vector->list->free(vector->list);
     free(vector);
 }

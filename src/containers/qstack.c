@@ -88,7 +88,7 @@
  *  free(obj);
  *
  *  // release
- *  stack->terminate(stack);
+ *  stack->free(stack);
  *
  *  [Output]
  *  pop_int(): 3
@@ -113,7 +113,7 @@
 #include <string.h>
 #include <errno.h>
 #include "qlibc.h"
-#include "qInternal.h"
+#include "qinternal.h"
 
 /*
  * Member method protos
@@ -139,7 +139,7 @@ static void *get_at(qstack_t *stack, int index, size_t *size, bool newmem);
 static size_t size(qstack_t *stack);
 static void clear(qstack_t *stack);
 static bool debug(qstack_t *stack, FILE *out);
-static void terminate(qstack_t *stack);
+static void free_(qstack_t *stack);
 
 #endif
 
@@ -189,7 +189,7 @@ qstack_t *qstack(void)
     stack->size         = size;
     stack->clear        = clear;
     stack->debug        = debug;
-    stack->terminate    = terminate;
+    stack->free         = free_;
 
     return stack;
 }
@@ -487,14 +487,14 @@ static bool debug(qstack_t *stack, FILE *out)
 }
 
 /**
- * (qstack_t*)->terminate(): Free qstack_t
+ * (qstack_t*)->free(): Free qstack_t
  *
  * @param stack qstack container pointer.
  *
  * @return always returns true.
  */
-static void terminate(qstack_t *stack)
+static void free_(qstack_t *stack)
 {
-    stack->list->terminate(stack->list);
+    stack->list->free(stack->list);
     free(stack);
 }

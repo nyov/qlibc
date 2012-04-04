@@ -37,12 +37,13 @@
 #include <stdbool.h>
 #include <string.h>
 #include "qlibc.h"
-#include "qInternal.h"
+#include "qinternal.h"
 
 /**
  * Parse URL encoded query string
  *
- * @param tbl       a pointer of qlisttbl_t container. NULL can be used to create new table.
+ * @param tbl       a pointer of qlisttbl_t container. NULL can be used to
+ *                  create new table.
  * @param query     URL encoded string.
  * @param equalchar separater of key, value pair.
  * @param sepchar   separater of line.
@@ -51,12 +52,12 @@
  * @return qlisttbl container pointer, otherwise returns NULL.
  *
  * @code
- *   cont char query = "category=love&str=%C5%A5%B5%F0%C4%DA%B4%F5&sort=asc";
- *   qlisttbl_t *tbl = qDecodeQueryString(NULL, req->pszQueryString, '=', '&', NULL);
- *   printf("category = %s\n", tbl->getStr(tbl, "category", false));
- *   printf("str = %s\n", tbl->getStr(tbl, "str", false));
- *   printf("sort = %s\n", tbl->getStr(tbl, "sort", false));
- *   tbl->free(tbl);
+ *  cont char query = "category=love&str=%C5%A5%B5%F0%C4%DA%B4%F5&sort=asc";
+ *  qlisttbl_t *tbl = qparse_queries(NULL, req->pszQueryString, '=', '&', NULL);
+ *  printf("category = %s\n", tbl->get_str(tbl, "category", false));
+ *  printf("str = %s\n", tbl->get_str(tbl, "str", false));
+ *  printf("sort = %s\n", tbl->get_str(tbl, "sort", false));
+ *  tbl->free(tbl);
  * @endcode
  */
 qlisttbl_t *qparse_queries(qlisttbl_t *tbl, const char *query, char equalchar, char sepchar, int *count)
@@ -72,7 +73,7 @@ qlisttbl_t *qparse_queries(qlisttbl_t *tbl, const char *query, char equalchar, c
     if (query != NULL) newquery = strdup(query);
     while (newquery && *newquery) {
         char *value = _q_makeword(newquery, sepchar);
-        char *name = qstr_trim(_q_makeword(value, equalchar));
+        char *name = qstrtrim(_q_makeword(value, equalchar));
         qurl_decode(name);
         qurl_decode(value);
 

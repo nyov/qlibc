@@ -45,7 +45,7 @@
 #include <sys/stat.h>
 #include <sys/file.h>
 #include "qlibc.h"
-#include "qInternal.h"
+#include "qinternal.h"
 
 /**
  * Lock file
@@ -369,9 +369,9 @@ char *qfile_get_ext(const char *filepath)
     char *filename = qfile_get_name(filepath);
     char *p = strrchr(filename, '.');
     char *ext = NULL;
-    if (p != NULL && strlen(p+1) <= MAX_EXTENSION_LENGTH && qstr_test(isalnum, p+1) == true) {
+    if (p != NULL && strlen(p+1) <= MAX_EXTENSION_LENGTH && qstrtest(isalnum, p+1) == true) {
         ext = strdup(p+1);
-        qstr_lower(ext);
+        qstrlower(ext);
     } else {
         ext = strdup("");
     }
@@ -416,17 +416,17 @@ char *qfile_correct_path(char *path)
     if (path == NULL) return NULL;
 
     // take off heading & tailing white spaces
-    qstr_trim(path);
+    qstrtrim(path);
 
     while (true) {
         // take off double slashes
         if (strstr(path, "//") != NULL) {
-            qstr_replace("sr", path, "//", "/");
+            qstrreplace("sr", path, "//", "/");
             continue;
         }
 
         if (strstr(path, "/./") != NULL) {
-            qstr_replace("sr", path, "/./", "/");
+            qstrreplace("sr", path, "/./", "/");
             continue;
         }
 
@@ -512,7 +512,7 @@ char *qfile_abspath(char *buf, size_t bufsize, const char *path)
     if (bufsize == 0) return NULL;
 
     if (path[0] == '/') {
-        qstr_cpy(buf, bufsize, path);
+        qstrcpy(buf, bufsize, path);
     } else {
         if (getcwd(buf, bufsize) == NULL) return NULL;
         strcat(buf, "/");

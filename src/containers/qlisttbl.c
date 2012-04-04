@@ -81,7 +81,7 @@
  *  }
  *
  *  // free object
- *  tbl->terminate(tbl);
+ *  tbl->free(tbl);
  * @endcode
  *
  * @note
@@ -98,7 +98,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include "qlibc.h"
-#include "qInternal.h"
+#include "qinternal.h"
 
 /*
  * Member method protos
@@ -150,14 +150,14 @@ static void clear(qlisttbl_t *tbl);
 static char *parse_str(qlisttbl_t *tbl, const char *str);
 static bool save(qlisttbl_t *tbl, const char *filepath, char sepchar,
                  bool encode);
-static size_t load(qlisttbl_t *tbl, const char *filepath, char sepchar,
-                   bool decode);
+static ssize_t load(qlisttbl_t *tbl, const char *filepath, char sepchar,
+                    bool decode);
 static bool debug(qlisttbl_t *tbl, FILE *out);
 
 static void lock(qlisttbl_t *tbl);
 static void unlock(qlisttbl_t *tbl);
 
-static void terminate(qlisttbl_t *tbl);
+static void free_(qlisttbl_t *tbl);
 
 /* internal functions */
 static bool _put(qlisttbl_t *tbl, const char *name, const void *data,
@@ -226,7 +226,7 @@ qlisttbl_t *qlisttbl(void)
     tbl->lock       = lock;
     tbl->unlock     = unlock;
 
-    tbl->terminate  = terminate;
+    tbl->free       = free_;
 
     // initialize recrusive mutex
     Q_MUTEX_INIT(tbl->qmutex, true);
@@ -801,7 +801,7 @@ static void clear(qlisttbl_t *tbl)
 }
 
 /**
- * (qlisttbl_t*)->parseStr(): Parse a string and replace variables in the string
+ * (qlisttbl_t*)->parse_str(): Parse a string and replace variables in the string
  * to the data in this list.
  *
  * @param tbl   qlisttbl_t container pointer.
@@ -822,7 +822,7 @@ static void clear(qlisttbl_t *tbl)
  *  NAME = qLibc
  *  -------------------------------------
  *
- *  char *str = tbl->parseStr(tbl, "${NAME}, ${%HOME}, ${!date -u}");
+ *  char *str = tbl->parse_str(tbl, "${NAME}, ${%HOME}, ${!date -u}");
  *  if(info != NULL) {
  *    printf("%s\n", str);
  *    free(str);
@@ -879,13 +879,13 @@ static char *parse_str(qlisttbl_t *tbl, const char *str)
             char *newstr = NULL;
             switch (varstr[0]) {
                 case _VAR_CMD : {
-                    if ((newstr = qstr_trim(qsys_cmd(varstr + 1))) == NULL) {
+                    if ((newstr = qstrtrim(qsyscmd(varstr + 1))) == NULL) {
                         newstr = strdup("");
                     }
                     break;
                 }
                 case _VAR_ENV : {
-                    newstr = strdup(qsys_get_env(varstr + 1, ""));
+                    newstr = strdup(qsys_getenv(varstr + 1, ""));
                     break;
                 }
                 default : {
@@ -901,7 +901,7 @@ static char *parse_str(qlisttbl_t *tbl, const char *str)
             strncpy(varstr, s, varlen + 3); // ${str}
             varstr[varlen + 3] = '\0';
 
-            s = qstr_replace("sn", value, varstr, newstr);
+            s = qstrreplace("sn", value, varstr, newstr);
             free(newstr);
             free(varstr);
             free(value);
@@ -968,27 +968,46 @@ static bool save(qlisttbl_t *tbl, const char *filepath, char sepchar,
  *                  used
  * @param decode    flag for decoding data
  *
- * @return a number of loaded entries.
+ * @return the number of loaded entries, otherwise returns -1.
  */
-static size_t load(qlisttbl_t *tbl, const char *filepath, char sepchar,
-                   bool decode)
+static ssize_t load(qlisttbl_t *tbl, const char *filepath, char sepchar,
+                    bool decode)
 {
-    qlisttbl_t *loaded;
-    if ((loaded = qConfigParseFile(NULL, filepath, sepchar)) == NULL) {
-        return false;
-    }
+    // load file
+    char *str = qfile_load(filepath, NULL);
+    if (str == NULL) return -1;
 
+    // parse
     lock(tbl);
-    size_t cnt;
-    qdlnobj_t *obj;
-    for (cnt = 0, obj = loaded->first; obj; obj = obj->next) {
-        if (decode == true) obj->size = qurl_decode(obj->data);
-        put(tbl, obj->name, obj->data, obj->size, false);
-        cnt++;
-    }
+    char *offset, *buf;
+    int cnt = 0;
+    for (offset = str; *offset != '\0'; ) {
+        // get one line into buf
+        for (buf = offset; *offset != '\n' && *offset != '\0'; offset++);
+        if (*offset != '\0') {
+            *offset = '\0';
+            offset++;
+        }
+        qstrtrim(buf);
 
-    terminate(loaded);
+        // skip blank or comment line
+        if ((buf[0] == '#') || (buf[0] == '\0')) continue;
+
+        // parse
+        char *value = strdup(buf);
+        char *name  = _q_makeword(value, sepchar);
+        qstrtrim(value);
+        qstrtrim(name);
+        if (decode == true) qurl_decode(value);
+
+        // append
+        put_str(tbl, name, value, false);
+
+        free(name);
+        free(value);
+    }
     unlock(tbl);
+    free(str);
 
     return cnt;
 }
@@ -1059,11 +1078,11 @@ static void unlock(qlisttbl_t *tbl)
 }
 
 /**
- * (qlisttbl_t*)->terminate(): Free qlisttbl_t
+ * (qlisttbl_t*)->free(): Free qlisttbl_t
  *
  * @param tbl qlisttbl_t container pointer.
  */
-static void terminate(qlisttbl_t *tbl)
+static void free_(qlisttbl_t *tbl)
 {
     clear(tbl);
     Q_MUTEX_DESTROY(tbl->qmutex);

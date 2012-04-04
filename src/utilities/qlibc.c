@@ -37,6 +37,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "qlibc.h"
+#include "qinternal.h"
 
 /**
  * Get the version string of qDecoder library

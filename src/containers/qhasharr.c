@@ -134,7 +134,7 @@
 #include <string.h>
 #include <errno.h>
 #include "qlibc.h"
-#include "qInternal.h"
+#include "qinternal.h"
 
 #ifndef _DOXYGEN_SKIP
 

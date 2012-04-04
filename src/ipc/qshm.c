@@ -78,6 +78,7 @@
 #include <string.h>
 #include <sys/shm.h>
 #include "qlibc.h"
+#include "qinternal.h"
 
 /**
  * Initialize shared-memory
@@ -107,7 +108,7 @@ int qshm_init(const char *keyfile, int keyid, size_t size, bool recreate)
         if (recreate == false) return -1;
 
         /* destroy & re-create */
-        if ((shmid = qshm_getid(keyfile, keyid)) >= 0) qshm_terminate(shmid);
+        if ((shmid = qshm_getid(keyfile, keyid)) >= 0) qshm_free(shmid);
         if ((shmid = shmget(semkey, size, IPC_CREAT | IPC_EXCL | 0666)) == -1) return -1;
     }
 
@@ -160,7 +161,7 @@ void *qshm_get(int shmid)
  *
  * @return true if successful, otherwise returns false
  */
-bool qshm_terminate(int shmid)
+bool qshm_free(int shmid)
 {
     if (shmid < 0) return false;
     if (shmctl(shmid, IPC_RMID, 0) != 0) return false;

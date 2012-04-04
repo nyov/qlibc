@@ -48,7 +48,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include "qlibc.h"
-#include "qInternal.h"
+#include "qinternal.h"
 
 /**
  * Create a TCP socket for the remote host and port.

@@ -47,7 +47,7 @@
  *   (... child forking codes ...)
  *
  *   // at the end of daemon, free semaphores
- *   if(semid >= 0) qsem_terminate(semid);
+ *   if(semid >= 0) qsem_free(semid);
  *
  *   [forked child]
  *   // critical section for resource 0
@@ -85,7 +85,7 @@
 #include <unistd.h>
 #include <sys/sem.h>
 #include "qlibc.h"
-#include "qInternal.h"
+#include "qinternal.h"
 
 /**
  * Initialize semaphore
@@ -119,7 +119,7 @@ int qsem_init(const char *keyfile, int keyid, int nsems, bool recreate)
         if (recreate == false) return -1;
 
         // destroy & re-create
-        if ((semid = qsem_getid(keyfile, keyid)) >= 0) qsem_terminate(semid);
+        if ((semid = qsem_getid(keyfile, keyid)) >= 0) qsem_free(semid);
         if ((semid = semget(semkey, nsems, IPC_CREAT | IPC_EXCL | 0666)) == -1) return -1;
     }
 
@@ -135,7 +135,7 @@ int qsem_init(const char *keyfile, int keyid, int nsems, bool recreate)
 
         /* initialize */
         if (semop(semid, &sbuf, 1) != 0) {
-            qsem_terminate(semid);
+            qsem_free(semid);
             return -1;
         }
     }
@@ -292,7 +292,7 @@ bool qsem_check(int semid, int semno)
  *
  * @return true if successful, otherwise returns false
  */
-bool qsem_terminate(int semid)
+bool qsem_free(int semid)
 {
     if (semid < 0) return false;
     if (semctl(semid, 0, IPC_RMID, 0) != 0) return false;

@@ -56,7 +56,7 @@
  ******************************************************************************/
 
 typedef struct qmutex_t qmutex_t;    /*!< qlibc pthread mutex type*/
-typedef struct qnobj_t qnobj_t;     /*!< named-object type*/
+typedef struct qnobj_t qnobj_t;      /*!< named-object type*/
 typedef struct qdlobj_t qdlobj_t;    /*!< doubly-linked-object type*/
 typedef struct qdlnobj_t qdlnobj_t;  /*!< doubly-linked-named-object type*/
 typedef struct qhnobj_t qhnobj_t;    /*!< hashed-named-object type*/
@@ -161,7 +161,7 @@ struct qlist_t {
     void (*lock)(qlist_t *list);
     void (*unlock)(qlist_t *list);
 
-    void (*terminate)(qlist_t *list);
+    void (*free)(qlist_t *list);
 
     /* private variables - do not access directly */
     qmutex_t qmutex;  /*!< activated if compiled with --enable-threadsafe */
@@ -226,14 +226,14 @@ struct qlisttbl_t {
     char *(*parse_str)(qlisttbl_t *tbl, const char *str);
     bool (*save)(qlisttbl_t *tbl, const char *filepath, char sepchar,
                  bool encode);
-    size_t (*load)(qlisttbl_t *tbl, const char *filepath, char sepchar,
-                   bool decode);
+    ssize_t (*load)(qlisttbl_t *tbl, const char *filepath, char sepchar,
+                    bool decode);
     bool (*debug)(qlisttbl_t *tbl, FILE *out);
 
     void (*lock)(qlisttbl_t *tbl);
     void (*unlock)(qlisttbl_t *tbl);
 
-    void (*terminate)(qlisttbl_t *tbl);
+    void (*free)(qlisttbl_t *tbl);
 
     /* private variables - do not access directly */
     qmutex_t qmutex;  /*!< activated if compiled with --enable-threadsafe */
@@ -282,7 +282,7 @@ struct qhashtbl_t {
     void (*lock)(qhashtbl_t *tbl);
     void (*unlock)(qhashtbl_t *tbl);
 
-    void (*terminate)(qhashtbl_t *tbl);
+    void (*free)(qhashtbl_t *tbl);
 
     /* private variables - do not access directly */
     qmutex_t qmutex;    /*!< activated if compiled with --enable-threadsafe */
@@ -394,7 +394,7 @@ struct qvector_t {
     void (*clear) (qvector_t *vector);
     bool (*debug) (qvector_t *vector, FILE *out);
 
-    void (*terminate) (qvector_t *vector);
+    void (*free) (qvector_t *vector);
 
     /* private variables - do not access directly */
     qlist_t *list;  /*!< data container */
@@ -435,7 +435,7 @@ struct qqueue_t {
     size_t (*size) (qqueue_t *stack);
     void (*clear) (qqueue_t *stack);
     bool (*debug) (qqueue_t *stack, FILE *out);
-    void (*terminate) (qqueue_t *stack);
+    void (*free) (qqueue_t *stack);
 
     /* private variables - do not access directly */
     qlist_t  *list;  /*!< data container */
@@ -476,7 +476,7 @@ struct qstack_t {
     size_t (*size) (qstack_t *stack);
     void (*clear) (qstack_t *stack);
     bool (*debug) (qstack_t *stack, FILE *out);
-    void (*terminate) (qstack_t *stack);
+    void (*free) (qstack_t *stack);
 
     /* private variables - do not access directly */
     qlist_t  *list;  /*!< data container */
@@ -550,44 +550,44 @@ extern bool qsocket_get_addr(struct sockaddr_in *addr, const char *hostname,
                              int port);
 
 /* qstring.c */
-extern char *qstr_trim(char *str);
-extern char *qstr_trim_tail(char *str);
-extern char *qstr_unchar(char *str, char head, char tail);
-extern char *qstr_replace(const char *mode, char *srcstr, const char *tokstr,
-                          const char *word);
-extern char *qstr_cpy(char *dst, size_t size, const char *src);
-extern char *qstr_ncpy(char *dst, size_t size, const char *src, size_t nbytes);
-extern char *qstr_dupf(const char *format, ...);
-extern char *qstr_dup_between(const char *str, const char *start,
+extern char *qstrtrim(char *str);
+extern char *qstrtrim_tail(char *str);
+extern char *qstrunchar(char *str, char head, char tail);
+extern char *qstrreplace(const char *mode, char *srcstr, const char *tokstr,
+                         const char *word);
+extern char *qstrcpy(char *dst, size_t size, const char *src);
+extern char *qstrncpy(char *dst, size_t size, const char *src, size_t nbytes);
+extern char *qstrdupf(const char *format, ...);
+extern char *qstrdup_between(const char *str, const char *start,
                              const char *end);
-extern char *qstr_catf(char *str, const char *format, ...);
-extern char *qstr_gets(char *buf, size_t size, char **offset);
-extern char *qstr_rev(char *str);
-extern char *qstr_upper(char *str);
-extern char *qstr_lower(char *str);
-extern char *qstr_tok(char *str, const char *delimiters, char *retstop,
+extern char *qstrcatf(char *str, const char *format, ...);
+extern char *qstrgets(char *buf, size_t size, char **offset);
+extern char *qstrrev(char *str);
+extern char *qstrupper(char *str);
+extern char *qstrlower(char *str);
+extern char *qstrtok(char *str, const char *delimiters, char *retstop,
                      int *offset);
 extern qlist_t *qstr_tokenizer(const char *str, const char *delimiters);
 extern char *qstr_comma_number(int number);
 extern char *qstr_unique(const char *seed);
-extern bool qstr_test(int (*testfunc)(int), const char *str);
+extern bool qstrtest(int (*testfunc)(int), const char *str);
 extern bool qstr_is_email(const char *email);
 extern bool qstr_is_ip4addr(const char *str);
 extern char *qstr_conv_encoding(const char *fromstr, const char *fromcode,
                                 const char *tocode, float mag);
 
 /* qsystem.c */
-extern const char *qsys_get_env(const char *envname, const char *nullstr);
-extern char *qsys_cmd(const char *cmd);
-extern bool qsys_get_ip(char *buf, size_t bufsize);
+extern const char *qsys_getenv(const char *envname, const char *nullstr);
+extern char *qsyscmd(const char *cmd);
+extern bool qsys_getip(char *buf, size_t bufsize);
 
 /* qtime.c */
-extern char *qtime_local_strf(char *buf, int size, time_t utctime,
-                               const char *format);
-extern char *qtime_local_str(time_t utctime);
-extern const char *qtime_local_staticstr(time_t utctime);
+extern char *qtime_localtime_strf(char *buf, int size, time_t utctime,
+                                  const char *format);
+extern char *qtime_localtime_str(time_t utctime);
+extern const char *qtime_localtime_staticstr(time_t utctime);
 extern char *qtime_gmt_strf(char *buf, int size, time_t utctime,
-                             const char *format);
+                            const char *format);
 extern char *qtime_gmt_str(time_t utctime);
 extern const char *qtime_gmt_staticstr(time_t utctime);
 extern time_t  qtime_parse_gmtstr(const char *gmtstr);
@@ -596,240 +596,27 @@ extern time_t  qtime_parse_gmtstr(const char *gmtstr);
  * IPC SECTION
  ******************************************************************************/
 
- /* qsem.c */
+/* qsem.c */
 extern int qsem_init(const char *keyfile, int keyid, int nsems, bool recreate);
 extern int qsem_getid(const char *keyfile, int keyid);
 extern bool qsem_enter(int semid, int semno);
 extern bool qsem_enter_nowait(int semid, int semno);
 extern bool qsem_enter_force(int semid, int semno, int maxwaitms,
-                           bool *forceflag);
+                             bool *forceflag);
 extern bool qsem_leave(int semid, int semno);
 extern bool qsem_check(int semid, int semno);
-extern bool qsem_terminate(int semid);
+extern bool qsem_free(int semid);
 
 /* qshm.c */
 extern int qshm_init(const char *keyfile, int keyid, size_t size,
- bool recreate);
+                     bool recreate);
 extern int qshm_getid(const char *keyfile, int keyid);
 extern void *qshm_get(int shmid);
-extern bool qshm_terminate(int shmid);
-
-/* =========================================================================
- *
- * EXTENSIONS SECTION
- *
- * ========================================================================= */
-
-/* -------------------------------------------------------------------------
- * Configuration Parser.
- * qConfig.c
- * ------------------------------------------------------------------------- */
-extern qlisttbl_t *qConfigParseFile(qlisttbl_t *tbl, const char *filepath,
-                                    char sepchar);
-extern qlisttbl_t *qConfigParseStr(qlisttbl_t *tbl, const char *str,
-                                   char sepchar);
-
-/* -------------------------------------------------------------------------
- * Q_LOG - Rotating file logger.
- * qLog.c
- * ------------------------------------------------------------------------- */
-
-/**
- * Q_LOG types and definitions.
- */
-typedef struct _Q_LOG  Q_LOG;
-
-/**
- * Q_LOG constructor.
- */
-extern Q_LOG *qLog(const char *filepathfmt, mode_t mode, int rotateinterval,
-                   bool flush);
-
-/**
- * Q_LOG details.
- */
-struct _Q_LOG {
-    /* capsulated member functions */
-    bool (*write) (Q_LOG *log, const char *str);
-    bool (*writef) (Q_LOG *log, const char *format, ...);
-    bool (*duplicate) (Q_LOG *log, FILE *outfp, bool flush);
-    bool (*flush) (Q_LOG *log);
-    bool (*free) (Q_LOG *log);
-
-    /* private variables - do not access directly */
-    qmutex_t  qmutex;  /*!< activated if compiled with --enable-threadsafe */
-
-    char filepathfmt[PATH_MAX];  /*!< file file naming format like /somepath/daily-%Y%m%d.log */
-    char filepath[PATH_MAX];  /*!< generated system path of log file */
-    FILE *fp;   /*!< file pointer of logpath */
-    mode_t  mode;   /*!< file mode */
-    int rotateinterval;  /*!< log file will be rotate in this interval seconds */
-    int nextrotate;  /*!< next rotate universal time, seconds */
-    bool logflush;  /*!< flag for immediate flushing */
-
-    FILE *outfp;   /*!< stream pointer for duplication */
-    bool outflush;  /*!< flag for immediate flushing for duplicated stream */
-};
-
-/* -------------------------------------------------------------------------
- * Q_HTTPCLIENT - HTTP client implementation.
- * qHttpClient.c
- * ------------------------------------------------------------------------- */
-
-/**
- * Q_HTTPCLIENT types and definitions.
- */
-typedef struct _Q_HTTPCLIENT  Q_HTTPCLIENT;
-
-/**
- * Q_HTTPCLIENT constructor.
- */
-extern Q_HTTPCLIENT *qHttpClient(const char *hostname, int port);
-
-/**
- * Q_HTTPCLIENT details.
- */
-struct _Q_HTTPCLIENT {
-    /* capsulated member functions */
-    bool (*setSsl) (Q_HTTPCLIENT *client);
-    void (*setTimeout) (Q_HTTPCLIENT *client, int timeoutms);
-    void (*setKeepalive) (Q_HTTPCLIENT *client, bool keepalive);
-    void (*setUseragent) (Q_HTTPCLIENT *client, const char *useragent);
-
-    bool (*open) (Q_HTTPCLIENT *client);
-
-    bool (*head) (Q_HTTPCLIENT *client, const char *uri, int *rescode, qlisttbl_t *reqheaders, qlisttbl_t *resheaders);
-    bool (*get) (Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize, int *rescode, qlisttbl_t *reqheaders, qlisttbl_t *resheaders, bool (*callback)(void *userdata, off_t recvbytes), void *userdata);
-    bool (*put) (Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, int *retcode, qlisttbl_t *userheaders, qlisttbl_t *resheaders, bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
-    void *(*cmd) (Q_HTTPCLIENT *client, const char *method, const char *uri, void *data, size_t size, int *rescode, size_t *contentslength, qlisttbl_t *reqheaders, qlisttbl_t *resheaders);
-
-    bool (*sendRequest) (Q_HTTPCLIENT *client, const char *method, const char *uri, qlisttbl_t *reqheaders);
-    int (*readResponse) (Q_HTTPCLIENT *client, qlisttbl_t *resheaders, off_t *contentlength);
-
-    ssize_t (*gets) (Q_HTTPCLIENT *client, char *buf, size_t bufsize);
-    ssize_t (*read) (Q_HTTPCLIENT *client, void *buf, size_t nbytes);
-    ssize_t (*write) (Q_HTTPCLIENT *client, const void *buf, size_t nbytes);
-    off_t (*recvfile) (Q_HTTPCLIENT *client, int fd, off_t nbytes);
-    off_t (*sendfile) (Q_HTTPCLIENT *client, int fd, off_t nbytes);
-
-    bool (*close) (Q_HTTPCLIENT *client);
-    void (*free) (Q_HTTPCLIENT *client);
-
-    /* private variables - do not access directly */
-    int socket;   /*!< socket descriptor */
-    void *ssl;   /*!< will be used if SSL has been enabled at compile time */
-
-    struct sockaddr_in addr;
-    char *hostname;
-    int port;
-
-    int timeoutms;  /*< wait timeout miliseconds*/
-    bool keepalive;  /*< keep-alive flag */
-    char *useragent;  /*< user-agent name */
-
-    bool connclose;  /*< response keep-alive flag for a last request */
-};
-
-/* -------------------------------------------------------------------------
- * Q_DB - Database interface.
- * qDatabase.c
- * ------------------------------------------------------------------------- */
-
-/**
- * Q_DB & Q_DBRESULT types and definitions.
- */
-typedef struct _Q_DB  Q_DB;
-typedef struct _Q_DBRESULT  Q_DBRESULT;
-
-/* Database Support*/
-#ifdef _mysql_h
-#define _Q_ENABLE_MYSQL  (1)
-#endif /* _mysql_h */
-
-/**
- * Q_DB constructor.
- */
-extern Q_DB *qDb(const char *dbtype, const char *addr, int port, const char *database, const char *username, const char *password, bool autocommit);
-
-/**
- * Q_DB details.
- */
-struct _Q_DB {
-    /* capsulated member functions */
-    bool (*open) (Q_DB *db);
-    bool (*close) (Q_DB *db);
-
-    int (*executeUpdate) (Q_DB *db, const char *query);
-    int (*executeUpdatef) (Q_DB *db, const char *format, ...);
-
-    Q_DBRESULT *(*executeQuery) (Q_DB *db, const char *query);
-    Q_DBRESULT *(*executeQueryf) (Q_DB *db, const char *format, ...);
-
-    bool (*beginTran) (Q_DB *db);
-    bool (*endTran) (Q_DB *db, bool commit);
-    bool (*commit) (Q_DB *db);
-    bool (*rollback) (Q_DB *db);
-
-    bool (*setFetchType) (Q_DB *db, bool use);
-    bool (*getConnStatus) (Q_DB *db);
-    bool (*ping) (Q_DB *db);
-    const char *(*getError) (Q_DB *db, unsigned int *errorno);
-    bool (*free) (Q_DB *db);
-
-    /* private variables - do not access directly */
-    qmutex_t  qmutex;  /*!< activated if compiled with --enable-threadsafe */
-
-    bool connected;   /*!< if opened true, if closed false */
-
-    struct {
-        char *dbtype;
-        char *addr;
-        int port;
-        char *username;
-        char *password;
-        char *database;
-        bool autocommit;
-        bool fetchtype;
-    } info;   /*!< database connection infomation */
-
-    /* private variables for mysql database */
-#ifdef _Q_ENABLE_MYSQL
-    MYSQL  *mysql;
-#endif
-};
-
-/**
- * Q_DBRESULT details.
- */
-struct _Q_DBRESULT {
-    /* capsulated member functions */
-    const char *(*getStr) (Q_DBRESULT *result, const char *field);
-    const char *(*getStrAt) (Q_DBRESULT *result, int idx);
-    int (*getInt) (Q_DBRESULT *result, const char *field);
-    int (*getIntAt) (Q_DBRESULT *result, int idx);
-    bool (*getNext) (Q_DBRESULT *result);
-
-    int (*getCols) (Q_DBRESULT *result);
-    int (*getRows) (Q_DBRESULT *result);
-    int (*getRow) (Q_DBRESULT *result);
-
-    bool (*free) (Q_DBRESULT *result);
-
-    /* private variables - do not access directly */
-
-    /* private variables for mysql database */
-#ifdef _Q_ENABLE_MYSQL
-    bool fetchtype;
-    MYSQL_RES  *rs;
-    MYSQL_FIELD  *fields;
-    MYSQL_ROW  row;
-    int cols;
-    int cursor;
-#endif
-};
+extern bool qshm_free(int shmid);
 
 #ifdef __cplusplus
 //}
 #endif
 
 #endif /*_QLIBC_H */
+

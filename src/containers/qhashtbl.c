@@ -74,14 +74,14 @@
  *
  *  // get objects
  *  void *sample1 = tbl->get(tbl, "sample1", &size, true);
- *  char *sample2 = tbl->getStr(tbl, "sample2", false);
- *  int  sample3  = tbl->getInt(tbl, "sample3");
+ *  char *sample2 = tbl->get_str(tbl, "sample2", false);
+ *  int  sample3  = tbl->get_int(tbl, "sample3");
  *
  *  // sample1 is memalloced
  *  if(sample1 != NULL) free(sample1);
  *
  *  // release table
- *  tbl->terminate(tbl);
+ *  tbl->free(tbl);
  * @endcode
  *
  * @note
@@ -96,7 +96,7 @@
 #include <string.h>
 #include <errno.h>
 #include "qlibc.h"
-#include "qInternal.h"
+#include "qinternal.h"
 
 #ifndef _DOXYGEN_SKIP
 
@@ -123,7 +123,7 @@ static bool debug(qhashtbl_t *tbl, FILE *out);
 static void lock(qhashtbl_t *tbl);
 static void unlock(qhashtbl_t *tbl);
 
-static void terminate(qhashtbl_t *tbl);
+static void free_(qhashtbl_t *tbl);
 
 #endif
 
@@ -161,7 +161,7 @@ qhashtbl_t *qhashtbl(size_t range)
     tbl->slots = (qhnobj_t **)malloc(sizeof(qhnobj_t *) * range);
     if (tbl->slots == NULL) {
         errno = ENOMEM;
-        terminate(tbl);
+        free_(tbl);
         return NULL;
     }
     memset((void *)tbl->slots, 0, sizeof(qhnobj_t *) * range);
@@ -187,7 +187,7 @@ qhashtbl_t *qhashtbl(size_t range)
     tbl->lock       = lock;
     tbl->unlock     = unlock;
 
-    tbl->terminate  = terminate;
+    tbl->free       = free_;
 
     // initialize recrusive mutex
     Q_MUTEX_INIT(tbl->qmutex, true);
@@ -424,7 +424,7 @@ static void *get(qhashtbl_t *tbl, const char *name, size_t *size, bool newmem)
 }
 
 /**
- * (qhashtbl_t*)->getStr(): Finds an object with given name and returns as
+ * (qhashtbl_t*)->get_str(): Finds an object with given name and returns as
  * string type.
  *
  * @param tbl       qhashtbl_t container pointer.
@@ -447,7 +447,7 @@ static char *get_str(qhashtbl_t *tbl, const char *name, bool newmem)
 }
 
 /**
- * (qhashtbl_t*)->getInt(): Finds an object with given name and returns as
+ * (qhashtbl_t*)->get_int(): Finds an object with given name and returns as
  * integer type.
  *
  * @param tbl       qhashtbl_t container pointer.
@@ -738,11 +738,11 @@ static void unlock(qhashtbl_t *tbl)
 }
 
 /**
- * (qhashtbl_t*)->terminate(): De-allocate hash table
+ * (qhashtbl_t*)->free(): De-allocate hash table
  *
  * @param tbl   qhashtbl_t container pointer.
  */
-void terminate(qhashtbl_t *tbl)
+void free_(qhashtbl_t *tbl)
 {
     lock(tbl);
     clear(tbl);

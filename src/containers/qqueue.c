@@ -113,7 +113,7 @@
 #include <string.h>
 #include <errno.h>
 #include "qlibc.h"
-#include "qInternal.h"
+#include "qinternal.h"
 
 /*
  * Member method protos
@@ -139,7 +139,7 @@ static void *get_at(qqueue_t *queue, int index, size_t *size, bool newmem);
 static size_t size(qqueue_t *queue);
 static void clear(qqueue_t *queue);
 static bool debug(qqueue_t *queue, FILE *out);
-static void terminate(qqueue_t *queue);
+static void free_(qqueue_t *queue);
 
 #endif
 
@@ -189,7 +189,7 @@ qqueue_t *qqueue(void)
     queue->size         = size;
     queue->clear        = clear;
     queue->debug        = debug;
-    queue->terminate    = terminate;
+    queue->free         = free_;
 
     return queue;
 }
@@ -487,14 +487,14 @@ static bool debug(qqueue_t *queue, FILE *out)
 }
 
 /**
- * (qqueue_t*)->terminate(): Free qqueue_t
+ * (qqueue_t*)->free(): Free qqueue_t
  *
  * @param queue qqueue container pointer.
  *
  * @return always returns true.
  */
-static void terminate(qqueue_t *queue)
+static void free_(qqueue_t *queue)
 {
-    queue->list->terminate(queue->list);
+    queue->list->free(queue->list);
     free(queue);
 }

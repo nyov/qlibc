@@ -86,7 +86,7 @@
  *  list->unlock(list);
  *
  *  // free object
- *  list->terminate(list);
+ *  list->free(list);
  * @endcode
  *
  * @note
@@ -100,7 +100,7 @@
 #include <string.h>
 #include <errno.h>
 #include "qlibc.h"
-#include "qInternal.h"
+#include "qinternal.h"
 
 /*
  * Member method protos
@@ -136,7 +136,7 @@ static bool qlist_debug(qlist_t *list, FILE *out);
 static void lock(qlist_t *list);
 static void unlock(qlist_t *list);
 
-static void terminate(qlist_t *list);
+static void free_(qlist_t *list);
 
 /* internal functions */
 static void *_get_at(qlist_t *list,
@@ -199,7 +199,7 @@ qlist_t *qlist(void)
     list->lock          = lock;
     list->unlock        = unlock;
 
-    list->terminate     = terminate;
+    list->free          = free_;
 
     // initialize recrusive mutex
     Q_MUTEX_INIT(list->qmutex, true);
@@ -885,11 +885,11 @@ static void unlock(qlist_t *list)
 }
 
 /**
- * (qlist_t*)->terminate(): Free qlist_t.
+ * (qlist_t*)->free(): Free qlist_t.
  *
  * @param list  qlist_t container pointer.
  */
-static void terminate(qlist_t *list)
+static void free_(qlist_t *list)
 {
     clear(list);
     Q_MUTEX_DESTROY(list->qmutex);

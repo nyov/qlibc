@@ -41,7 +41,7 @@
 #include <time.h>
 #include <unistd.h>
 #include "qlibc.h"
-#include "qInternal.h"
+#include "qinternal.h"
 
 /**
  * Remove white spaces(including CR, LF) from head and tail of the string.
@@ -52,7 +52,7 @@
  *
  * @note This modify source string directly.
  */
-char *qstr_trim(char *str)
+char *qstrtrim(char *str)
 {
     int i, j;
 
@@ -74,7 +74,7 @@ char *qstr_trim(char *str)
  *
  * @note This modify source string directly.
  */
-char *qstr_trim_tail(char *str)
+char *qstrtrim_tail(char *str)
 {
     int i;
 
@@ -98,11 +98,11 @@ char *qstr_trim_tail(char *str)
  *
  * @code
  *   char *str = strdup("   \"hello world\"   ");
- *   qstr_trim(str); // to remove white spaces
- *   qstr_unchar(str, '"', '"'); // to unquote
+ *   qstrtrim(str); // to remove white spaces
+ *   qstrunchar(str, '"', '"'); // to unquote
  * @endcode
  */
-char *qstr_unchar(char *str, char head, char tail)
+char *qstrunchar(char *str, char head, char tail)
 {
     if (str == NULL) return NULL;
 
@@ -162,7 +162,7 @@ char *qstr_unchar(char *str, char head, char tail)
  *     strcpy(srcstr, "Welcome to The qDecoder Project.");
  *
  *     printf("before %s : srcstr = %s\n", mode[i], srcstr);
- *     retstr = qstr_replace(mode[i], srcstr, "The", "_");
+ *     retstr = qstrreplace(mode[i], srcstr, "The", "_");
  *     printf("after  %s : srcstr = %s\n", mode[i], srcstr);
  *     printf("            retstr = %s\n\n", retstr);
  *     if(mode[i][1] == 'n') free(retstr);
@@ -186,7 +186,7 @@ char *qstr_unchar(char *str, char head, char tail)
  *               retstr = Welcome to _ qDecoder Project.
  * @endcode
  */
-char *qstr_replace(const char *mode, char *srcstr, const char *tokstr, const char *word)
+char *qstrreplace(const char *mode, char *srcstr, const char *tokstr, const char *word)
 {
     if (mode == NULL || strlen(mode) != 2 || srcstr == NULL || tokstr == NULL || word == NULL) {
         DEBUG("Unknown mode \"%s\".", mode);
@@ -258,12 +258,12 @@ char *qstr_replace(const char *mode, char *srcstr, const char *tokstr, const cha
  *
  * @return always returns a pointer of dst
  */
-char *qstr_cpy(char *dst, size_t size, const char *src)
+char *qstrcpy(char *dst, size_t size, const char *src)
 {
     if (dst == NULL || size == 0 || src == NULL) return dst;
 
     size_t nbytes = strlen(src);
-    return qstr_ncpy(dst, size, src, nbytes);
+    return qstrncpy(dst, size, src, nbytes);
 }
 
 /**
@@ -275,7 +275,7 @@ char *qstr_cpy(char *dst, size_t size, const char *src)
  *
  * @return always returns a pointer of dst
  */
-char *qstr_ncpy(char *dst, size_t size, const char *src, size_t nbytes)
+char *qstrncpy(char *dst, size_t size, const char *src, size_t nbytes)
 {
     if (dst == NULL || size == 0 || src == NULL) return dst;
 
@@ -293,7 +293,7 @@ char *qstr_ncpy(char *dst, size_t size, const char *src, size_t nbytes)
  *
  * @return a pointer of malloced string if successful, otherwise returns NULL
  */
-char *qstr_dupf(const char *format, ...)
+char *qstrdupf(const char *format, ...)
 {
     char *str;
     DYNAMIC_VSPRINTF(str, format);
@@ -314,7 +314,7 @@ char *qstr_dupf(const char *format, ...)
  *
  * @return a pointer of malloced string if successful, otherwise returns NULL
  */
-char *qstr_dup_between(const char *str, const char *start, const char *end)
+char *qstrdup_between(const char *str, const char *start, const char *end)
 {
     char *s;
     if ((s = strstr(str, start)) == NULL) return NULL;
@@ -340,7 +340,7 @@ char *qstr_dup_between(const char *str, const char *start, const char *end)
  *
  * @return a pointer of str if successful, otherwise returns NULL
  */
-char *qstr_catf(char *str, const char *format, ...)
+char *qstrcatf(char *str, const char *format, ...)
 {
     char *buf;
     DYNAMIC_VSPRINTF(buf, format);
@@ -368,12 +368,12 @@ char *qstr_catf(char *str, const char *format, ...)
  *
  *   char *offset = text;
  *   char buf[1024];
- *   while(qstr_gets(buf, sizeof(buf), &offset) == NULL) {
+ *   while(qstrgets(buf, sizeof(buf), &offset) == NULL) {
  *     printf("%s\n", buf);
  *   }
  * @endcode
  */
-char *qstr_gets(char *buf, size_t size, char **offset)
+char *qstrgets(char *buf, size_t size, char **offset)
 {
     if (offset == NULL || *offset == NULL || **offset == '\0') return NULL;
 
@@ -404,7 +404,7 @@ char *qstr_gets(char *buf, size_t size, char **offset)
  *
  * @note This modify str directly.
  */
-char *qstr_rev(char *str)
+char *qstrrev(char *str)
 {
     if (str == NULL) return str;
 
@@ -427,7 +427,7 @@ char *qstr_rev(char *str)
  *
  * @note This modify str directly.
  */
-char *qstr_upper(char *str)
+char *qstrupper(char *str)
 {
     char *cp;
 
@@ -445,7 +445,7 @@ char *qstr_upper(char *str)
  *
  * @note This modify str directly.
  */
-char *qstr_lower(char *str)
+char *qstrlower(char *str)
 {
     char *cp;
 
@@ -468,17 +468,17 @@ char *qstr_lower(char *str)
  *   char *str = strdup("Hello,world|Thank,you");
  *   char *token;
  *   int offset = 0;
- *   while((token = qstr_tok(str, "|,", NULL, &offset)) != NULL) {
+ *   while((token = qstrtok(str, "|,", NULL, &offset)) != NULL) {
  *     printf("%s\n", token);
  *  }
  * @endcode
  *
  * @note
  * This mau modify str argument.
- * The major difference between qstr_tok() and standard strtok() is that qstr_tok() can returns empty string tokens.
- * If the str is "a:b::d", qstr_tok() returns "a", "b", "", "d". But strtok() returns "a","b","d".
+ * The major difference between qstrtok() and standard strtok() is that qstrtok() can returns empty string tokens.
+ * If the str is "a:b::d", qstrtok() returns "a", "b", "", "d". But strtok() returns "a","b","d".
  */
-char *qstr_tok(char *str, const char *delimiters, char *retstop, int *offset)
+char *qstrtok(char *str, const char *delimiters, char *retstop, int *offset)
 {
     char *tokensp, *tokenep;
 
@@ -531,7 +531,7 @@ qlist_t *qstr_tokenizer(const char *str, const char *delimiters)
     char *dupstr = strdup(str);
     char *token;
     int offset = 0;
-    for (i = 1, token = qstr_tok(dupstr, delimiters, NULL, &offset); token != NULL; token = qstr_tok(dupstr, delimiters, NULL, &offset), i++) {
+    for (i = 1, token = qstrtok(dupstr, delimiters, NULL, &offset); token != NULL; token = qstrtok(dupstr, delimiters, NULL, &offset), i++) {
         list->add_last(list, token, strlen(token) + 1);
     }
     free(dupstr);
@@ -604,11 +604,11 @@ char *qstr_unique(const char *seed)
  * @return true for ok, otherwise returns false
  *
  * @code
- *   if(qstr_test(isalnum, "hello1234") == true) {
+ *   if(qstrtest(isalnum, "hello1234") == true) {
  *     printf("It is alpha-numeric string.");
  *   }
  *
- *   if(qstr_test(isdigit, "0123456789") == true) {
+ *   if(qstrtest(isdigit, "0123456789") == true) {
  *     printf("It is alpha-numeric string.");
  *   }
  * @endcode
@@ -630,7 +630,7 @@ char *qstr_unique(const char *seed)
  *   isxdigit -  checks for a hexadecimal digits.
  * Please refer "man isalnum" for more details about these functions.
  */
-bool qstr_test(int (*testfunc)(int), const char *str)
+bool qstrtest(int (*testfunc)(int), const char *str)
 {
     for (; *str; str++) {
         if (testfunc(*str) == 0) return false;
@@ -703,7 +703,7 @@ bool qstr_is_ip4addr(const char *str)
         *s2 = '\0';
 
         int n;
-        if (qstr_test(isdigit, s1) == false
+        if (qstrtest(isdigit, s1) == false
             || (n = atoi(s1)) <= 0 || n >= 256) {
             free(dupstr);
             return false;

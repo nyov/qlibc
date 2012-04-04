@@ -39,7 +39,7 @@
 #include <time.h>
 extern char *strptime(const char *, const char *, struct tm *);
 #include "qlibc.h"
-#include "qInternal.h"
+#include "qinternal.h"
 
 /**
  * Get custom formmatted local time string.
@@ -52,13 +52,13 @@ extern char *strptime(const char *, const char *, struct tm *);
  * @return string pointer of buf
  *
  * @code
- *   char *timestr = qtime_local_strf(0, "%H:%M:%S"); // HH:MM:SS
+ *   char *timestr = qtime_localtime_strf(0, "%H:%M:%S"); // HH:MM:SS
  *   free(timestr);
- *   char *timestr = qtime_local_strf(0, "%Y%m%d%H%M%S"); // YYMMDDhhmmss
+ *   char *timestr = qtime_localtime_strf(0, "%Y%m%d%H%M%S"); // YYMMDDhhmmss
  *   free(timestr);
  * @endcode
  */
-char *qtime_local_strf(char *buf, int size, time_t utctime, const char *format)
+char *qtime_localtime_strf(char *buf, int size, time_t utctime, const char *format)
 {
     if (utctime == 0) utctime = time(NULL);
     struct tm *localtm = localtime(&utctime);
@@ -79,19 +79,19 @@ char *qtime_local_strf(char *buf, int size, time_t utctime, const char *format)
  *
  * @code
  *   char *timestr;
- *   timestr = qGetLocaltimeStr(0);         // now
+ *   timestr = qtime_localtime_str(0);  // now
  *   free(timestr);
- *   timestr = qGetLocaltimeStr(time(NULL));        // same as above
+ *   timestr = qtime_localtime_str(time(NULL));  // same as above
  *   free(timestr);
- *   timestr = qGetLocaltimeStr(time(NULL) - 86400));   // 1 day before
+ *   timestr = qtime_localtime_str(time(NULL) - 86400));  // 1 day before
  *   free(timestr);
  * @endcode
  */
-char *qtime_local_str(time_t utctime)
+char *qtime_localtime_str(time_t utctime)
 {
     int size = sizeof(char) * (CONST_STRLEN("00-Jan-0000 00:00:00 +0000") + 1);
     char *timestr = (char *)malloc(size);
-    qtime_local_strf(timestr, size, utctime, "%d-%b-%Y %H:%M:%S %z");
+    qtime_localtime_strf(timestr, size, utctime, "%d-%b-%Y %H:%M:%S %z");
     return timestr;
 }
 
@@ -103,14 +103,14 @@ char *qtime_local_str(time_t utctime)
  * @return internal static string pointer of time string
  *
  * @code
- *   printf("%s", qtime_local_staticstr(0));           // now
- *   printf("%s", qtime_local_staticstr(time(NULL) + 86400));  // 1 day later
+ *   printf("%s", qtime_localtime_staticstr(0));           // now
+ *   printf("%s", qtime_localtime_staticstr(time(NULL) + 86400));  // 1 day later
  * @endcode
  */
-const char *qtime_local_staticstr(time_t utctime)
+const char *qtime_localtime_staticstr(time_t utctime)
 {
     static char timestr[sizeof(char) * (CONST_STRLEN("00-Jan-0000 00:00:00 +0000") + 1)];
-    qtime_local_strf(timestr, sizeof(timestr), utctime, "%d-%b-%Y %H:%M:%S %z");
+    qtime_localtime_strf(timestr, sizeof(timestr), utctime, "%d-%b-%Y %H:%M:%S %z");
     return timestr;
 }
 

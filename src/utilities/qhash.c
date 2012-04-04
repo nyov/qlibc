@@ -42,7 +42,7 @@
 #include <sys/stat.h>
 #include "md5/md5.h"
 #include "qlibc.h"
-#include "qInternal.h"
+#include "qinternal.h"
 
 /**
  * Get MD5 hash.

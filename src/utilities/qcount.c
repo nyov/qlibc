@@ -41,7 +41,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "qlibc.h"
-#include "qInternal.h"
+#include "qinternal.h"
 
 /**
  * Read counter(integer) from file with advisory file locking.
@@ -85,7 +85,6 @@ int qcount_read(const char *filepath)
  *
  * @return true if successful, otherwise returns false.
  *
- * @note
  * @code
  *   qcount_save("number.dat", 75);
  * @endcode
@@ -111,7 +110,6 @@ bool qcount_save(const char *filepath, int number)
  *
  * @return updated counter value. in case of failure, returns 0.
  *
- * @note
  * @code
  *   int count;
  *   count = qcount_update("number.dat", -3);

@@ -36,7 +36,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include "qlibc.h"
-#include "qInternal.h"
+#include "qinternal.h"
 
 // Change two hex character to one hex value.
 char _q_x2c(char hex_up, char hex_low) {

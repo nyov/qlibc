@@ -41,7 +41,7 @@
 #include <poll.h>
 #include <errno.h>
 #include "qlibc.h"
-#include "qInternal.h"
+#include "qinternal.h"
 
 #define MAX_IOSEND_SIZE     (32 * 1024)
 
