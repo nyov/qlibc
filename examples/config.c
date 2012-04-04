@@ -35,6 +35,11 @@
 
 int main(void)
 {
+#ifdef DISABLE_QCONFIG
+    printf("qconfig extension is disabled.\n"
+           "Compile qLibc without '--disable-qconfig' option.\n");
+    return 1;
+#else
     qlisttbl_t *tbl = qconfig_parse_file(NULL, CONF_PATH, '=');
     if (tbl == NULL) {
         printf("Failed to open '" CONF_PATH "'.\n");
@@ -43,4 +48,5 @@ int main(void)
     tbl->debug(tbl, stdout);
 
     return 0;
+#endif
 }

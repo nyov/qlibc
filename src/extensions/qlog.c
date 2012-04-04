@@ -50,7 +50,7 @@
  * @endcode
  */
 
-#ifndef DISABLE_EXTENSIONS
+#ifndef DISABLE_QLOG
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -319,4 +319,4 @@ static bool _real_open(qlog_t *log)
 
 #endif
 
-#endif /* DISABLE_EXTENSIONS */
+#endif /* DISABLE_QLOG */

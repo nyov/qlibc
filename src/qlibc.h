@@ -541,7 +541,6 @@ extern ssize_t qio_printf(int fd, int timeoutms, const char *format, ...);
 /* qlibc.c */
 extern const char *qlibc_version(void);
 extern bool qlibc_is_threadsafe(void);
-extern bool qlibc_is_lfs(void);
 
 /* qsocket.c */
 extern int qsocket_open(const char *hostname, int port, int timeoutms);

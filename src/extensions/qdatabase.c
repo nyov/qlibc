@@ -81,7 +81,7 @@
  *  multi-threaded environments.
  */
 
-#ifndef DISABLE_EXTENSIONS
+#ifndef DISABLE_QDATABASE
 
 #if defined(ENABLE_MYSQL) || defined( _DOXYGEN_SKIP)
 
@@ -885,4 +885,4 @@ static bool result_free(qdbresult_t *result)
 
 #endif
 
-#endif /* DISABLE_EXTENSIONS */
+#endif /* DISABLE_QDATABASE */

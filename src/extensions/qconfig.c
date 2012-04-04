@@ -32,7 +32,7 @@
  * @file qconfig.c Configuration parser APIs.
  */
 
-#ifndef DISABLE_EXTENSIONS
+#ifndef DISABLE_QCONFIG
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -268,4 +268,4 @@ qlisttbl_t *qconfig_parse_str(qlisttbl_t *tbl, const char *str, char sepchar)
     return tbl;
 }
 
-#endif /* DISABLE_EXTENSIONS */
+#endif /* DISABLE_QCONFIG */

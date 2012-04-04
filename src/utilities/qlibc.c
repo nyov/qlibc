@@ -63,16 +63,3 @@ bool qlibc_is_threadsafe(void)
 #endif
 }
 
-/**
- * Returns this library is compiled with large file support option --enable-lfs
- *
- * @return true if it supports large file, otherwise returns false.
- */
-bool qlibc_is_lfs(void)
-{
-#ifdef ENABLE_LFS
-    return true;
-#else
-    return false;
-#endif
-}

@@ -113,7 +113,7 @@
  * @endcode
  */
 
-#ifndef DISABLE_EXTENSIONS
+#ifndef DISABLE_QHTTPCLIENT
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1636,4 +1636,4 @@ static bool _parse_uri(const char *uri, bool *protocol, char *hostname, size_t n
 }
 #endif /* _DOXYGEN_SKIP */
 
-#endif /* DISABLE_EXTENSIONS */
+#endif /* DISABLE_QHTTPCLIENT */
