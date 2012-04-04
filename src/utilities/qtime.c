@@ -58,7 +58,8 @@ extern char *strptime(const char *, const char *, struct tm *);
  *   free(timestr);
  * @endcode
  */
-char *qtime_localtime_strf(char *buf, int size, time_t utctime, const char *format)
+char *qtime_localtime_strf(char *buf, int size, time_t utctime,
+                           const char *format)
 {
     if (utctime == 0) utctime = time(NULL);
     struct tm *localtm = localtime(&utctime);
@@ -103,14 +104,18 @@ char *qtime_localtime_str(time_t utctime)
  * @return internal static string pointer of time string
  *
  * @code
- *   printf("%s", qtime_localtime_staticstr(0));           // now
- *   printf("%s", qtime_localtime_staticstr(time(NULL) + 86400));  // 1 day later
+ *   printf("%s", qtime_localtime_staticstr(0));  // now
+ *   printf("%s", qtime_localtime_staticstr(time(NULL) + 86400)); // 1 day later
  * @endcode
  */
 const char *qtime_localtime_staticstr(time_t utctime)
 {
-    static char timestr[sizeof(char) * (CONST_STRLEN("00-Jan-0000 00:00:00 +0000") + 1)];
-    qtime_localtime_strf(timestr, sizeof(timestr), utctime, "%d-%b-%Y %H:%M:%S %z");
+    static char timestr[sizeof(char)
+                        * (CONST_STRLEN("00-Jan-0000 00:00:00 +0000") + 1)];
+    qtime_localtime_strf(timestr,
+                         sizeof(timestr),
+                         utctime,
+                         "%d-%b-%Y %H:%M:%S %z");
     return timestr;
 }
 
@@ -157,7 +162,8 @@ char *qtime_gmt_strf(char *buf, int size, time_t utctime, const char *format)
  */
 char *qtime_gmt_str(time_t utctime)
 {
-    int size = sizeof(char) * (CONST_STRLEN("Mon, 00 Jan 0000 00:00:00 GMT") + 1);
+    int size = sizeof(char)
+               * (CONST_STRLEN("Mon, 00 Jan 0000 00:00:00 GMT") + 1);
     char *timestr = (char *)malloc(size);
     qtime_gmt_strf(timestr, size, utctime, "%a, %d %b %Y %H:%M:%S GMT");
     return timestr;
@@ -177,8 +183,12 @@ char *qtime_gmt_str(time_t utctime)
  */
 const char *qtime_gmt_staticstr(time_t utctime)
 {
-    static char timestr[sizeof(char) * (CONST_STRLEN("Mon, 00-Jan-0000 00:00:00 GMT") + 1)];
-    qtime_gmt_strf(timestr, sizeof(timestr), utctime, "%a, %d %b %Y %H:%M:%S GMT");
+    static char timestr[sizeof(char)
+                        * (CONST_STRLEN("Mon, 00-Jan-0000 00:00:00 GMT") + 1)];
+    qtime_gmt_strf(timestr,
+                   sizeof(timestr),
+                   utctime,
+                   "%a, %d %b %Y %H:%M:%S GMT");
     return timestr;
 }
 

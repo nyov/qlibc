@@ -73,13 +73,14 @@ unsigned char *qhash_md5(const void *data, size_t nbytes)
 }
 
 /**
- * Get MD5 hash string of a object data represented as a sequence of 32 hexadecimal digits.
+ * Get MD5 hash string of a object data represented as a sequence of 32
+ * hexadecimal digits.
  *
  * @param data      source object
  * @param nbytes    size of data
  *
- * @return 32 bytes(128 bits) long malloced digest binary data
- malloced 32+1 bytes digested ASCII string which is terminated by NULL character
+ * @return 32 bytes(128 bits) long malloced digest binary data malloced 32+1
+ *         bytes digested ASCII string which is terminated by NULL character.
  *
  * @code
  *   char *md5str = qhash_md5_str((void*)"hello", 5);
@@ -102,17 +103,19 @@ char *qhash_md5_str(const void *data, size_t nbytes)
 }
 
 /**
- * Get MD5 hash string of a file contents represented as a sequence of 32 hexadecimal digits.
+ * Get MD5 hash string of a file contents represented as a sequence of 32
+ * hexadecimal digits.
  *
  * @param filepath  file path
  * @param nbytes    size of data. Set to NULL to digest end of file
  *
- * @return malloced 33(16*2+1) bytes digested ASCII string which is terminated by NULL character
+ * @return malloced 33(16*2+1) bytes digested ASCII string which is terminated
+ *         by NULL character
  *
  * @note
- * If the nbytes is set, qhash_md5_file() will try to digest at lease nbytes then
- * store actual digested size into nbytes. So if you set nbytes to over size than file size,
- * finally nbytes will have actual file size.
+ *  If the nbytes is set, qhash_md5_file() will try to digest at lease nbytes
+ *  then store actual digested size into nbytes. So if you set nbytes to over
+ *  size than file size, finally nbytes will have actual file size.
  *
  * @code
  *   // case of digesting entire file

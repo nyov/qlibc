@@ -40,7 +40,7 @@
 #include "qinternal.h"
 
 /**
- * Get the version string of qDecoder library
+ * Get the version string of qLibc library
  *
  * @return a pointer of version string
  */
@@ -50,7 +50,7 @@ const char *qlibc_version(void)
 }
 
 /**
- * Returns this library is compiled with thread-safe option. (--enable-threadsafe)
+ * Returns this library is compiled with thread-safe option. --enable-threadsafe
  *
  * @return true if it's thread-safe, otherwise returns false.
  */
@@ -64,7 +64,7 @@ bool qlibc_is_threadsafe(void)
 }
 
 /**
- * Returns this library is compiled with large file support option. (--enable-lfs)
+ * Returns this library is compiled with large file support option --enable-lfs
  *
  * @return true if it supports large file, otherwise returns false.
  */

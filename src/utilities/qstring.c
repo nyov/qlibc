@@ -57,9 +57,16 @@ char *qstrtrim(char *str)
     int i, j;
 
     if (str == NULL) return NULL;
-    for (j = 0; str[j] == ' ' || str[j] == '\t' || str[j] == '\r' || str[j] == '\n'; j++);
+    for (j = 0; str[j] == ' '
+         || str[j] == '\t'
+         || str[j] == '\r'
+         || str[j] == '\n'; j++);
     for (i = 0; str[j] != '\0'; i++, j++) str[i] = str[j];
-    for (i--; (i >= 0) && (str[i] == ' ' || str[i] == '\t' || str[i] == '\r' || str[i] == '\n'); i--);
+    for (i--; (i >= 0)
+         && (str[i] == ' '
+             || str[i] == '\t'
+             || str[i] == '\r'
+             || str[i] == '\n'); i--);
     str[i+1] = '\0';
 
     return str;
@@ -79,7 +86,11 @@ char *qstrtrim_tail(char *str)
     int i;
 
     if (str == NULL)return NULL;
-    for (i = strlen(str) - 1; (i >= 0) && (str[i] == ' ' || str[i] == '\t' || str[i] == '\r' || str[i] == '\n'); i--);
+    for (i = strlen(str) - 1; (i >= 0)
+         && (str[i] == ' '
+             || str[i] == '\t'
+             || str[i] == '\r'
+             || str[i] == '\n'); i--);
     str[i+1] = '\0';
 
     return str;
@@ -123,7 +134,8 @@ char *qstrunchar(char *str, char head, char tail)
  * @param tokstr    token or string
  * @param word      target word to be replaced
  *
- * @return a pointer of malloced or source string depending on the mode if rsuccessful, otherewise returns NULL
+ * @return a pointer of malloced or source string depending on the mode if
+ *         successful, otherewise returns NULL
  *
  * @note
  * The mode argument has two separated character. First character
@@ -186,9 +198,14 @@ char *qstrunchar(char *str, char head, char tail)
  *               retstr = Welcome to _ qDecoder Project.
  * @endcode
  */
-char *qstrreplace(const char *mode, char *srcstr, const char *tokstr, const char *word)
+char *qstrreplace(const char *mode, char *srcstr, const char *tokstr,
+                  const char *word)
 {
-    if (mode == NULL || strlen(mode) != 2 || srcstr == NULL || tokstr == NULL || word == NULL) {
+    if (mode == NULL
+        || strlen(mode) != 2
+        || srcstr == NULL
+        || tokstr == NULL
+        || word == NULL) {
         DEBUG("Unknown mode \"%s\".", mode);
         return NULL;
     }
@@ -208,7 +225,9 @@ char *qstrreplace(const char *mode, char *srcstr, const char *tokstr, const char
             for (tokenp = (char *)tokstr; *tokenp; tokenp++) {
                 if (*srcp == *tokenp) {
                     char *wordp;
-                    for (wordp = (char *)word; *wordp; wordp++) *newp++ = *wordp;
+                    for (wordp = (char *)word; *wordp; wordp++) {
+                        *newp++ = *wordp;
+                    }
                     break;
                 }
             }
@@ -216,8 +235,12 @@ char *qstrreplace(const char *mode, char *srcstr, const char *tokstr, const char
         }
         *newp = '\0';
     } else if (method == 's') { /* String replace */
-        if (strlen(word) > strlen(tokstr)) maxstrlen = ((strlen(srcstr) / strlen(tokstr)) * strlen(word)) + (strlen(srcstr) % strlen(tokstr));
-        else maxstrlen = strlen(srcstr);
+        if (strlen(word) > strlen(tokstr)) {
+            maxstrlen = ((strlen(srcstr) / strlen(tokstr)) * strlen(word))
+                        + (strlen(srcstr) % strlen(tokstr));
+        } else {
+            maxstrlen = strlen(srcstr);
+        }
         newstr = (char *)malloc(maxstrlen + 1);
         tokstrlen = strlen(tokstr);
 
@@ -250,7 +273,8 @@ char *qstrreplace(const char *mode, char *srcstr, const char *tokstr, const char
 }
 
 /**
- * Copy src string to dst. The dst string arrary will be always terminated by NULL character.
+ * Copy src string to dst. The dst string arrary will be always terminated by
+ * NULL character.
  *
  * @param dst       a pointer of the string to be copied
  * @param size      the size of dst character arrary
@@ -267,7 +291,8 @@ char *qstrcpy(char *dst, size_t size, const char *src)
 }
 
 /**
- * Copy src string to dst no more than n bytes. The dst string arrary will be always terminated by NULL character.
+ * Copy src string to dst no more than n bytes. The dst string arrary will be
+ * always terminated by NULL character.
  *
  * @param dst       a pointer of the string to be copied
  * @param size      the size of dst character arrary
@@ -457,12 +482,16 @@ char *qstrlower(char *str)
 /**
  * Split string into tokens
  *
- * @param str       source string
- * @param delimiters    string that specifies a set of delimiters that may surround the token being extracted
- * @param retstop   stop delimiter character will be stored. it can be NULL if you don't want to know.
- * @param offset    integer pointer used for store last position. (must be reset to 0)
+ * @param str           source string
+ * @param delimiters    string that specifies a set of delimiters that may
+ *                      surround the token being extracted
+ * @param retstop       stop delimiter character will be stored. it can be NULL
+ *                      if you don't want to know.
+ * @param offset        integer pointer used for store last position.
+ *                      (must be reset to 0)
  *
- * @return a pointer to the first byte of a token if successful, otherwise returns NULL.
+ * @return a pointer to the first byte of a token if successful, otherwise
+ *         returns NULL.
  *
  * @code
  *   char *str = strdup("Hello,world|Thank,you");
@@ -474,9 +503,10 @@ char *qstrlower(char *str)
  * @endcode
  *
  * @note
- * This mau modify str argument.
- * The major difference between qstrtok() and standard strtok() is that qstrtok() can returns empty string tokens.
- * If the str is "a:b::d", qstrtok() returns "a", "b", "", "d". But strtok() returns "a","b","d".
+ *  This may modify str argument.
+ *  The major difference between qstrtok() and standard strtok() is that
+ *  qstrtok() can returns empty string tokens. If the str is "a:b::d", qstrtok()
+ *  returns "a", "b", "", "d". But strtok() returns "a","b","d".
  */
 char *qstrtok(char *str, const char *delimiters, char *retstop, int *offset)
 {
@@ -508,8 +538,9 @@ char *qstrtok(char *str, const char *delimiters, char *retstop, int *offset)
 /**
  * String Tokenizer
  *
- * @param str       source string
- * @param delimiters    string that specifies a set of delimiters that may surround the token being extracted
+ * @param str           source string
+ * @param delimiters    string that specifies a set of delimiters that may
+ *                      surround the token being extracted
  *
  * @return qlist container pointer otherwise returns NULL.
  *
@@ -531,7 +562,9 @@ qlist_t *qstr_tokenizer(const char *str, const char *delimiters)
     char *dupstr = strdup(str);
     char *token;
     int offset = 0;
-    for (i = 1, token = qstrtok(dupstr, delimiters, NULL, &offset); token != NULL; token = qstrtok(dupstr, delimiters, NULL, &offset), i++) {
+    for (i = 1, token = qstrtok(dupstr, delimiters, NULL, &offset);
+         token != NULL;
+         token = qstrtok(dupstr, delimiters, NULL, &offset), i++) {
         list->add_last(list, token, strlen(token) + 1);
     }
     free(dupstr);
@@ -544,7 +577,8 @@ qlist_t *qstr_tokenizer(const char *str, const char *delimiters)
  *
  * @param number    integer
  *
- * @return a pointer of malloced string which contains comma separated number if successful, otherwise returns NULL
+ * @return a pointer of malloced string which contains comma separated number
+ *         if successful, otherwise returns NULL
  */
 char *qstr_comma_number(int number)
 {
@@ -574,8 +608,9 @@ char *qstr_comma_number(int number)
  * @return a pointer of malloced string
  *
  * @note
- * The length of returned string is 32+1 bytes long including terminating NULL character.
- * it's a good idea to call srand() once before calling this because it uses rand().
+ *  The length of returned string is 32+1 bytes long including terminating NULL
+ *  character. It's a good idea to call srand() once before calling this because
+ *  it uses rand().
  */
 char *qstr_unique(const char *seed)
 {
@@ -591,7 +626,12 @@ char *qstr_unique(const char *seed)
 #endif
 
     char szSeed[128];
-    snprintf(szSeed, sizeof(szSeed), "%u%d%lu%ld%s", getpid(), rand(), (unsigned long int)time(NULL), usec, (seed!=NULL?seed:""));
+    snprintf(szSeed, sizeof(szSeed), "%u%d%lu%ld%s",
+             getpid(),
+             rand(),
+             (unsigned long int)time(NULL),
+             usec,
+             (seed!=NULL?seed:""));
     return qhash_md5_str(szSeed, strlen(szSeed));
 }
 
@@ -613,22 +653,26 @@ char *qstr_unique(const char *seed)
  *   }
  * @endcode
  *
- * @note Basically you can use below test functios without creating your own version.
- * Make sure <ctype.h> header should be included before using any of these functions.
- *   isalnum - checks for an alphanumeric character.
- *   isalpha - checks for an alphabetic character.
- *   isascii - checks  whether  c is a 7-bit unsigned char value that fits into the ASCII character set.
- *   isblank - checks for a blank character; that is, a space or a tab.
- *   iscntrl - checks for a control character.
- *   isdigit - checks for a digit (0 through 9).
- *   isgraph - checks for any printable character except space.
- *   islower - checks for a lower-case character.
- *   isprint - checks for any printable character including space.
- *   ispunct - checks for any printable character which is not a  space  or  an alphanumeric character.
- *   isspace - checks  for  white-space  characters.
- *   isupper - checks for an uppercase letter.
- *   isxdigit -  checks for a hexadecimal digits.
- * Please refer "man isalnum" for more details about these functions.
+ * @note
+ *  Basically you can use below test functios without creating your own version.
+ *  Make sure <ctype.h> header should be included before using any of these
+ *  functions.
+ *    isalnum - checks for an alphanumeric character.
+ *    isalpha - checks for an alphabetic character.
+ *    isascii - checks  whether  c is a 7-bit unsigned char value that fits into
+ *              the ASCII character set.
+ *    isblank - checks for a blank character; that is, a space or a tab.
+ *    iscntrl - checks for a control character.
+ *    isdigit - checks for a digit (0 through 9).
+ *    isgraph - checks for any printable character except space.
+ *    islower - checks for a lower-case character.
+ *    isprint - checks for any printable character including space.
+ *    ispunct - checks for any printable character which is not a  space or an
+ *              alphanumeric character.
+ *    isspace - checks  for  white-space  characters.
+ *    isupper - checks for an uppercase letter.
+ *    isxdigit -  checks for a hexadecimal digits.
+ *  Please refer "man isalnum" for more details about these functions.
  */
 bool qstrtest(int (*testfunc)(int), const char *str)
 {
@@ -699,7 +743,9 @@ bool qstr_is_ip4addr(const char *str)
 
     char *s1, *s2;
     int periodcnt;
-    for (s1 = dupstr, periodcnt = 0; (s2 = strchr(s1, '.')) != NULL; s1 = s2 + 1, periodcnt++) {
+    for (s1 = dupstr, periodcnt = 0;
+         (s2 = strchr(s1, '.')) != NULL;
+         s1 = s2 + 1, periodcnt++) {
         *s2 = '\0';
 
         int n;
@@ -727,13 +773,15 @@ bool qstr_is_ip4addr(const char *str)
  * @param tocode    encoding to convert
  * @param mag       magnification between fromcode and tocode
  *
- * @return a pointer of malloced converted string if successful, otherwise returns NULL
+ * @return a pointer of malloced converted string if successful,
+ *         otherwise returns NULL
  *
  * @code
  *   qCharEncode("KOREAN_EUCKR_STRING", "EUC-KR", "UTF-8", 1.5);
  * @endcode
  */
-char *qstr_conv_encoding(const char *str, const char *fromcode, const char *tocode, float mag)
+char *qstr_conv_encoding(const char *str, const char *fromcode,
+                         const char *tocode, float mag)
 {
 #ifdef __linux__
     if (str == NULL) return NULL;

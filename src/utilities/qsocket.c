@@ -53,21 +53,29 @@
 /**
  * Create a TCP socket for the remote host and port.
  *
- * @param   hostname    remote hostname
- * @param   port        remote port
- * @param   timeoutms   wait timeout milliseconds. if set to negative value, wait indefinitely.
+ * @param hostname  remote hostname
+ * @param port      remote port
+ * @param timeoutms wait timeout milliseconds. if set to negative value,
+ *                  wait indefinitely.
  *
- * @return the new socket descriptor, or -1 in case of invalid hostname, -2 in case of socket creation failure, -3 in case of connection failure.
+ * @return the new socket descriptor, or
+ *         -1 in case of invalid hostname,
+ *         -2 in case of socket creation failure,
+ *         -3 in case of connection failure.
  */
 int qsocket_open(const char *hostname, int port, int timeoutms)
 {
     /* host conversion */
     struct sockaddr_in addr;
-    if (qsocket_get_addr(&addr, hostname, port) == false) return -1; /* invalid hostname */
+    if (qsocket_get_addr(&addr, hostname, port) == false) {
+        return -1; /* invalid hostname */
+    }
 
     /* create new socket */
     int sockfd;
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) return -2; /* sockfd creation fail */
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        return -2; /* sockfd creation fail */
+    }
 
     /* set to non-block socket*/
     int flags = fcntl(sockfd, F_GETFL, 0);
@@ -75,7 +83,8 @@ int qsocket_open(const char *hostname, int port, int timeoutms)
 
     /* try to connect */
     int status = connect(sockfd, (struct sockaddr *)&addr, sizeof(addr));
-    if ( status < 0 && (errno != EINPROGRESS || qio_wait_writable(sockfd, timeoutms) <= 0) ) {
+    if ( status < 0 && (errno != EINPROGRESS
+                        || qio_wait_writable(sockfd, timeoutms) <= 0) ) {
         close(sockfd);
         return -3; /* connection failed */
     }
@@ -89,8 +98,10 @@ int qsocket_open(const char *hostname, int port, int timeoutms)
 /**
  * Close socket.
  *
- * @param   sockfd      socket descriptor
- * @param   timeoutms   if timeoutms >= 0, shut down write connection first then wait and throw out input stream data. set to -1 to close socket immediately.
+ * @param sockfd    socket descriptor
+ * @param timeoutms if timeoutms >= 0, shut down write connection first then
+ *                  wait and throw out input stream data. set to -1 to close
+ *                  socket immediately.
  *
  * @return true on success, or false if an error occurred.
  */
@@ -113,9 +124,9 @@ bool qsocket_close(int sockfd, int timeoutms)
 /**
  * Convert hostname to sockaddr_in structure.
  *
- * @param   addr        sockaddr_in structure pointer
- * @param   hostname    IP string address or hostname
- * @param   port        port number
+ * @param addr      sockaddr_in structure pointer
+ * @param hostname  IP string address or hostname
+ * @param port      port number
  *
  * @return true if successful, otherwise returns false.
  */

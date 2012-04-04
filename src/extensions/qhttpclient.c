@@ -96,7 +96,7 @@
  *  if(httpClient == NULL) return;
  *
  *  // set options
- *  httpClient->setKeepalive(httpClient, true);
+ *  httpClient->set_keepalive(httpClient, true);
  *
  *  // make a connection
  *  if(httpClient->open(httpClient) == false) return;
@@ -145,17 +145,17 @@ static void set_keepalive(qhttpclient_t *client, bool keepalive);
 static void set_useragent(qhttpclient_t *client, const char *agentname);
 
 static bool head(qhttpclient_t *client, const char *uri, int *rescode,
-                  qlisttbl_t *reqheaders, qlisttbl_t *resheaders);
+                 qlisttbl_t *reqheaders, qlisttbl_t *resheaders);
 static bool get(qhttpclient_t *client, const char *uri, int fd,
-                 off_t *savesize, int *rescode,
-                 qlisttbl_t *reqheaders, qlisttbl_t *resheaders,
-                 bool (*callback)(void *userdata, off_t recvbytes),
-                 void *userdata);
+                off_t *savesize, int *rescode,
+                qlisttbl_t *reqheaders, qlisttbl_t *resheaders,
+                bool (*callback)(void *userdata, off_t recvbytes),
+                void *userdata);
 static bool put(qhttpclient_t *client, const char *uri, int fd, off_t length,
-                 int *rescode,
-                 qlisttbl_t *reqheaders, qlisttbl_t *resheaders,
-                 bool (*callback)(void *userdata, off_t sentbytes),
-                 void *userdata);
+                int *rescode,
+                qlisttbl_t *reqheaders, qlisttbl_t *resheaders,
+                bool (*callback)(void *userdata, off_t sentbytes),
+                void *userdata);
 static void *cmd(qhttpclient_t *client, const char *method, const char *uri,
                  void *data, size_t size,
                  int *rescode, size_t *contentslength,
@@ -164,7 +164,7 @@ static void *cmd(qhttpclient_t *client, const char *method, const char *uri,
 static bool send_request(qhttpclient_t *client, const char *method,
                          const char *uri, qlisttbl_t *reqheaders);
 static int read_response(qhttpclient_t *client, qlisttbl_t *resheaders,
-                          off_t *contentlength);
+                         off_t *contentlength);
 
 static ssize_t  gets_(qhttpclient_t *client, char *buf, size_t bufsize);
 static ssize_t  read_(qhttpclient_t *client, void *buf, size_t nbytes);
@@ -178,7 +178,7 @@ static void _free(qhttpclient_t *client);
 // internal usages
 static bool _set_socket_option(int socket);
 static bool _parse_uri(const char *uri, bool *protocol, char *hostname,
-                      size_t namesize, int *port);
+                       size_t namesize, int *port);
 
 #endif
 
@@ -239,8 +239,8 @@ struct  SslConn {
  *
  * @note
  *  Keep-alive feature is turned off by default. Turn it on by calling
- *  setKeepalive(). If destname is URI string starting with
- *  "https://", setSsl() will be called internally.
+ *  set_keepalive(). If destname is URI string starting with
+ *  "https://", set_ssl() will be called internally.
  */
 qhttpclient_t *qhttpclient(const char *destname, int port)
 {
@@ -276,10 +276,10 @@ qhttpclient_t *qhttpclient(const char *destname, int port)
     client->port        = port;
 
     // member methods
-    client->setSsl          = set_ssl;
-    client->setTimeout      = set_timeout;
-    client->setKeepalive    = set_keepalive;
-    client->setUseragent    = set_useragent;
+    client->set_ssl         = set_ssl;
+    client->set_timeout     = set_timeout;
+    client->set_keepalive   = set_keepalive;
+    client->set_useragent   = set_useragent;
 
     client->open            = open_;
 
@@ -310,12 +310,12 @@ qhttpclient_t *qhttpclient(const char *destname, int port)
 }
 
 /**
- * qhttpclient_t->setSsl(): Sets connection to HTTPS connection
+ * qhttpclient_t->set_ssl(): Sets connection to HTTPS connection
  *
  * @param client    qhttpclient_t object pointer
  *
  * @code
- *   httpClient->setSsl(httpClient);
+ *   httpClient->set_ssl(httpClient);
  * @endcode
  */
 static bool set_ssl(qhttpclient_t *client)
@@ -343,14 +343,14 @@ static bool set_ssl(qhttpclient_t *client)
 }
 
 /**
- * qhttpclient_t->setTimeout(): Sets connection wait timeout.
+ * qhttpclient_t->set_timeout(): Sets connection wait timeout.
  *
  * @param client    qhttpclient_t object pointer
  * @param timeoutms timeout mili-seconds. 0 for system defaults
  *
  * @code
- *   httpClient->setTimeout(httpClient, 0);    // default
- *   httpClient->setTimeout(httpClient, 5000); // 5 seconds
+ *   httpClient->set_timeout(httpClient, 0);    // default
+ *   httpClient->set_timeout(httpClient, 5000); // 5 seconds
  * @endcode
  */
 static void set_timeout(qhttpclient_t *client, int timeoutms)
@@ -360,14 +360,14 @@ static void set_timeout(qhttpclient_t *client, int timeoutms)
 }
 
 /**
- * qhttpclient_t->setKeepalive(): Sets KEEP-ALIVE feature on/off.
+ * qhttpclient_t->set_keepalive(): Sets KEEP-ALIVE feature on/off.
  *
  * @param client    qhttpclient_t object pointer
  * @param keepalive true to set keep-alive on, false to set keep-alive off
  *
  * @code
- *   httpClient->setKeepalive(httpClient, true);  // keep-alive on
- *   httpClient->setKeepalive(httpClient, false); // keep-alive off
+ *   httpClient->set_keepalive(httpClient, true);  // keep-alive on
+ *   httpClient->set_keepalive(httpClient, false); // keep-alive off
  * @endcode
  */
 static void set_keepalive(qhttpclient_t *client, bool keepalive)
@@ -376,13 +376,13 @@ static void set_keepalive(qhttpclient_t *client, bool keepalive)
 }
 
 /**
- * qhttpclient_t->setUseragent(): Sets user-agent string.
+ * qhttpclient_t->set_useragent(): Sets user-agent string.
  *
  * @param client    qhttpclient_t object pointer
  * @param useragent user-agent string
  *
  * @code
- *   httpClient->setUseragent(httpClient, "MyAgent/1.0");
+ *   httpClient->set_useragent(httpClient, "MyAgent/1.0");
  * @endcode
  */
 static void set_useragent(qhttpclient_t *client, const char *useragent)
@@ -536,7 +536,7 @@ static bool open_(qhttpclient_t *client)
  * @endcode
  */
 static bool head(qhttpclient_t *client, const char *uri, int *rescode,
-                  qlisttbl_t *reqheaders, qlisttbl_t *resheaders)
+                 qlisttbl_t *reqheaders, qlisttbl_t *resheaders)
 {
 
     // reset rescode
@@ -659,8 +659,8 @@ static bool head(qhttpclient_t *client, const char *uri, int *rescode,
  * The "rescode" will be set if it received any response code from a remote server even though it returns false.
  */
 static bool get(qhttpclient_t *client, const char *uri, int fd, off_t *savesize, int *rescode,
-                 qlisttbl_t *reqheaders, qlisttbl_t *resheaders,
-                 bool (*callback)(void *userdata, off_t recvbytes), void *userdata)
+                qlisttbl_t *reqheaders, qlisttbl_t *resheaders,
+                bool (*callback)(void *userdata, off_t recvbytes), void *userdata)
 {
 
     // reset rescode
@@ -869,8 +869,8 @@ static bool get(qhttpclient_t *client, const char *uri, int fd, off_t *savesize,
  * The "rescode" will be set if it received any response code from a remote server even though it returns false.
  */
 static bool put(qhttpclient_t *client, const char *uri, int fd, off_t length, int *rescode,
-                 qlisttbl_t *reqheaders, qlisttbl_t *resheaders,
-                 bool (*callback)(void *userdata, off_t sentbytes), void *userdata)
+                qlisttbl_t *reqheaders, qlisttbl_t *resheaders,
+                bool (*callback)(void *userdata, off_t sentbytes), void *userdata)
 {
 
     // reset rescode
@@ -1027,9 +1027,9 @@ static bool put(qhttpclient_t *client, const char *uri, int fd, off_t length, in
  * and will be null terminated.
  */
 static void *cmd(qhttpclient_t *client, const char *method, const char *uri,
-                  void *data, size_t size,
-                  int *rescode, size_t *contentslength,
-                  qlisttbl_t *reqheaders, qlisttbl_t *resheaders)
+                 void *data, size_t size,
+                 int *rescode, size_t *contentslength,
+                 qlisttbl_t *reqheaders, qlisttbl_t *resheaders)
 {
 
     // reset rescode

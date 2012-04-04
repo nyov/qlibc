@@ -42,6 +42,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "qlibc.h"
+#include "qinternal.h"
 
 /**
  * Get system environment variable
@@ -63,9 +64,12 @@ const char *qsys_getenv(const char *envname, const char *nullstr)
  *
  * @param cmd       external command
  *
- * @return malloced string pointer which contains result if successful, otherwise returns NULL
+ * @return malloced string pointer which contains result if successful,
+ *         otherwise returns NULL
  *
- * @note If the command does not report result but it is executed successfully, this will returns empty string(not null)
+ * @note
+ *  If the command does not report result but it is executed successfully,
+ *  this will returns empty string(not null)
  */
 char *qsyscmd(const char *cmd)
 {
@@ -81,7 +85,8 @@ char *qsyscmd(const char *cmd)
 /**
  * Get system IP address string.
  *
- * @return malloced string pointer which contains IP address string if successful, otherwise returns NULL
+ * @return malloced string pointer which contains IP address string if
+ *         successful, otherwise returns NULL
  */
 bool qsys_getip(char *buf, size_t bufsize)
 {

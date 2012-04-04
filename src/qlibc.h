@@ -41,7 +41,7 @@
 #define _Q_VERSION "2.0.0"  /*!< qlibc version number string */
 
 #ifdef __cplusplus
-//extern "C" {
+extern "C" {
 #endif
 
 #include <stdio.h>
@@ -409,7 +409,7 @@ struct qvector_t {
 typedef struct qqueue_t qqueue_t;
 
 /* public functions */
-extern qqueue_t *qQueue();
+extern qqueue_t *qqueue();
 
 /**
  * qvector container.
@@ -615,7 +615,7 @@ extern void *qshm_get(int shmid);
 extern bool qshm_free(int shmid);
 
 #ifdef __cplusplus
-//}
+}
 #endif
 
 #endif /*_QLIBC_H */

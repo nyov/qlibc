@@ -129,7 +129,9 @@ bool qfile_exist(const char *filepath)
  * Load file into memory.
  *
  * @param filepath  file path
- * @param nbytes    has two purpost, one is to set how many bytes are readed. the other is actual the number loaded bytes will be stored. nbytes must be point 0 or NULL to read entire file.
+ * @param nbytes    has two purpost, one is to set how many bytes are readed.
+ *                  the other is actual the number loaded bytes will be stored.
+ *                  nbytes must be point 0 or NULL to read entire file.
  *
  * @return allocated memory pointer if successful, otherwise returns NULL.
  *
@@ -147,11 +149,12 @@ bool qfile_exist(const char *filepath)
  * @endcode
  *
  * @note
- * This method actually allocates memory more than 1 bytes than filesize then append
- * NULL character at the end. For example, when the file size is 10 bytes long, 10+1
- * bytes will allocated and the last byte is always NULL character. So you can load
- * text file and use without appending NULL character. By the way, *size still will
- * be returned the actual file size of 10.
+ *  This method actually allocates memory more than 1 bytes than filesize then
+ *  append NULL character at the end. For example, when the file size is 10
+ *  bytes long, 10+1 bytes will allocated and the last byte is always NULL
+ *  character. So you can load text file and use without appending NULL
+ *  character. By the way, the actual file size 10 will be returned at nbytes
+ *  variable.
  */
 void *qfile_load(const char *filepath, size_t *nbytes)
 {
@@ -191,12 +194,15 @@ void *qfile_load(const char *filepath, size_t *nbytes)
  * Load file stream which has unknown size into memory.
  *
  * @param fp        FILE pointer
- * @param nbytes    has two purpost, one is to set how many bytes are readed. the other is actual the number loaded bytes will be stored. nbytes must be point 0 or NULL to read end of stream.
+ * @param nbytes    has two purpost, one is to set how many bytes are readed.
+ *                  the other is actual the number loaded bytes will be stored.
+ *                  nbytes must be point 0 or NULL to read end of stream.
  *
  * @return allocated memory pointer if successful, otherwise returns NULL.
  *
  * @note
- * This method append NULL character at the end of stream. but nbytes only counts actual readed bytes.
+ *  This method append NULL character at the end of stream. but nbytes only
+ *  counts actual readed bytes.
  */
 void *qfile_read(FILE *fp, size_t *nbytes)
 {
@@ -223,7 +229,7 @@ void *qfile_read(FILE *fp, size_t *nbytes)
         } else if (c_count == memsize - 1) {
             memsize *= 2;
 
-            /* Here, we do not use realloc(). Because sometimes it is unstable. */
+            /* Here, we don't use realloc(). Sometimes it is unstable. */
             char *datatmp = (char *)malloc(sizeof(char) * (memsize + 1));
             if (datatmp == NULL) {
                 DEBUG("Memory allocation failed.");
@@ -265,12 +271,16 @@ void *qfile_read(FILE *fp, size_t *nbytes)
  *   qfile_save("/tmp/integer.bin, (void*)&integer, sizeof(int));
  * @endcode
  */
-ssize_t qfile_save(const char *filepath, const void *buf, size_t size, bool append)
+ssize_t qfile_save(const char *filepath, const void *buf, size_t size,
+                   bool append)
 {
     int fd;
 
-    if (append == false) fd = open(filepath, O_CREAT|O_WRONLY|O_TRUNC, DEF_FILE_MODE);
-    else fd = open(filepath, O_CREAT|O_WRONLY|O_APPEND, DEF_FILE_MODE);
+    if (append == false) {
+        fd = open(filepath, O_CREAT|O_WRONLY|O_TRUNC, DEF_FILE_MODE);
+    } else {
+        fd = open(filepath, O_CREAT|O_WRONLY|O_APPEND, DEF_FILE_MODE);
+    }
     if (fd < 0) return -1;
 
     ssize_t count = write(fd, buf, size);
@@ -369,7 +379,9 @@ char *qfile_get_ext(const char *filepath)
     char *filename = qfile_get_name(filepath);
     char *p = strrchr(filename, '.');
     char *ext = NULL;
-    if (p != NULL && strlen(p+1) <= MAX_EXTENSION_LENGTH && qstrtest(isalnum, p+1) == true) {
+    if (p != NULL
+        && strlen(p+1) <= MAX_EXTENSION_LENGTH
+        && qstrtest(isalnum, p+1) == true) {
         ext = strdup(p+1);
         qstrlower(ext);
     } else {
@@ -397,7 +409,7 @@ off_t qfile_get_size(const char *filepath)
 /**
  * Correct path string.
  *
- * @param path      path string
+ * @param path  path string
  *
  * @return path string pointer
  *

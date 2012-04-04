@@ -48,13 +48,15 @@
 /**
  * Test & wait until the file descriptor has readable data.
  *
- * @param   fd      file descriptor
- * @param   timeoutms   wait timeout milliseconds. 0 for no wait, -1 for infinite wait
+ * @param fd        file descriptor
+ * @param timeoutms wait timeout milliseconds. 0 for no wait,
+ *                  -1 for infinite wait
  *
  * @return 1 if readable, 0 on timeout, -1 if an error occurred.
  *
  * @note
- * The argument timeoutms can be used to set maximum wait time for a socket descriptor.
+ *  The argument timeoutms can be used to set maximum wait time for a socket
+ *  descriptor.
  */
 int qio_wait_readable(int fd, int timeoutms)
 {
@@ -73,8 +75,9 @@ int qio_wait_readable(int fd, int timeoutms)
 /**
  * Test & wait until the file descriptor is ready for writing.
  *
- * @param   fd      file descriptor
- * @param   timeoutms   wait timeout milliseconds. 0 for no wait, -1 for infinite wait
+ * @param fd        file descriptor
+ * @param timeoutms wait timeout milliseconds. 0 for no wait,
+ *                  -1 for infinite wait
  *
  * @return 1 if writable, 0 on timeout, -1 if an error occurred.
  */
@@ -95,10 +98,12 @@ int qio_wait_writable(int fd, int timeoutms)
 /**
  * Read from a file descriptor.
  *
- * @param   fd      file descriptor
- * @param   buf     data buffer pointer to write to
- * @param   nbytes      the number of bytes to read from file descriptor & write into buffer
- * @param   timeoutms   wait timeout milliseconds. 0 for no wait, -1 for infinite wait
+ * @param fd        file descriptor
+ * @param buf       data buffer pointer to write to
+ * @param nbytes    the number of bytes to read from file descriptor & write
+ *                  into buffer
+ * @param timeoutms wait timeout milliseconds. 0 for no wait, -1 for infinite
+ *                  wait
  *
  * @return the number of bytes read if successful, otherwise returns -1.
  */
@@ -129,10 +134,12 @@ ssize_t qio_read(int fd, void *buf, size_t nbytes, int timeoutms)
 /**
  * Write to a file descriptor.
  *
- * @param   fd      file descriptor
- * @param   buf     data buffer pointer to read from
- * @param   nbytes      the number of bytes to write to file descriptor & read from buffer
- * @param   timeoutms   wait timeout milliseconds. 0 for no wait, -1 for infinite wait
+ * @param fd        file descriptor
+ * @param buf       data buffer pointer to read from
+ * @param nbytes    the number of bytes to write to file descriptor & read
+ *                  from buffer
+ * @param timeoutms wait timeout milliseconds. 0 for no wait, -1 for infinite
+ *                  wait
  *
  * @return the number of bytes written if successful, otherwise returns -1.
  */
@@ -163,10 +170,12 @@ ssize_t qio_write(int fd, const void *buf, size_t nbytes, int timeoutms)
 /**
  * Transfer data between file descriptors
  *
- * @param   outfd       output file descriptor
- * @param   infd        input file descriptor
- * @param   nbytes      the number of bytes to copy between file descriptors. 0 means transfer until end of infd.
- * @param   timeoutms   wait timeout milliseconds. 0 for no wait, -1 for infinite wait
+ * @param outfd       output file descriptor
+ * @param infd        input file descriptor
+ * @param nbytes      the number of bytes to copy between file descriptors.
+ *                    0 means transfer until end of infd.
+ * @param timeoutms   wait timeout milliseconds. 0 for no wait, -1 for infinite
+ *                    wait
  *
  * @return the number of bytes written if successful, otherwise returns -1.
  */
@@ -204,19 +213,22 @@ off_t qio_send(int outfd, int infd, off_t nbytes, int timeoutms)
 }
 
 /**
- * Read a line from a file descriptor into the buffer pointed to until either a terminating newline or EOF.
- * New-line characters(CR, LF ) will not be stored into buffer.
+ * Read a line from a file descriptor into the buffer pointed to until either a
+ * terminating newline or EOF. New-line characters(CR, LF ) will not be stored
+ * into buffer.
  *
- * @param   fd      file descriptor
- * @param   buf     data buffer pointer
- * @param   bufsize     buffer size
- * @param   timeoutms   wait timeout milliseconds
+ * @param fd      file descriptor
+ * @param buf     data buffer pointer
+ * @param bufsize     buffer size
+ * @param timeoutms   wait timeout milliseconds
  *
- * @return the number of bytes read from file descriptor if successful, otherwise returns -1.
+ * @return the number of bytes read from file descriptor if successful,
+ *         otherwise returns -1.
  *
- * @note    Be sure the return value does not mean the length of actual stored data.
- *      It means how many bytes are readed from the file descriptor,
- *      so the new-line characters will be counted, but not be stored.
+ * @note
+ *  Be sure the return value does not mean the length of actual stored data.
+ *  It means how many bytes are readed from the file descriptor,
+ *  so the new-line characters will be counted, but not be stored.
  */
 ssize_t qio_gets(int fd, char *buf, size_t bufsize, int timeoutms)
 {
@@ -251,11 +263,13 @@ ssize_t qio_gets(int fd, char *buf, size_t bufsize, int timeoutms)
 /**
  * Writes the string and a trailing newline to file descriptor.
  *
- * @param   fd      file descriptor
- * @param   str     string pointer
- * @param   timeoutms   wait timeout milliseconds. 0 for no wait, -1 for infinite wait
+ * @param fd        file descriptor
+ * @param str       string pointer
+ * @param timeoutms wait timeout milliseconds. 0 for no wait, -1 for infinite
+ *                  wait
  *
- * @return the number of bytes written including trailing newline characters if successful, otherwise returns -1.
+ * @return the number of bytes written including trailing newline characters
+ *         if successful, otherwise returns -1.
  */
 ssize_t qio_puts(int fd, const char *str, int timeoutms)
 {
@@ -265,9 +279,10 @@ ssize_t qio_puts(int fd, const char *str, int timeoutms)
 /**
  * Formatted output to a file descriptor
  *
- * @param   fd      file descriptor
- * @param   timeoutms   wait timeout milliseconds. 0 for no wait, -1 for infinite wait
- * @param   format      format string
+ * @param fd        file descriptor
+ * @param timeoutms wait timeout milliseconds. 0 for no wait, -1 for infinite
+ *                  wait
+ * @param format    format string
  *
  * @return the number of bytes written if successful, otherwise returns -1.
  */

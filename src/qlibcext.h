@@ -38,7 +38,7 @@
 #define _QLIBCEXT_H
 
 #ifdef __cplusplus
-//extern "C" {
+extern "C" {
 #endif
 
 #include <stdio.h>
@@ -107,10 +107,10 @@ extern qhttpclient_t *qhttpclient(const char *hostname, int port);
 /* qhttpclient_t details */
 struct qhttpclient_t {
     /* capsulated member functions */
-    bool (*setSsl) (qhttpclient_t *client);
-    void (*setTimeout) (qhttpclient_t *client, int timeoutms);
-    void (*setKeepalive) (qhttpclient_t *client, bool keepalive);
-    void (*setUseragent) (qhttpclient_t *client, const char *useragent);
+    bool (*set_ssl) (qhttpclient_t *client);
+    void (*set_timeout) (qhttpclient_t *client, int timeoutms);
+    void (*set_keepalive) (qhttpclient_t *client, bool keepalive);
+    void (*set_useragent) (qhttpclient_t *client, const char *useragent);
 
     bool (*open) (qhttpclient_t *client);
 
@@ -163,15 +163,15 @@ struct qhttpclient_t {
 };
 
 /******************************************************************************
- * Q_DB - Database interface.
+ * qdb_t - Database interface.
  * qdatabase.c
  ******************************************************************************/
 
 /**
- * Q_DB & Q_DBRESULT types and definitions.
+ * qdb_t & qdbresult_t types and definitions.
  */
-typedef struct _Q_DB  Q_DB;
-typedef struct _Q_DBRESULT  Q_DBRESULT;
+typedef struct qdb_t  qdb_t;
+typedef struct qdbresult_t  qdbresult_t;
 
 /* Database Support*/
 #ifdef _mysql_h
@@ -179,34 +179,36 @@ typedef struct _Q_DBRESULT  Q_DBRESULT;
 #endif /* _mysql_h */
 
 /**
- * Q_DB constructor.
+ * qdb_t constructor.
  */
-extern Q_DB *qDb(const char *dbtype, const char *addr, int port, const char *database, const char *username, const char *password, bool autocommit);
+extern qdb_t *qdb(const char *dbtype,
+                  const char *addr, int port, const char *database,
+                  const char *username, const char *password, bool autocommit);
 
 /**
- * Q_DB details.
+ * qdb_t details.
  */
-struct _Q_DB {
+struct qdb_t {
     /* capsulated member functions */
-    bool (*open) (Q_DB *db);
-    bool (*close) (Q_DB *db);
+    bool (*open) (qdb_t *db);
+    bool (*close) (qdb_t *db);
 
-    int (*executeUpdate) (Q_DB *db, const char *query);
-    int (*executeUpdatef) (Q_DB *db, const char *format, ...);
+    int (*execute_update) (qdb_t *db, const char *query);
+    int (*execute_updatef) (qdb_t *db, const char *format, ...);
 
-    Q_DBRESULT *(*executeQuery) (Q_DB *db, const char *query);
-    Q_DBRESULT *(*executeQueryf) (Q_DB *db, const char *format, ...);
+    qdbresult_t *(*execute_query) (qdb_t *db, const char *query);
+    qdbresult_t *(*execute_queryf) (qdb_t *db, const char *format, ...);
 
-    bool (*beginTran) (Q_DB *db);
-    bool (*endTran) (Q_DB *db, bool commit);
-    bool (*commit) (Q_DB *db);
-    bool (*rollback) (Q_DB *db);
+    bool (*begin_tran) (qdb_t *db);
+    bool (*end_tran) (qdb_t *db, bool commit);
+    bool (*commit) (qdb_t *db);
+    bool (*rollback) (qdb_t *db);
 
-    bool (*setFetchType) (Q_DB *db, bool use);
-    bool (*getConnStatus) (Q_DB *db);
-    bool (*ping) (Q_DB *db);
-    const char *(*getError) (Q_DB *db, unsigned int *errorno);
-    bool (*free) (Q_DB *db);
+    bool (*set_fetchtype) (qdb_t *db, bool fromdb);
+    bool (*get_conn_status) (qdb_t *db);
+    bool (*ping) (qdb_t *db);
+    const char *(*get_error) (qdb_t *db, unsigned int *errorno);
+    bool (*free) (qdb_t *db);
 
     /* private variables - do not access directly */
     qmutex_t  qmutex;  /*!< activated if compiled with --enable-threadsafe */
@@ -224,33 +226,31 @@ struct _Q_DB {
         bool fetchtype;
     } info;   /*!< database connection infomation */
 
-    /* private variables for mysql database */
 #ifdef _Q_ENABLE_MYSQL
+    /* private variables for mysql database - do not access directly */
     MYSQL  *mysql;
 #endif
 };
 
 /**
- * Q_DBRESULT details.
+ * qdbresult_t details.
  */
-struct _Q_DBRESULT {
+struct qdbresult_t {
     /* capsulated member functions */
-    const char *(*getStr) (Q_DBRESULT *result, const char *field);
-    const char *(*getStrAt) (Q_DBRESULT *result, int idx);
-    int (*getInt) (Q_DBRESULT *result, const char *field);
-    int (*getIntAt) (Q_DBRESULT *result, int idx);
-    bool (*getNext) (Q_DBRESULT *result);
+    const char *(*get_str) (qdbresult_t *result, const char *field);
+    const char *(*get_str_at) (qdbresult_t *result, int idx);
+    int (*get_int) (qdbresult_t *result, const char *field);
+    int (*get_int_at) (qdbresult_t *result, int idx);
+    bool (*get_next) (qdbresult_t *result);
 
-    int (*getCols) (Q_DBRESULT *result);
-    int (*getRows) (Q_DBRESULT *result);
-    int (*getRow) (Q_DBRESULT *result);
+    int (*get_cols) (qdbresult_t *result);
+    int (*get_rows) (qdbresult_t *result);
+    int (*get_row) (qdbresult_t *result);
 
-    bool (*free) (Q_DBRESULT *result);
+    bool (*free) (qdbresult_t *result);
 
-    /* private variables - do not access directly */
-
-    /* private variables for mysql database */
 #ifdef _Q_ENABLE_MYSQL
+    /* private variables for mysql database - do not access directly */
     bool fetchtype;
     MYSQL_RES  *rs;
     MYSQL_FIELD  *fields;
@@ -261,7 +261,7 @@ struct _Q_DBRESULT {
 };
 
 #ifdef __cplusplus
-//}
+}
 #endif
 
 #endif /*_QLIBCEXT_H */
