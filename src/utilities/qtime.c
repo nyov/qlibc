@@ -37,7 +37,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <time.h>
-extern char *strptime(const char *, const char *, struct tm *);
+// extern char *strptime(const char *, const char *, struct tm *);
 #include "qlibc.h"
 #include "qinternal.h"
 

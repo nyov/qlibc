@@ -252,7 +252,8 @@ char *qbase64_encode(const void *bin, size_t size)
     }
 
     // malloc for encoded string
-    char *pszB64 = (char *)malloc((4 * ((size / 3) + ((size % 3 == 0) ? 0 : 1)) + 1));
+    char *pszB64 = (char *)malloc(4 * ((size / 3) + ((size % 3 == 0) ? 0 : 1))
+                                  + 1);
     if (pszB64 == NULL) {
         return NULL;
     }

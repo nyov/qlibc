@@ -122,7 +122,7 @@ static bool rollback(qdb_t *db);
 
 static bool set_fetchtype(qdb_t *db, bool use);
 static bool get_conn_status(qdb_t *db);
-static bool _ping(qdb_t *db);
+static bool ping(qdb_t *db);
 static const char  *get_error(qdb_t *db, unsigned int *errorno);
 static bool free_(qdb_t *db);
 
@@ -219,7 +219,7 @@ qdb_t *qdb(const char *dbtype, const char *addr, int port, const char *username,
 
     db->set_fetchtype   = set_fetchtype;
     db->get_conn_status = get_conn_status;
-    db->ping            = _ping;
+    db->ping            = ping;
     db->get_error       = get_error;
     db->free            = free_;
 
@@ -621,7 +621,7 @@ static bool get_conn_status(qdb_t *db)
  * @note
  * If the connection has gone down, an attempt to reconnect.
  */
-static bool _ping(qdb_t *db)
+static bool ping(qdb_t *db)
 {
     if (db == NULL) return false;
 

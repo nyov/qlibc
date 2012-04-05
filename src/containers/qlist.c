@@ -131,7 +131,7 @@ static void clear(qlist_t *list);
 
 static void *to_array(qlist_t *list, size_t *size);
 static char *to_string(qlist_t *list);
-static bool qlist_debug(qlist_t *list, FILE *out);
+static bool debug(qlist_t *list, FILE *out);
 
 static void lock(qlist_t *list);
 static void unlock(qlist_t *list);
@@ -194,7 +194,7 @@ qlist_t *qlist(void)
 
     list->to_array      = to_array;
     list->to_string     = to_string;
-    list->debug         = qlist_debug;
+    list->debug         = debug;
 
     list->lock          = lock;
     list->unlock        = unlock;
@@ -828,7 +828,7 @@ static char *to_string(qlist_t *list)
  * @retval errno will be set in error condition.
  *  -EIO  : Invalid output stream.
  */
-static bool qlist_debug(qlist_t *list, FILE *out)
+static bool debug(qlist_t *list, FILE *out)
 {
     if (out == NULL) {
         errno = EIO;

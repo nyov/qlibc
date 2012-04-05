@@ -801,8 +801,8 @@ static void clear(qlisttbl_t *tbl)
 }
 
 /**
- * (qlisttbl_t*)->parse_str(): Parse a string and replace variables in the string
- * to the data in this list.
+ * (qlisttbl_t*)->parse_str(): Parse a string and replace variables in the
+ * string to the data in this list.
  *
  * @param tbl   qlisttbl_t container pointer.
  * @param str   string value which may contain variables like ${...}

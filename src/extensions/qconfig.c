@@ -194,7 +194,8 @@ qlisttbl_t *qconfig_parse_file(qlisttbl_t *tbl, const char *filepath,
  * @see qconfig_parse_file
  *
  * @code
- *  qlisttbl_t *tbl = qconfig_parse_str(NULL, "key = value\nhello = world", '=');
+ *  qlisttbl_t *tbl;
+ *  tbl = qconfig_parse_str(NULL, "key = value\nhello = world", '=');
  * @endcode
  */
 qlisttbl_t *qconfig_parse_str(qlisttbl_t *tbl, const char *str, char sepchar)

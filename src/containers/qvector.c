@@ -84,7 +84,8 @@
  *  }
  *
  *  // final
- *  struct sampleobj *final = (struct sampleobj *)vector->to_array(vector, NULL);
+ *  struct sampleobj *final;
+ *  final = (struct sampleobj *)vector->to_array(vector, NULL);
  *
  *  // print out
  *  printf("Number of Objects = %zu\n", vector->size(vector));
