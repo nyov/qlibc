@@ -31,8 +31,8 @@
 /**
  * @file qstack.c Stack implementation.
  *
- * qstack_t container is a stack implementation. It represents a
- * last-in-first-out(LIFO). It extends container Q_LIST that allow a linked-list
+ * qstack container is a stack implementation. It represents a
+ * last-in-first-out(LIFO). It extends qlist container that allow a linked-list
  * to be treated as a stack.
  *
  * @code

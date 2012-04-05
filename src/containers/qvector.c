@@ -32,7 +32,7 @@
  * @file qvector.c Vector implementation.
  *
  * qvector container is a vector implementation. It implements a growable array
- * of objects and it extends container Q_LIST that allow a linked-list to be
+ * of objects and it extends qlist container that allow a linked-list to be
  * treated as a vector.
  *
  * @code

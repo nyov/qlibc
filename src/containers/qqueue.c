@@ -31,8 +31,8 @@
 /**
  * @file qqueue.c Queue implementation.
  *
- * qqueue_t container is a queue implementation. It represents a
- * first-in-first-out(FIFO). It extends container Q_LIST that allow a
+ * qqueue container is a queue implementation. It represents a
+ * first-in-first-out(FIFO). It extends qlist container that allow a
  * linked-list to be treated as a queue.
  *
  * @code

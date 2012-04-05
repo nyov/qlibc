@@ -31,9 +31,9 @@
 /**
  * @file qlist.c Doubly Linked-list implementation.
  *
- * qlist_t container is a doubly Linked-List implementation.
- * qlist_t provides uniformly named methods to add, get, pop and remove an
- * element at the beginning and end of the list. These operations allow qlist_t
+ * qlist container is a doubly Linked-List implementation.
+ * qlist provides uniformly named methods to add, get, pop and remove an
+ * element at the beginning and end of the list. These operations allow qlist
  * to be used as a stack, queue, or double-ended queue.
  *
  * @code

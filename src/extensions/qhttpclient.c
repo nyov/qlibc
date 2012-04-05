@@ -31,7 +31,7 @@
 /**
  * @file qhttpclient.c HTTP client object.
  *
- * qhttpclient_t implements HTTP client.
+ * qhttpclient implements HTTP client.
  *
  * Example code for simple HTTP GET operation.
  *

@@ -31,10 +31,10 @@
 /**
  * @file qlisttbl.c Linked-list-table implementation.
  *
- * qlisttbl_t container is a Linked-List-Table implementation.
+ * qlisttbl container is a Linked-List-Table implementation.
  * Which maps keys to values. Key is a string and value is any non-null object.
  * These elements are stored sequentially in Doubly-Linked-List data structure.
- * In addition, qlisttbl_t allows to add multiple records with same keys.
+ * In addition, qlisttbl allows to add multiple records with same keys.
  *
  * @code
  *  [Conceptional Data Structure Diagram]

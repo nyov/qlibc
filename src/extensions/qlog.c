@@ -31,7 +31,7 @@
 /**
  * @file qlog.c Rotating file logger object.
  *
- * qlog_t implements a auto-rotating file logger.
+ * qlog implements a auto-rotating file logger.
  *
  * @code
  *   // create a daily-rotating log file.
