@@ -68,10 +68,10 @@ int main(void)
     free(e2);
 
     //
-    // TEST 3 : travesal list.
+    // TEST 3 : travesal a list.
     //
 
-    printf("--[Test 3 : travesal list]--\n");
+    printf("--[Test 3 : travesal a list]--\n");
     printf("list size : %zu elements\n", tbl->size(tbl));
     qdlnobj_t obj;
     memset((void *)&obj, 0, sizeof(obj)); // must be cleared before call
@@ -84,10 +84,10 @@ int main(void)
     tbl->unlock(tbl);
 
     //
-    // TEST 4 :  travesal particular key 'e2' only.
+    // TEST 4 :  travesal a particular key 'e2'.
     //
 
-    printf("\n--[Test 4 : travesal particular key 'e2' only]--\n");
+    printf("\n--[Test 4 : travesal a particular key 'e2']--\n");
     memset((void *)&obj, 0, sizeof(obj)); // must be cleared before call
     tbl->lock(tbl);
     while (tbl->get_next(tbl, &obj, "e2", false) == true) {

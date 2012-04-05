@@ -56,10 +56,10 @@ int main(void)
     tbl->debug(tbl, stdout);
 
     //
-    // TEST 2 : many ways to find key.
+    // TEST 2 : many ways to find a key.
     //
 
-    printf("\n--[Test 2 : many ways to find key]--\n");
+    printf("\n--[Test 2 : many ways to find a key]--\n");
     printf("get('e2') : %s\n", (char *)tbl->get(tbl, "e2", NULL, false));
     printf("get_str('e2') : %s\n", tbl->get_str(tbl, "e2", false));
 
@@ -68,10 +68,10 @@ int main(void)
     free(e2);
 
     //
-    // TEST 3 : travesal list.
+    // TEST 3 : travesal a table.
     //
 
-    printf("\n--[Test 3 : travesal list]--\n");
+    printf("\n--[Test 3 : travesal a table]--\n");
     printf("list size : %zu elements\n", tbl->size(tbl));
     qhnobj_t obj;
     memset((void *)&obj, 0, sizeof(obj)); // must be cleared before call
