@@ -60,7 +60,8 @@ int main(void)
 
     printf("\n--[Test 2 : many ways to find key]--\n");
     printf("get('e2') : %s\n", (char *)tbl->get(tbl, "e2", NULL, false));
-    printf("get_last('e2') : %s\n", (char *)tbl->get_last(tbl, "e2", NULL, false));
+    printf("get_last('e2') : %s\n",
+           (char *)tbl->get_last(tbl, "e2", NULL, false));
     printf("get_str('e2') : %s\n", tbl->get_str(tbl, "e2", false));
 
     char *e2 = tbl->get_str(tbl, "e2", true);
@@ -77,7 +78,8 @@ int main(void)
     memset((void *)&obj, 0, sizeof(obj)); // must be cleared before call
     tbl->lock(tbl);
     while (tbl->get_next(tbl, &obj, NULL, true) == true) {
-        printf("NAME=%s, DATA=%s, SIZE=%zu\n", obj.name, (char *)obj.data, obj.size);
+        printf("NAME=%s, DATA=%s, SIZE=%zu\n",
+               obj.name, (char *)obj.data, obj.size);
         free(obj.name);
         free(obj.data);
     }
@@ -91,7 +93,8 @@ int main(void)
     memset((void *)&obj, 0, sizeof(obj)); // must be cleared before call
     tbl->lock(tbl);
     while (tbl->get_next(tbl, &obj, "e2", false) == true) {
-        printf("NAME=%s, DATA=%s, SIZE=%zu\n", obj.name, (char *)obj.data, obj.size);
+        printf("NAME=%s, DATA=%s, SIZE=%zu\n",
+               obj.name, (char *)obj.data, obj.size);
     }
     tbl->unlock(tbl);
 
@@ -103,7 +106,8 @@ int main(void)
     tbl->put_str(tbl, "e5", "g", false);
 
     // print out
-    printf("\n--[Test 5 : changed adding direction and added 'e4' and 'e5' element]--\n");
+    printf("\n--[Test 5 : changed adding direction then"
+           " added 'e4' and 'e5' element]--\n");
     tbl->debug(tbl, stdout);
 
     //

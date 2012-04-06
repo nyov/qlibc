@@ -54,7 +54,8 @@ int main(void)
     tbl->put_str(tbl, "e3", "d");
     tbl->put_str(tbl, "e4", "e");
     tbl->put_str(tbl, "e5", "f");
-    tbl->put_str(tbl, "12345678901234567890", "1234567890123456789012345678901234567890");
+    tbl->put_str(tbl, "12345678901234567890",
+                      "1234567890123456789012345678901234567890");
 
     // print out
     printf("--[Test 1 : adding elements]--\n");
@@ -80,7 +81,8 @@ int main(void)
     int idx = 0;
     qnobj_t obj;
     while (tbl->get_next(tbl, &obj, &idx) == true) {
-        printf("NAME=%s, DATA=%s, SIZE=%zu\n", obj.name, (char *)obj.data, obj.size);
+        printf("NAME=%s, DATA=%s, SIZE=%zu\n",
+               obj.name, (char *)obj.data, obj.size);
         free(obj.name);
         free(obj.data);
     }

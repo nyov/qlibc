@@ -77,7 +77,8 @@ int main(void)
     memset((void *)&obj, 0, sizeof(obj)); // must be cleared before call
     tbl->lock(tbl);
     while (tbl->get_next(tbl, &obj, true) == true) {
-        printf("NAME=%s, DATA=%s, SIZE=%zu\n", obj.name, (char *)obj.data, obj.size);
+        printf("NAME=%s, DATA=%s, SIZE=%zu\n",
+               obj.name, (char *)obj.data, obj.size);
         free(obj.name);
         free(obj.data);
     }
