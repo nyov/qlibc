@@ -264,7 +264,8 @@ struct qhashtbl_t {
     bool (*put)(qhashtbl_t *tbl, const char *name, const void *data,
                 size_t size);
     bool (*put_str)(qhashtbl_t *tbl, const char *name, const char *str);
-    bool (*put_strf)(qhashtbl_t *tbl, const char *name, const char *format, ...);
+    bool (*put_strf)(qhashtbl_t *tbl, const char *name, const char *format,
+                     ...);
     bool (*put_int)(qhashtbl_t *tbl, const char *name, int num);
 
     void *(*get)(qhashtbl_t *tbl, const char *name, size_t *size, bool newmem);
