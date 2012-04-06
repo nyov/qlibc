@@ -104,6 +104,7 @@ qlibc: ${OBJ}
 
 install: all
 	${INSTALL_DATA} qlibc.h ${HEADERDIR}/qlibc.h
+	${INSTALL_DATA} qlibcext.h ${HEADERDIR}/qlibcext.h
 	${INSTALL_DATA} ${LIBNAME} ${LIBDIR}/${LIBNAME}
 	${INSTALL_DATA} ${SLIBREALNAME} ${LIBDIR}/${SLIBREALNAME}
 	${LN_S} -f ${LIBDIR}/${SLIBREALNAME} ${LIBDIR}/${SLIBNAME}
@@ -111,6 +112,7 @@ install: all
 deinstall: uninstall
 uninstall:
 	${RM} -f ${HEADERDIR}/qlibc.h
+	${RM} -f ${HEADERDIR}/qlibcext.h
 	${RM} -f ${LIBDIR}/${LIBNAME}
 	${RM} -f ${LIBDIR}/${SLIBREALNAME}
 	${RM} -f ${LIBDIR}/${SLIBNAME}
@@ -127,3 +129,4 @@ clean:
 ## Compile
 .c.o:
 	${CC} ${CFLAGS} ${CPPFLAGS} -c -o $@ $<
+

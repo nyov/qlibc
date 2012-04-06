@@ -45,8 +45,8 @@ extern "C" {
 #endif
 
 #include <stdio.h>
-#include <stdbool.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <limits.h>
 #include <sys/types.h>
 #include <netinet/in.h>
