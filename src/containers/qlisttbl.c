@@ -45,12 +45,12 @@
  *  first~~~|~>   0   <~|~~~~~~~~~~|~>   1   <~|~~~~~~~~~~|~>   N     |
  *          +--|-----|--+  linked  +--|-----|--+  linked  +--|-----|--+
  *             |     |                |     |                |     |
- *       +-----v-+ +-v------------+   |     |          +-----v-+ +-v-------+
- *       | KEY A | | VALUE A      |   |     |          | KEY N | | VALUE N |
- *       +-------+ +--------------+   |     |          +-------+ +---------+
- *                 +------------------v-+ +-v---------------------+
- *                 | KEY B              | | VALUE B               |
- *                 +--------------------+ +-----------------------+
+ *       +-----v-+ +-v-------+        |     |          +-----v-+ +-v-------+
+ *       | KEY A | | VALUE A |        |     |          | KEY N | | VALUE N |
+ *       +-------+ +---------+        |     |          +-------+ +---------+
+ *                              +-----v-+ +-v-------+
+ *                              | KEY B | | VALUE B |
+ *                              +-------+ +---------+
  * @endcode
  *
  * @code
@@ -58,7 +58,7 @@
  *  qlisttbl_t *tbl = qlisttbl();
  *
  *  // insert elements (key duplication allowed)
- *  tbl->put(tbl, "e1", "a", strlen("e1")+1, false); // equal to addStr();
+ *  tbl->put(tbl, "e1", "a", strlen("e1")+1, false); // equal to put_str();
  *  tbl->put_str(tbl, "e2", "b", false);
  *  tbl->put_str(tbl, "e2", "c", false);
  *  tbl->put_str(tbl, "e3", "d", false);
@@ -264,7 +264,7 @@ qlisttbl_t *qlisttbl(void)
  *
  * @note
  *  The default behavior is adding object at the end of this table unless it's
- *  changed by calling setPutDirection().
+ *  changed by calling set_putdir().
  */
 static bool put(qlisttbl_t *tbl, const char *name, const void *data,
                 size_t size, bool unique)
@@ -273,7 +273,7 @@ static bool put(qlisttbl_t *tbl, const char *name, const void *data,
 }
 
 /**
- * (qlisttbl_t*)->putFirst(): Put an element at the beginning of this table.
+ * (qlisttbl_t*)->put_first(): Put an element at the beginning of this table.
  *
  * @param tbl       qlisttbl_t container pointer.
  * @param name      element name.
@@ -294,7 +294,7 @@ static bool put_first(qlisttbl_t *tbl, const char *name, const void *data,
 }
 
 /**
- * (qlisttbl_t*)->putLast(): Put an object at the end of this table.
+ * (qlisttbl_t*)->put_last(): Put an object at the end of this table.
  *
  * @param tbl       qlisttbl_t container pointer.
  * @param name      element name.
@@ -718,7 +718,7 @@ static bool remove_(qlisttbl_t *tbl, const char *name)
 }
 
 /**
- * (qlisttbl_t*)->setPutDirection(): Sets default adding direction(first or
+ * (qlisttbl_t*)->set_putdir(): Sets default adding direction(first or
  * last).
  *
  * @param tbl       qlisttbl_t container pointer.
