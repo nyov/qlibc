@@ -32,46 +32,53 @@ prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 
 ## Compiler options
-CC	= @CC@
-CFLAGS	= @CFLAGS@
-CPPFLAGS= -I../src/ @CPPFLAGS@
-LIBS	= ../src/libqlibc.a @LIBS@
+CC		= @CC@
+CFLAGS		= @CFLAGS@
+CPPFLAGS	= -I../src/ @CPPFLAGS@
+RM		= @RM@
 
-TARGETS	= list listtbl hashtbl hasharr vector vector_obj queue stack config
+TARGETS		= list listtbl hashtbl hasharr vector vector_obj queue stack
+LIBQLIBC	= ../src/libqlibc.a
+LIBQLIBCEXT	= ../src/libqlibcext.a
+
+BUILD_QLIBCEXT	= @BUILD_QLIBCEXT@
+ifeq ("${BUILD_QLIBCEXT}", "qlibcext")
+	TARGETS += config
+endif
 
 ## Main
 all:	${TARGETS}
 
 list: list.o
-	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ list.o ${LIBS}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ list.o ${LIBQLIBC}
 
 listtbl: listtbl.o
-	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ listtbl.o ${LIBS}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ listtbl.o ${LIBQLIBC}
 
 hashtbl: hashtbl.o
-	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ hashtbl.o ${LIBS}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ hashtbl.o ${LIBQLIBC}
 
 hasharr:	hasharr.o
-	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ hasharr.o ${LIBS}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ hasharr.o ${LIBQLIBC}
 
 vector: vector.o
-	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ vector.o ${LIBS}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ vector.o ${LIBQLIBC}
 
 vector_obj: vector_obj.o
-	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ vector_obj.o ${LIBS}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ vector_obj.o ${LIBQLIBC}
 
 queue: queue.o
-	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ queue.o ${LIBS}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ queue.o ${LIBQLIBC}
 
 stack: stack.o
-	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ stack.o ${LIBS}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ stack.o ${LIBQLIBC}
 
 config: config.o
-	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ config.o ${LIBS}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ config.o ${LIBQLIBCEXT} ${LIBQLIBC}
 
 ## Clear Module
 clean:
-	rm -f *.o ${TARGETS}
+	${RM} -f *.o ${TARGETS}
 
 ## Compile Module
 .c.o:

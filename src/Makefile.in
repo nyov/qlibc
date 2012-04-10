@@ -31,17 +31,6 @@
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 
-## Name
-PRGNAME		= qlibc
-
-## Static Library Name
-LIBNAME		= lib${PRGNAME}.a
-
-## Shared Library Name
-SLIBVERSION	= 2
-SLIBNAME	= lib${PRGNAME}.so
-SLIBREALNAME	= ${SLIBNAME}.${SLIBVERSION}
-
 ## System library directory
 LIBDIR		= @libdir@
 HEADERDIR	= @includedir@
@@ -61,8 +50,29 @@ LN_S		= @LN_S@
 RANLIB		= @RANLIB@
 RM		= @RM@
 
+## Custom definitions
+BUILD_TARGETS = qlibc
+INSTALL_TARGETS = install-qlibc
+BUILD_QLIBCEXT	= @BUILD_QLIBCEXT@
+ifeq ("${BUILD_QLIBCEXT}", "qlibcext")
+	BUILD_TARGETS += qlibcext
+	INSTALL_TARGETS += install-qlibc
+endif
+
+## qlibc definitions
+QLIBC_LIBNAME		= libqlibc.a
+QLIBC_SLIBNAME		= libqlibc.so
+QLIBC_SLIBVERSION	= 2
+QLIBC_SLIBREALNAME	= ${QLIBC_SLIBNAME}.${QLIBC_SLIBVERSION}
+
+## qlibcext definitions
+QLIBCEXT_LIBNAME	= libqlibcext.a
+QLIBCEXT_SLIBNAME	= libqlibcext.so
+QLIBCEXT_SLIBVERSION	= 1
+QLIBCEXT_SLIBREALNAME	= ${QLIBCEXT_SLIBNAME}.${QLIBCEXT_SLIBVERSION}
+
 ## Objects List
-OBJ		= \
+QLIBC_OBJS	= \
 		containers/qlist.o		\
 		containers/qlisttbl.o		\
 		containers/qhashtbl.o		\
@@ -85,46 +95,66 @@ OBJ		= \
 		ipc/qsem.o			\
 		ipc/qshm.o			\
 						\
-		extensions/qconfig.o		\
-		extensions/qlog.o		\
-		extensions/qhttpclient.o	\
-		extensions/qdatabase.o		\
-						\
 		internal/qinternal.o		\
 		internal/md5/md5c.o
 
+QLIBCEXT_OBJS	= \
+		extensions/qconfig.o		\
+		extensions/qlog.o		\
+		extensions/qhttpclient.o	\
+		extensions/qdatabase.o
+
 ## Make Library
-all: qlibc
+all: ${BUILD_TARGETS}
 
-qlibc: ${OBJ}
-	${AR} ${ARFLAGS} ${LIBNAME} ${OBJ}
-	${RANLIB} ${LIBNAME}
-	${CC} -shared -Wl,-soname,${SLIBREALNAME} -o ${SLIBREALNAME} ${OBJ}
-	${LN_S} -f ${SLIBREALNAME} ${SLIBNAME}
+qlibc: ${QLIBC_OBJS}
+	${AR} ${ARFLAGS} ${QLIBC_LIBNAME} ${QLIBC_OBJS}
+	${RANLIB} ${QLIBC_LIBNAME}
+	${CC} -shared -Wl,-soname,${QLIBC_SLIBREALNAME} -o ${QLIBC_SLIBREALNAME} ${QLIBC_OBJS}
+	${LN_S} -f ${QLIBC_SLIBREALNAME} ${QLIBC_SLIBNAME}
 
-install: all
+qlibcext: ${QLIBCEXT_OBJS}
+	${AR} ${ARFLAGS} ${QLIBCEXT_LIBNAME} ${QLIBCEXT_OBJS}
+	${RANLIB} ${QLIBCEXT_LIBNAME}
+	${CC} -shared -Wl,-soname,${QLIBCEXT_SLIBREALNAME} -o ${QLIBCEXT_SLIBREALNAME} ${QLIBCEXT_OBJS}
+	${LN_S} -f ${QLIBCEXT_SLIBREALNAME} ${QLIBCEXT_SLIBNAME}
+
+install: ${INSTALL_TARGETS}
+
+install-qlibc: qlibc
 	${INSTALL_DATA} qlibc.h ${HEADERDIR}/qlibc.h
+	${INSTALL_DATA} ${QLIBC_LIBNAME} ${LIBDIR}/${QLIBC_LIBNAME}
+	${INSTALL_DATA} ${QLIBC_SLIBREALNAME} ${LIBDIR}/${QLIBC_SLIBREALNAME}
+	${LN_S} -f ${LIBDIR}/${QLIBC_SLIBREALNAME} ${LIBDIR}/${QLIBC_SLIBNAME}
+
+install-qlibcext: qlibcext
 	${INSTALL_DATA} qlibcext.h ${HEADERDIR}/qlibcext.h
-	${INSTALL_DATA} ${LIBNAME} ${LIBDIR}/${LIBNAME}
-	${INSTALL_DATA} ${SLIBREALNAME} ${LIBDIR}/${SLIBREALNAME}
-	${LN_S} -f ${LIBDIR}/${SLIBREALNAME} ${LIBDIR}/${SLIBNAME}
+	${INSTALL_DATA} ${QLIBCEXT_LIBNAME} ${LIBDIR}/${QLIBCEXT_LIBNAME}
+	${INSTALL_DATA} ${QLIBCEXT_SLIBREALNAME} ${LIBDIR}/${QLIBCEXT_SLIBREALNAME}
+	${LN_S} -f ${LIBDIR}/${QLIBCEXT_SLIBREALNAME} ${LIBDIR}/${QLIBCEXT_SLIBNAME}
 
 deinstall: uninstall
 uninstall:
 	${RM} -f ${HEADERDIR}/qlibc.h
+	${RM} -f ${LIBDIR}/${QLIBC_LIBNAME}
+	${RM} -f ${LIBDIR}/${QLIBC_SLIBREALNAME}
+	${RM} -f ${LIBDIR}/${QLIBC_SLIBNAME}
 	${RM} -f ${HEADERDIR}/qlibcext.h
-	${RM} -f ${LIBDIR}/${LIBNAME}
-	${RM} -f ${LIBDIR}/${SLIBREALNAME}
-	${RM} -f ${LIBDIR}/${SLIBNAME}
-
-doc:
-	doxygen doxygen.conf
-
-cleandoc:
-	${RM} -rf ../doc/html
+	${RM} -f ${LIBDIR}/${QLIBCEXT_LIBNAME}
+	${RM} -f ${LIBDIR}/${QLIBCEXT_SLIBREALNAME}
+	${RM} -f ${LIBDIR}/${QLIBCEXT_SLIBNAME}
 
 clean:
-	${RM} -f ${OBJ} ${LIBNAME} ${SLIBREALNAME} ${SLIBNAME}
+	${RM} -f ${QLIBC_OBJS} ${QLIBC_LIBNAME} ${QLIBC_SLIBREALNAME} ${QLIBC_SLIBNAME}
+	${RM} -f ${QLIBCEXT_OBJS} ${QLIBCEXT_LIBNAME} ${QLIBCEXT_SLIBREALNAME} ${QLIBCEXT_SLIBNAME}
+
+doc:
+	doxygen doxygen-qlibc.conf
+	doxygen doxygen-qlibcext.conf
+
+cleandoc:
+	${RM} -rf ../doc/qlibc
+	${RM} -rf ../doc/qlibcext
 
 ## Compile
 .c.o:

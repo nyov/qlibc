@@ -80,6 +80,8 @@ AC_INIT([qLibc], [2 RELEASE], [http://www.qdecoder.org/])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile src/Makefile examples/Makefile])
+AC_SUBST(BUILD_QLIBC, ["qlibc"])
+AC_SUBST(BUILD_QLIBCEXT, ["qlibcext"])
 
 ## Set path
 PATH="$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
@@ -118,7 +120,16 @@ AC_HEADER_DIRENT
 #AC_CHECK_HEADER([sys/sendfile.h])
 
 ## Checks for typedefs, structures, and compiler characteristics.
+AC_TYPE_INT8_T
+AC_TYPE_INT16_T
+AC_TYPE_INT32_T
+AC_TYPE_INT64_T
+AC_TYPE_UINT8_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
 AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
 AC_TYPE_OFF_T
 
 ## Checks for libraries.
@@ -137,12 +148,17 @@ fi
 
 Q_ARG_ENABLE([debug], [Enable debugging output. This will print out internal debugging messages to stdout.], [-DBUILD_DEBUG])
 #Q_ARG_ENABLE([lfs], [Enable large file supports.], [-DENABLE_LFS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64])
-Q_ARG_DISABLE([ipc], [Disable all IPC APIs in src/ipc directory.], [-DDISABLE_IPC])
-Q_ARG_DISABLE([extensions], [Disable all extension APIs in src/extensions directory.], [-DDISABLE_QCONFIG -DDISABLE_QLOG -DDISABLE_QHTTPCLIENT -DDISABLE_QDATABASE])
-Q_ARG_DISABLE([qconfig], [Disable qconfig extension.], [-DDISABLE_QCONFIG])
-Q_ARG_DISABLE([qlog], [Disable qlog extension.], [-DDISABLE_QLOG])
-Q_ARG_DISABLE([qhttpclient], [Disable qhttpclient extension.], [-DDISABLE_QHTTPCLIENT])
-Q_ARG_DISABLE([qdatabase], [Disable qdatabase extension.], [-DDISABLE_QDATABASE])
+Q_ARG_DISABLE([ipc], [Disable IPC APIs(src/ipc/) in qlibc library.], [-DDISABLE_IPC])
+#Q_ARG_DISABLE([ext], [Disable all extension APIs in src/extensions directory.], [-DDISABLE_QCONFIG -DDISABLE_QLOG -DDISABLE_QHTTPCLIENT -DDISABLE_QDATABASE])
+Q_ARG_DISABLE([ext], [Disable building qlibext extension library.], [])
+if test "$enableval" = no; then
+	AC_SUBST(BUILD_QLIBCEXT, [""])
+fi
+#Q_ARG_DISABLE([ext-all], [Disable all extension APIs in src/extensions directory.], [-DDISABLE_QCONFIG -DDISABLE_QLOG -DDISABLE_QHTTPCLIENT -DDISABLE_QDATABASE])
+Q_ARG_DISABLE([ext-qconfig], [Disable qconfig extension in qlibext library.], [-DDISABLE_QCONFIG])
+Q_ARG_DISABLE([ext-qlog], [Disable qlog extension in qlibext library.], [-DDISABLE_QLOG])
+Q_ARG_DISABLE([ext-qhttpclient], [Disable qhttpclient extension in qlibext library.], [-DDISABLE_QHTTPCLIENT])
+Q_ARG_DISABLE([ext-qdatabase], [Disable qdatabase extension in qlibext library.], [-DDISABLE_QDATABASE])
 
 if test "$enableval" = yes; then
 	CFLAGS="$CFLAGS -g -O2"
