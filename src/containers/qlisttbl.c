@@ -332,7 +332,7 @@ static bool put_last(qlisttbl_t *tbl, const char *name, const void *data,
  *
  * @note
  *  The default behavior is adding object at the end of this list unless it's
- *  changed by calling setDirection().
+ *  changed by calling set_putdir().
  */
 static bool put_str(qlisttbl_t *tbl, const char *name, const char *str,
                     bool unique)
@@ -357,7 +357,7 @@ static bool put_str(qlisttbl_t *tbl, const char *name, const char *str,
  *
  * @note
  *  The default behavior is adding object at the end of this list unless it's
- *  changed by calling setDirection().
+ *  changed by calling set_putdir().
  */
 static bool put_strf(qlisttbl_t *tbl, bool unique, const char *name,
                      const char *format, ...)
@@ -392,7 +392,7 @@ static bool put_strf(qlisttbl_t *tbl, bool unique, const char *name,
  * @note
  *  The integer will be converted to a string object and stored as a string
  *  object. The default behavior is adding object at the end of this list unless
- *  it's changed by calling setDirection().
+ *  it's changed by calling set_putdir().
  */
 static bool put_int(qlisttbl_t *tbl, const char *name, int num, bool unique)
 {
