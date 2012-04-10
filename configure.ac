@@ -80,8 +80,8 @@ AC_INIT([qLibc], [2 RELEASE], [http://www.qdecoder.org/])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile src/Makefile examples/Makefile])
-AC_SUBST(BUILD_QLIBC, ["qlibc"])
-AC_SUBST(BUILD_QLIBCEXT, ["qlibcext"])
+AC_SUBST(BUILD_TARGETS, ["qlibc qlibcext"])
+AC_SUBST(INSTALL_TARGETS, ["install-qlibc install-qlibcext"])
 
 ## Set path
 PATH="$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
@@ -152,7 +152,8 @@ Q_ARG_DISABLE([ipc], [Disable IPC APIs(src/ipc/) in qlibc library.], [-DDISABLE_
 #Q_ARG_DISABLE([ext], [Disable all extension APIs in src/extensions directory.], [-DDISABLE_QCONFIG -DDISABLE_QLOG -DDISABLE_QHTTPCLIENT -DDISABLE_QDATABASE])
 Q_ARG_DISABLE([ext], [Disable building qlibext extension library.], [])
 if test "$enableval" = no; then
-	AC_SUBST(BUILD_QLIBCEXT, [""])
+	AC_SUBST(BUILD_TARGETS, ["qlibc"])
+	AC_SUBST(INSTALL_TARGETS, ["install-qlibc"])
 fi
 #Q_ARG_DISABLE([ext-all], [Disable all extension APIs in src/extensions directory.], [-DDISABLE_QCONFIG -DDISABLE_QLOG -DDISABLE_QHTTPCLIENT -DDISABLE_QDATABASE])
 Q_ARG_DISABLE([ext-qconfig], [Disable qconfig extension in qlibext library.], [-DDISABLE_QCONFIG])

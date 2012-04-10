@@ -690,8 +690,8 @@ CPPFLAGS
 LDFLAGS
 CFLAGS
 CC
-BUILD_QLIBCEXT
-BUILD_QLIBC
+INSTALL_TARGETS
+BUILD_TARGETS
 target_alias
 host_alias
 build_alias
@@ -1891,9 +1891,9 @@ ac_config_headers="$ac_config_headers config.h"
 
 ac_config_files="$ac_config_files Makefile src/Makefile examples/Makefile"
 
-BUILD_QLIBC="qlibc"
+BUILD_TARGETS="qlibc qlibcext"
 
-BUILD_QLIBCEXT="qlibcext"
+INSTALL_TARGETS="install-qlibc install-qlibcext"
 
 
 ## Set path
@@ -5603,7 +5603,9 @@ $as_echo "$as_me: 'ext' feature is disabled" >&6;}
 	fi
 
 if test "$enableval" = no; then
-	BUILD_QLIBCEXT=""
+	BUILD_TARGETS="qlibc"
+
+	INSTALL_TARGETS="install-qlibc"
 
 fi
 #Q_ARG_DISABLE([ext-all], [Disable all extension APIs in src/extensions directory.], [-DDISABLE_QCONFIG -DDISABLE_QLOG -DDISABLE_QHTTPCLIENT -DDISABLE_QDATABASE])

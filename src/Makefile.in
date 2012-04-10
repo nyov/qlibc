@@ -51,13 +51,8 @@ RANLIB		= @RANLIB@
 RM		= @RM@
 
 ## Custom definitions
-BUILD_TARGETS = qlibc
-INSTALL_TARGETS = install-qlibc
-BUILD_QLIBCEXT	= @BUILD_QLIBCEXT@
-ifeq ("${BUILD_QLIBCEXT}", "qlibcext")
-	BUILD_TARGETS += qlibcext
-	INSTALL_TARGETS += install-qlibc
-endif
+BUILD_TARGETS	= @BUILD_TARGETS@
+INSTALL_TARGETS	= @INSTALL_TARGETS@
 
 ## qlibc definitions
 QLIBC_LIBNAME		= libqlibc.a

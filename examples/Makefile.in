@@ -37,14 +37,9 @@ CFLAGS		= @CFLAGS@
 CPPFLAGS	= -I../src/ @CPPFLAGS@
 RM		= @RM@
 
-TARGETS		= list listtbl hashtbl hasharr vector vector_obj queue stack
+TARGETS		= list listtbl hashtbl hasharr vector vector_obj queue stack config
 LIBQLIBC	= ../src/libqlibc.a
 LIBQLIBCEXT	= ../src/libqlibcext.a
-
-BUILD_QLIBCEXT	= @BUILD_QLIBCEXT@
-ifeq ("${BUILD_QLIBCEXT}", "qlibcext")
-	TARGETS += config
-endif
 
 ## Main
 all:	${TARGETS}
