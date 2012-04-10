@@ -102,6 +102,10 @@ if test $ac_compiler_gnu = yes; then
 #else
 #	AC_MSG_FAILURE([GCC is required.])
 fi
+AC_PROG_CC_C99
+if test $ac_cv_prog_cc_c99 = no; then
+	AC_MSG_FAILURE([Compiler doesn't support C99 mode.])
+fi
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -117,7 +121,7 @@ AC_PATH_PROG(RM, rm)
 AC_HEADER_STDC
 AC_HEADER_STDBOOL
 AC_HEADER_DIRENT
-#AC_CHECK_HEADER([sys/sendfile.h])
+AC_CHECK_HEADER([inttypes.h])
 
 ## Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_INT8_T
