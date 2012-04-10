@@ -236,6 +236,8 @@ qlisttbl_t *qlisttbl(void)
 
 /**
  * (qlisttbl_t*)->put(): Put an element to this table.
+ * Default behavior is adding an element at the end of this table unless changed
+ * by set_putdir().
  *
  * @param tbl       qlisttbl_t container pointer.
  * @param name      element name.
@@ -263,8 +265,8 @@ qlisttbl_t *qlisttbl(void)
  * @endcode
  *
  * @note
- *  The default behavior is adding object at the end of this table unless it's
- *  changed by calling set_putdir().
+ *  The default behavior is adding an object at the end of this table unless
+ *  it's changed by set_putdir().
  */
 static bool put(qlisttbl_t *tbl, const char *name, const void *data,
                 size_t size, bool unique)
