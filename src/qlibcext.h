@@ -132,10 +132,10 @@ struct qhttpclient_t {
                   size_t *contentslength,
                   qlisttbl_t *reqheaders, qlisttbl_t *resheaders);
 
-    bool (*send_request) (qhttpclient_t *client, const char *method,
-                          const char *uri, qlisttbl_t *reqheaders);
-    int (*read_response) (qhttpclient_t *client, qlisttbl_t *resheaders,
-                          off_t *contentlength);
+    bool (*sendrequest) (qhttpclient_t *client, const char *method,
+                         const char *uri, qlisttbl_t *reqheaders);
+    int (*readresponse) (qhttpclient_t *client, qlisttbl_t *resheaders,
+                         off_t *contentlength);
 
     ssize_t (*gets) (qhttpclient_t *client, char *buf, size_t bufsize);
     ssize_t (*read) (qhttpclient_t *client, void *buf, size_t nbytes);

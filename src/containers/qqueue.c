@@ -124,16 +124,16 @@ static size_t setsize(qqueue_t *queue, size_t max);
 
 static bool push(qqueue_t *queue, const void *data, size_t size);
 static bool pushstr(qqueue_t *queue, const char *str);
-static bool pushint(qqueue_t *queue, int num);
+static bool pushint(qqueue_t *queue, int64_t num);
 
 static void *pop(qqueue_t *queue, size_t *size);
 static char *popstr(qqueue_t *queue);
-static int  popint(qqueue_t *queue);
+static int64_t  popint(qqueue_t *queue);
 static void *popat(qqueue_t *queue, int index, size_t *size);
 
 static void *get(qqueue_t *queue, size_t *size, bool newmem);
 static char *getstr(qqueue_t *queue);
-static int getint(qqueue_t *queue);
+static int64_t getint(qqueue_t *queue);
 static void *getat(qqueue_t *queue, int index, size_t *size, bool newmem);
 
 static size_t size(qqueue_t *queue);
@@ -262,9 +262,9 @@ static bool pushstr(qqueue_t *queue, const char *str)
  *                limited number of elements.
  *  - ENOMEM    : Memory allocation failure.
  */
-static bool pushint(qqueue_t *queue, int num)
+static bool pushint(qqueue_t *queue, int64_t num)
 {
-    return queue->list->addlast(queue->list, &num, sizeof(int));
+    return queue->list->addlast(queue->list, &num, sizeof(num));
 }
 
 /**
@@ -323,10 +323,10 @@ static char *popstr(qqueue_t *queue)
  * @note
  * The integer element should be pushed through pushint().
  */
-static int popint(qqueue_t *queue)
+static int64_t popint(qqueue_t *queue)
 {
-    int num = 0;
-    int *pnum = queue->list->popfirst(queue->list, NULL);
+    int64_t num = 0;
+    int64_t *pnum = queue->list->popfirst(queue->list, NULL);
     if (pnum != NULL) {
         num = *pnum;
         free(pnum);
@@ -415,10 +415,10 @@ static char *getstr(qqueue_t *queue)
  * @note
  *  The integer element should be pushed through pushint().
  */
-static int getint(qqueue_t *queue)
+static int64_t getint(qqueue_t *queue)
 {
-    int num = 0;
-    int *pnum = queue->list->getfirst(queue->list, NULL, true);
+    int64_t num = 0;
+    int64_t *pnum = queue->list->getfirst(queue->list, NULL, true);
     if (pnum != NULL) {
         num = *pnum;
         free(pnum);

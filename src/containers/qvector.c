@@ -40,9 +40,9 @@
  *  qvector_t *vector = qvector();
  *
  *  // add elements
- *  vector->add_str(vector, "AB");      // no need to supply size
- *  vector->add_strf(vector, "%d", 12); // for formatted string
- *  vector->add_str(vector, "CD");
+ *  vector->addstr(vector, "AB");      // no need to supply size
+ *  vector->addstrf(vector, "%d", 12); // for formatted string
+ *  vector->addstr(vector, "CD");
  *
  *  // get the chunk as a string
  *  char *final = vector->tostring(vector);
@@ -123,8 +123,8 @@
  */
 #ifndef _DOXYGEN_SKIP
 static bool add(qvector_t *vector, const void *object, size_t size);
-static bool add_str(qvector_t *vector, const char *str);
-static bool add_strf(qvector_t *vector, const char *format, ...);
+static bool addstr(qvector_t *vector, const char *str);
+static bool addstrf(qvector_t *vector, const char *format, ...);
 static void *toarray(qvector_t *vector, size_t *size);
 static char *tostring(qvector_t *vector);
 static size_t size(qvector_t *vector);
@@ -165,8 +165,8 @@ qvector_t *qvector(void)
 
     // methods
     vector->add         = add;
-    vector->add_str     = add_str;
-    vector->add_strf    = add_strf;
+    vector->addstr      = addstr;
+    vector->addstrf     = addstrf;
 
     vector->toarray     = toarray;
     vector->tostring    = tostring;
@@ -198,7 +198,7 @@ static bool add(qvector_t *vector, const void *data, size_t size)
 }
 
 /**
- * (qvector_t*)->add_str(): Stack string
+ * (qvector_t*)->addstr(): Stack string
  *
  * @param vector    qvector_t container pointer.
  * @param str        a pointer of string
@@ -208,13 +208,13 @@ static bool add(qvector_t *vector, const void *data, size_t size)
  *  - EINVAL    : Invalid argument.
  *  - ENOMEM    : Memory allocation failure.
  */
-static bool add_str(qvector_t *vector, const char *str)
+static bool addstr(qvector_t *vector, const char *str)
 {
     return vector->list->addlast(vector->list, str, strlen(str));
 }
 
 /**
- * (qvector_t*)->add_strf(): Stack formatted string
+ * (qvector_t*)->addstrf(): Stack formatted string
  *
  * @param vector    qvector_t container pointer.
  * @param format    string format
@@ -224,7 +224,7 @@ static bool add_str(qvector_t *vector, const char *str)
  *  - EINVAL    : Invalid argument.
  *  - ENOMEM    : Memory allocation failure.
  */
-static bool add_strf(qvector_t *vector, const char *format, ...)
+static bool addstrf(qvector_t *vector, const char *format, ...)
 {
     char *str;
     DYNAMIC_VSPRINTF(str, format);
@@ -233,7 +233,7 @@ static bool add_strf(qvector_t *vector, const char *format, ...)
         return false;
     }
 
-    bool ret = add_str(vector, str);
+    bool ret = addstr(vector, str);
     free(str);
 
     return ret;

@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 #include "qlibc.h"
 
@@ -39,9 +40,9 @@ int main(void)
     qvector_t *vector = qvector();
 
     // add elements
-    vector->add_str(vector, "AB");       // no need to supply size
-    vector->add_strf(vector, "%d", 12);  // for formatted string
-    vector->add_str(vector, "CD");
+    vector->addstr(vector, "AB");       // no need to supply size
+    vector->addstrf(vector, "%d", 12);  // for formatted string
+    vector->addstr(vector, "CD");
 
     char *final = vector->tostring(vector);
     // get the chunk as a string

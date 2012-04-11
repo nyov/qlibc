@@ -118,12 +118,12 @@ static bool putint(qlisttbl_t *tbl, const char *name, int64_t num, bool unique);
 
 static void *get(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem);
 static char *getstr(qlisttbl_t *tbl, const char *name, bool newmem);
-static int getint(qlisttbl_t *tbl, const char *name);
+static int64_t getint(qlisttbl_t *tbl, const char *name);
 
 static void *caseget(qlisttbl_t *tbl, const char *name, size_t *size,
                      bool newmem);
 static char *casegetstr(qlisttbl_t *tbl, const char *name, bool newmem);
-static int casegetint(qlisttbl_t *tbl, const char *name);
+static int64_t casegetint(qlisttbl_t *tbl, const char *name);
 
 static bool getnext(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
                     bool newmem);
@@ -426,12 +426,12 @@ static char *getstr(qlisttbl_t *tbl, const char *name, bool newmem)
  *  - EINVAL : Invalid argument.
  *  - ENOMEM : Memory allocation failure.
  */
-static int getint(qlisttbl_t *tbl, const char *name)
+static int64_t getint(qlisttbl_t *tbl, const char *name)
 {
-    int num = 0;
+    int64_t num = 0;
     char *str = getstr(tbl, name, true);
     if (str != NULL) {
-        num = atoi(str);
+        num = atoll(str);
         free(str);
     }
     return num;
@@ -492,12 +492,12 @@ static char *casegetstr(qlisttbl_t *tbl, const char *name, bool newmem)
  *  - EINVAL : Invalid argument.
  *  - ENOMEM : Memory allocation failure.
  */
-static int casegetint(qlisttbl_t *tbl, const char *name)
+static int64_t casegetint(qlisttbl_t *tbl, const char *name)
 {
-    int num = 0;
+    int64_t num = 0;
     char *str = caseget(tbl, name, NULL, true);
     if (str != NULL) {
-        num = atoi(str);
+        num = atoll(str);
         free(str);
     }
     return num;

@@ -45,8 +45,8 @@ extern "C" {
 #endif
 
 #include <stdio.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <limits.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -200,12 +200,12 @@ struct qlisttbl_t {
 
     void *(*get)(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem);
     char *(*getstr)(qlisttbl_t *tbl, const char *name, bool newmem);
-    int  (*getint)(qlisttbl_t *tbl, const char *name);
+    int64_t (*getint)(qlisttbl_t *tbl, const char *name);
 
     void *(*caseget)(qlisttbl_t *tbl, const char *name, size_t *size,
                      bool newmem);
     char *(*casegetstr)(qlisttbl_t *tbl, const char *name, bool newmem);
-    int  (*casegetint)(qlisttbl_t *tbl, const char *name);
+    int64_t (*casegetint)(qlisttbl_t *tbl, const char *name);
 
     bool (*getnext)(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
                      bool newmem);
@@ -263,11 +263,11 @@ struct qhashtbl_t {
     bool (*putstr)(qhashtbl_t *tbl, const char *name, const char *str);
     bool (*putstrf)(qhashtbl_t *tbl, const char *name, const char *format,
                      ...);
-    bool (*putint)(qhashtbl_t *tbl, const char *name, int num);
+    bool (*putint)(qhashtbl_t *tbl, const char *name, int64_t num);
 
     void *(*get)(qhashtbl_t *tbl, const char *name, size_t *size, bool newmem);
     char *(*getstr)(qhashtbl_t *tbl, const char *name, bool newmem);
-    int (*getint)(qhashtbl_t *tbl, const char *name);
+    int64_t (*getint)(qhashtbl_t *tbl, const char *name);
 
     bool (*getnext)(qhashtbl_t *tbl, qhnobj_t *obj, bool newmem);
 
@@ -314,7 +314,7 @@ struct _Q_HASHARR_SLOT {
                      indicating linked block */
     uint32_t  hash; /*!< key hash. we use FNV32 */
 
-    uint8_t  size;  /*!< value size in this slot*/
+    uint8_t size;   /*!< value size in this slot*/
     int link;       /*!< next link */
 
     union {
@@ -343,11 +343,11 @@ struct qhasharr_t {
                 size_t size);
     bool (*putstr)(qhasharr_t *tbl, const char *key, const char *str);
     bool (*putstrf)(qhasharr_t *tbl, const char *key, const char *format, ...);
-    bool (*putint)(qhasharr_t *tbl, const char *key, int num);
+    bool (*putint)(qhasharr_t *tbl, const char *key, int64_t num);
 
     void *(*get)(qhasharr_t *tbl, const char *key, size_t *size);
     char *(*getstr)(qhasharr_t *tbl, const char *key);
-    int  (*getint)(qhasharr_t *tbl, const char *key);
+    int64_t (*getint)(qhasharr_t *tbl, const char *key);
     bool (*getnext)(qhasharr_t *tbl, qnobj_t *obj, int *idx);
 
     bool (*remove)(qhasharr_t *tbl, const char *key);
@@ -381,8 +381,8 @@ extern qvector_t *qvector(void);
 struct qvector_t {
     /* capsulated member functions */
     bool (*add) (qvector_t *vector, const void *data, size_t size);
-    bool (*add_str) (qvector_t *vector, const char *str);
-    bool (*add_strf) (qvector_t *vector, const char *format, ...);
+    bool (*addstr) (qvector_t *vector, const char *str);
+    bool (*addstrf) (qvector_t *vector, const char *format, ...);
 
     void *(*toarray) (qvector_t *vector, size_t *size);
     char *(*tostring) (qvector_t *vector);
@@ -418,16 +418,16 @@ struct qqueue_t {
 
     bool (*push) (qqueue_t *stack, const void *data, size_t size);
     bool (*pushstr) (qqueue_t *stack, const char *str);
-    bool (*pushint) (qqueue_t *stack, int num);
+    bool (*pushint) (qqueue_t *stack, int64_t num);
 
     void *(*pop) (qqueue_t *stack, size_t *size);
     char *(*popstr) (qqueue_t *stack);
-    int (*popint) (qqueue_t *stack);
+    int64_t (*popint) (qqueue_t *stack);
     void *(*popat) (qqueue_t *stack, int index, size_t *size);
 
     void *(*get) (qqueue_t *stack, size_t *size, bool newmem);
     char *(*getstr) (qqueue_t *stack);
-    int (*getint) (qqueue_t *stack);
+    int64_t (*getint) (qqueue_t *stack);
     void *(*getat) (qqueue_t *stack, int index, size_t *size, bool newmem);
 
     size_t (*size) (qqueue_t *stack);
@@ -459,16 +459,16 @@ struct qstack_t {
 
     bool (*push) (qstack_t *stack, const void *data, size_t size);
     bool (*pushstr) (qstack_t *stack, const char *str);
-    bool (*pushint) (qstack_t *stack, int num);
+    bool (*pushint) (qstack_t *stack, int64_t num);
 
     void *(*pop) (qstack_t *stack, size_t *size);
     char *(*popstr) (qstack_t *stack);
-    int (*popint) (qstack_t *stack);
+    int64_t (*popint) (qstack_t *stack);
     void *(*popat) (qstack_t *stack, int index, size_t *size);
 
     void *(*get) (qstack_t *stack, size_t *size, bool newmem);
     char *(*getstr) (qstack_t *stack);
-    int (*getint) (qstack_t *stack);
+    int64_t (*getint) (qstack_t *stack);
     void *(*getat) (qstack_t *stack, int index, size_t *size, bool newmem);
 
     size_t (*size) (qstack_t *stack);
@@ -485,9 +485,9 @@ struct qstack_t {
  ******************************************************************************/
 
 /* qcount.c */
-extern int qcount_read(const char *filepath);
-extern bool qcount_save(const char *filepath, int number);
-extern int qcount_update(const char *filepath, int number);
+extern int64_t qcount_read(const char *filepath);
+extern bool qcount_save(const char *filepath, int64_t number);
+extern int64_t qcount_update(const char *filepath, int64_t number);
 
 /* qencode.c */
 extern qlisttbl_t *qparse_queries(qlisttbl_t *tbl, const char *query,

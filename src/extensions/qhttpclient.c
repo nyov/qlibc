@@ -161,10 +161,10 @@ static void *cmd(qhttpclient_t *client, const char *method, const char *uri,
                  int *rescode, size_t *contentslength,
                  qlisttbl_t *reqheaders, qlisttbl_t *resheaders);
 
-static bool send_request(qhttpclient_t *client, const char *method,
-                         const char *uri, qlisttbl_t *reqheaders);
-static int read_response(qhttpclient_t *client, qlisttbl_t *resheaders,
-                         off_t *contentlength);
+static bool sendrequest(qhttpclient_t *client, const char *method,
+                        const char *uri, qlisttbl_t *reqheaders);
+static int readresponse(qhttpclient_t *client, qlisttbl_t *resheaders,
+                        off_t *contentlength);
 
 static ssize_t gets_(qhttpclient_t *client, char *buf, size_t bufsize);
 static ssize_t read_(qhttpclient_t *client, void *buf, size_t nbytes);
@@ -289,8 +289,8 @@ qhttpclient_t *qhttpclient(const char *destname, int port)
     client->put             = put;
     client->cmd             = cmd;
 
-    client->send_request    = send_request;
-    client->read_response   = read_response;
+    client->sendrequest     = sendrequest;
+    client->readresponse    = readresponse;
 
     client->gets            = gets_;
     client->read            = read_;
@@ -570,7 +570,7 @@ static bool head(qhttpclient_t *client, const char *uri, int *rescode,
     reqheaders->putstr(reqheaders,  "Accept", "*/*", true);
 
     // send request
-    bool sendret = send_request(client, "HEAD", uri, reqheaders);
+    bool sendret = sendrequest(client, "HEAD", uri, reqheaders);
     if (freeReqHeaders == true) reqheaders->free(reqheaders);
     if (sendret == false) {
         _close(client);
@@ -579,7 +579,7 @@ static bool head(qhttpclient_t *client, const char *uri, int *rescode,
 
     // read response
     off_t clength = 0;
-    int resno = read_response(client, resheaders, &clength);
+    int resno = readresponse(client, resheaders, &clength);
     if (rescode != NULL) *rescode = resno;
 
     // throw out content
@@ -706,7 +706,7 @@ static bool get(qhttpclient_t *client, const char *uri, int fd, off_t *savesize,
     reqheaders->putstr(reqheaders,  "Accept", "*/*", true);
 
     // send request
-    bool sendret = send_request(client, "GET", uri, reqheaders);
+    bool sendret = sendrequest(client, "GET", uri, reqheaders);
     if (freeReqHeaders == true) reqheaders->free(reqheaders);
     if (sendret == false) {
         _close(client);
@@ -715,7 +715,7 @@ static bool get(qhttpclient_t *client, const char *uri, int fd, off_t *savesize,
 
     // read response
     off_t clength = 0;
-    int resno = read_response(client, resheaders, &clength);
+    int resno = readresponse(client, resheaders, &clength);
     if (rescode != NULL) *rescode = resno;
 
     // check response code
@@ -929,7 +929,7 @@ static bool put(qhttpclient_t *client, const char *uri, int fd, off_t length,
     reqheaders->putstr(reqheaders,  "Expect", "100-continue", true);
 
     // send request
-    bool sendret =send_request(client, "PUT", uri, reqheaders);
+    bool sendret =sendrequest(client, "PUT", uri, reqheaders);
     if (freeReqHeaders == true) {
         reqheaders->free(reqheaders);
         reqheaders = NULL;
@@ -948,7 +948,7 @@ static bool put(qhttpclient_t *client, const char *uri, int fd, off_t length,
 
     // read response
     off_t clength = 0;
-    int resno = read_response(client, resheaders, &clength);
+    int resno = readresponse(client, resheaders, &clength);
     if (resno != HTTP_CODE_CONTINUE) {
         if (rescode != NULL) *rescode = resno;
 
@@ -1006,7 +1006,7 @@ static bool put(qhttpclient_t *client, const char *uri, int fd, off_t length,
 
     // read response
     clength = 0;
-    resno = read_response(client, resheaders, &clength);
+    resno = readresponse(client, resheaders, &clength);
     if (rescode != NULL) *rescode = resno;
 
     if (resno == HTTP_NO_RESPONSE) {
@@ -1069,7 +1069,7 @@ static bool put(qhttpclient_t *client, const char *uri, int fd, off_t length,
  *
  * @note
  *  This store server's response into memory so if you expect server responses
- *  large amount of data, consider to use send_request() and read_response()
+ *  large amount of data, consider to use sendrequest() and readresponse()
  *  instead of using this. The returning malloced content will be allocated
  *  +1 byte than actual content size 'contentslength' and will be null
  *  terminated.
@@ -1092,7 +1092,7 @@ static void *cmd(qhttpclient_t *client, const char *method, const char *uri,
         freeReqHeaders = true;
     }
 
-    bool sendret = send_request(client, method, uri, reqheaders);
+    bool sendret = sendrequest(client, method, uri, reqheaders);
     if (freeReqHeaders == true) {
         reqheaders->free(reqheaders);
         reqheaders = NULL;
@@ -1113,7 +1113,7 @@ static void *cmd(qhttpclient_t *client, const char *method, const char *uri,
 
     // read response
     off_t clength = 0;
-    int resno = read_response(client, resheaders, &clength);
+    int resno = readresponse(client, resheaders, &clength);
     if (rescode != NULL) *rescode = resno;
     if (contentslength != NULL) *contentslength = clength;
 
@@ -1144,7 +1144,7 @@ static void *cmd(qhttpclient_t *client, const char *method, const char *uri,
 }
 
 /**
- * (qhttpclient_t*)->send_request(): Sends a HTTP request to the remote host.
+ * (qhttpclient_t*)->sendrequest(): Sends a HTTP request to the remote host.
  *
  * @param client    qhttpclient object pointer
  * @param method    HTTP method name
@@ -1162,11 +1162,11 @@ static void *cmd(qhttpclient_t *client, const char *method, const char *uri,
  *   qlisttbl_t *reqheaders = qlisttbl();
  *   reqheaders->putstr(reqheaders,  "Date", qTimeGetGmtStaticStr(0), true);
  *
- *   httpclient->send_request(client,
- *                            "DELETE", "/img/qdecoder.png", reqheaders);
+ *   httpclient->sendrequest(client,
+ *                           "DELETE", "/img/qdecoder.png", reqheaders);
  * @endcode
  */
-static bool send_request(qhttpclient_t *client, const char *method,
+static bool sendrequest(qhttpclient_t *client, const char *method,
                          const char *uri, qlisttbl_t *reqheaders)
 {
     if (open_(client) == false) {
@@ -1200,21 +1200,21 @@ static bool send_request(qhttpclient_t *client, const char *method,
     if (outBuf == NULL) return false;
 
     // buffer out command
-    outBuf->add_strf(outBuf, "%s %s %s\r\n",
-                     method,
-                     uri,
-                     HTTP_PROTOCOL_11);
+    outBuf->addstrf(outBuf, "%s %s %s\r\n",
+                    method,
+                    uri,
+                    HTTP_PROTOCOL_11);
 
     // buffer out headers
     qdlnobj_t obj;
     memset((void *)&obj, 0, sizeof(obj)); // must be cleared before call
     reqheaders->lock(reqheaders);
     while (reqheaders->getnext(reqheaders, &obj, NULL, false) == true) {
-        outBuf->add_strf(outBuf, "%s: %s\r\n", obj.name, (char *)obj.data);
+        outBuf->addstrf(outBuf, "%s: %s\r\n", obj.name, (char *)obj.data);
     }
     reqheaders->unlock(reqheaders);
 
-    outBuf->add_strf(outBuf, "\r\n");
+    outBuf->addstrf(outBuf, "\r\n");
 
     // stream out
     size_t towrite = 0;
@@ -1234,7 +1234,7 @@ static bool send_request(qhttpclient_t *client, const char *method,
 }
 
 /**
- * (qhttpclient_t*)->read_response(): Reads HTTP response header from the
+ * (qhttpclient_t*)->readresponse(): Reads HTTP response header from the
  * remote host.
  *
  * @param client        qhttpclient object pointer
@@ -1247,12 +1247,12 @@ static bool send_request(qhttpclient_t *client, const char *method,
  *
  * @code
  *   // send request
- *   httpclient->send_request(client, "DELETE", "/img/qdecoder.png", NULL);
+ *   httpclient->sendrequest(client, "DELETE", "/img/qdecoder.png", NULL);
  *
  *   // read response
  *   qlisttbl_t *resheaders = qlisttbl();
  *   off_t clength;
- *   int rescode = httpclient->read_response(client, resheaders, &clength);
+ *   int rescode = httpclient->readresponse(client, resheaders, &clength);
  *   if(clength > 0) {
  *     // read & throw out a content. don't need content
  *     httpclient->read(client, NULL, clength);
@@ -1263,7 +1263,7 @@ static bool send_request(qhttpclient_t *client, const char *method,
  *  Data of content body must be read by a application side, if you want to use
  *  Keep-Alive session. Please refer (qhttpclient_t*)->read().
  */
-static int read_response(qhttpclient_t *client, qlisttbl_t *resheaders,
+static int readresponse(qhttpclient_t *client, qlisttbl_t *resheaders,
                          off_t *contentlength)
 {
     if (contentlength != NULL) {
@@ -1396,7 +1396,7 @@ static ssize_t gets_(qhttpclient_t *client, char *buf, size_t bufsize)
  *
  * @code
  *   off_t clength = 0;
- *   int resno = client->read_response(client, NULL, &clength);
+ *   int resno = client->readresponse(client, NULL, &clength);
  *   if(clength > 0) {
  *     void *buf = malloc(clength);
  *     client->read(client, buf, clength);

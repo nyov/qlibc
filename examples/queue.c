@@ -31,6 +31,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include <string.h>
 #include "qlibc.h"
 
@@ -44,9 +46,9 @@ int main(void)
     queue->pushint(queue, 2);
     queue->pushint(queue, 3);
 
-    printf("popint(): %d\n", queue->popint(queue));
-    printf("popint(): %d\n", queue->popint(queue));
-    printf("popint(): %d\n", queue->popint(queue));
+    printf("popint(): %"PRId64"\n", queue->popint(queue));
+    printf("popint(): %"PRId64"\n", queue->popint(queue));
+    printf("popint(): %"PRId64"\n", queue->popint(queue));
 
     // example: string queue
     queue->pushstr(queue, "A string");

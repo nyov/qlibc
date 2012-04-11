@@ -92,6 +92,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
@@ -105,12 +107,12 @@ static bool put(qhashtbl_t *tbl, const char *name, const void *data,
                 size_t size);
 static bool putstr(qhashtbl_t *tbl, const char *name, const char *str);
 static bool putstrf(qhashtbl_t *tbl, const char *name, const char *format,
-                     ...);
-static bool putint(qhashtbl_t *tbl, const char *name, int num);
+                    ...);
+static bool putint(qhashtbl_t *tbl, const char *name, int64_t num);
 
 static void *get(qhashtbl_t *tbl, const char *name, size_t *size, bool newmem);
 static char *getstr(qhashtbl_t *tbl, const char *name, bool newmem);
-static int  getint(qhashtbl_t *tbl, const char *name);
+static int64_t getint(qhashtbl_t *tbl, const char *name);
 
 static bool getnext(qhashtbl_t *tbl, qhnobj_t *obj, bool newmem);
 
@@ -341,10 +343,10 @@ static bool putstrf(qhashtbl_t *tbl, const char *name, const char *format, ...)
  * @note
  * The integer will be converted to a string object and stored as string object.
  */
-static bool putint(qhashtbl_t *tbl, const char *name, const int num)
+static bool putint(qhashtbl_t *tbl, const char *name, int64_t num)
 {
     char str[20+1];
-    snprintf(str, sizeof(str), "%d", num);
+    snprintf(str, sizeof(str), "%"PRId64, num);
     return putstr(tbl, name, str);
 }
 
@@ -459,12 +461,12 @@ static char *getstr(qhashtbl_t *tbl, const char *name, bool newmem)
  *  - EINVAL : Invalid argument.
  *  - ENOMEM : Memory allocation failure.
  */
-static int getint(qhashtbl_t *tbl, const char *name)
+static int64_t getint(qhashtbl_t *tbl, const char *name)
 {
-    int num = 0;
+    int64_t num = 0;
     char *str = getstr(tbl, name, true);
     if (str != NULL) {
-        num = atoi(str);
+        num = atoll(str);
         free(str);
     }
 

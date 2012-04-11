@@ -124,16 +124,16 @@ static size_t setsize(qstack_t *stack, size_t max);
 
 static bool push(qstack_t *stack, const void *data, size_t size);
 static bool pushstr(qstack_t *stack, const char *str);
-static bool pushint(qstack_t *stack, int num);
+static bool pushint(qstack_t *stack, int64_t num);
 
 static void *pop(qstack_t *stack, size_t *size);
 static char *popstr(qstack_t *stack);
-static int popint(qstack_t *stack);
+static int64_t popint(qstack_t *stack);
 static void *popat(qstack_t *stack, int index, size_t *size);
 
 static void *get(qstack_t *stack, size_t *size, bool newmem);
 static char *getstr(qstack_t *stack);
-static int getint(qstack_t *stack);
+static int64_t getint(qstack_t *stack);
 static void *getat(qstack_t *stack, int index, size_t *size, bool newmem);
 
 static size_t size(qstack_t *stack);
@@ -262,7 +262,7 @@ static bool pushstr(qstack_t *stack, const char *str)
  *                limited number of elements.
  *  - ENOMEM    : Memory allocation failure.
  */
-static bool pushint(qstack_t *stack, int num)
+static bool pushint(qstack_t *stack, int64_t num)
 {
     return stack->list->addfirst(stack->list, &num, sizeof(int));
 }
@@ -323,10 +323,10 @@ static char *popstr(qstack_t *stack)
  * @note
  * The integer element should be pushed through pushint().
  */
-static int popint(qstack_t *stack)
+static int64_t popint(qstack_t *stack)
 {
-    int num = 0;
-    int *pnum = stack->list->popfirst(stack->list, NULL);
+    int64_t num = 0;
+    int64_t *pnum = stack->list->popfirst(stack->list, NULL);
     if (pnum != NULL) {
         num = *pnum;
         free(pnum);
@@ -415,10 +415,10 @@ static char *getstr(qstack_t *stack)
  * @note
  * The integer element should be pushed through pushint().
  */
-static int getint(qstack_t *stack)
+static int64_t getint(qstack_t *stack)
 {
-    int num = 0;
-    int *pnum = stack->list->getfirst(stack->list, NULL, true);
+    int64_t num = 0;
+    int64_t *pnum = stack->list->getfirst(stack->list, NULL, true);
     if (pnum != NULL) {
         num = *pnum;
         free(pnum);
