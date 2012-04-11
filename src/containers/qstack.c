@@ -49,27 +49,27 @@
  *  qstack_t *stack = qstack();
  *
  *  // example: integer stack
- *  stack->push_int(stack, 1);
- *  stack->push_int(stack, 2);
- *  stack->push_int(stack, 3);
+ *  stack->pushint(stack, 1);
+ *  stack->pushint(stack, 2);
+ *  stack->pushint(stack, 3);
  *
- *  printf("pop_int(): %d\n", stack->pop_int(stack));
- *  printf("pop_int(): %d\n", stack->pop_int(stack));
- *  printf("pop_int(): %d\n", stack->pop_int(stack));
+ *  printf("popint(): %d\n", stack->popint(stack));
+ *  printf("popint(): %d\n", stack->popint(stack));
+ *  printf("popint(): %d\n", stack->popint(stack));
  *
  *  // example: string stack
- *  stack->push_str(stack, "A string");
- *  stack->push_str(stack, "B string");
- *  stack->push_str(stack, "C string");
+ *  stack->pushstr(stack, "A string");
+ *  stack->pushstr(stack, "B string");
+ *  stack->pushstr(stack, "C string");
  *
- *  char *str = stack->pop_str(stack);
- *  printf("pop_str(): %s\n", str);
+ *  char *str = stack->popstr(stack);
+ *  printf("popstr(): %s\n", str);
  *  free(str);
- *  str = stack->pop_str(stack);
- *  printf("pop_str(): %s\n", str);
+ *  str = stack->popstr(stack);
+ *  printf("popstr(): %s\n", str);
  *  free(str);
- *  str = stack->pop_str(stack);
- *  printf("pop_str(): %s\n", str);
+ *  str = stack->popstr(stack);
+ *  printf("popstr(): %s\n", str);
  *  free(str);
  *
  *  // example: object stack
@@ -91,12 +91,12 @@
  *  stack->free(stack);
  *
  *  [Output]
- *  pop_int(): 3
- *  pop_int(): 2
- *  pop_int(): 1
- *  pop_str(): C string
- *  pop_str(): B string
- *  pop_str(): A string
+ *  popint(): 3
+ *  popint(): 2
+ *  popint(): 1
+ *  popstr(): C string
+ *  popstr(): B string
+ *  popstr(): A string
  *  pop(): C object
  *  pop(): B object
  *  pop(): A object
@@ -120,21 +120,21 @@
  */
 #ifndef _DOXYGEN_SKIP
 
-static size_t set_size(qstack_t *stack, size_t max);
+static size_t setsize(qstack_t *stack, size_t max);
 
 static bool push(qstack_t *stack, const void *data, size_t size);
-static bool push_str(qstack_t *stack, const char *str);
-static bool push_int(qstack_t *stack, int num);
+static bool pushstr(qstack_t *stack, const char *str);
+static bool pushint(qstack_t *stack, int num);
 
 static void *pop(qstack_t *stack, size_t *size);
-static char *pop_str(qstack_t *stack);
-static int pop_int(qstack_t *stack);
-static void *pop_at(qstack_t *stack, int index, size_t *size);
+static char *popstr(qstack_t *stack);
+static int popint(qstack_t *stack);
+static void *popat(qstack_t *stack, int index, size_t *size);
 
 static void *get(qstack_t *stack, size_t *size, bool newmem);
-static char *get_str(qstack_t *stack);
-static int get_int(qstack_t *stack);
-static void *get_at(qstack_t *stack, int index, size_t *size, bool newmem);
+static char *getstr(qstack_t *stack);
+static int getint(qstack_t *stack);
+static void *getat(qstack_t *stack, int index, size_t *size, bool newmem);
 
 static size_t size(qstack_t *stack);
 static void clear(qstack_t *stack);
@@ -170,21 +170,21 @@ qstack_t *qstack(void)
     }
 
     // methods
-    stack->set_size     = set_size;
+    stack->setsize      = setsize;
 
     stack->push         = push;
-    stack->push_str     = push_str;
-    stack->push_int     = push_int;
+    stack->pushstr      = pushstr;
+    stack->pushint      = pushint;
 
     stack->pop          = pop;
-    stack->pop_str      = pop_str;
-    stack->pop_int      = pop_int;
-    stack->pop_at       = pop_at;
+    stack->popstr       = popstr;
+    stack->popint       = popint;
+    stack->popat        = popat;
 
     stack->get          = get;
-    stack->get_str      = get_str;
-    stack->get_int      = get_int;
-    stack->get_at       = get_at;
+    stack->getstr       = getstr;
+    stack->getint       = getint;
+    stack->getat        = getat;
 
     stack->size         = size;
     stack->clear        = clear;
@@ -195,7 +195,7 @@ qstack_t *qstack(void)
 }
 
 /**
- * (qstack_t*)->set_size(): Sets maximum number of elements allowed in this
+ * (qstack_t*)->setsize(): Sets maximum number of elements allowed in this
  * stack.
  *
  * @param stack qstack container pointer.
@@ -203,9 +203,9 @@ qstack_t *qstack(void)
  *
  * @return previous maximum number.
  */
-static size_t set_size(qstack_t *stack, size_t max)
+static size_t setsize(qstack_t *stack, size_t max)
 {
-    return stack->list->set_size(stack->list, max);
+    return stack->list->setsize(stack->list, max);
 }
 
 /**
@@ -224,11 +224,11 @@ static size_t set_size(qstack_t *stack, size_t max)
  */
 static bool push(qstack_t *stack, const void *data, size_t size)
 {
-    return stack->list->add_first(stack->list, data, size);
+    return stack->list->addfirst(stack->list, data, size);
 }
 
 /**
- * (qstack_t*)->push_str(): Pushes a string onto the top of this stack.
+ * (qstack_t*)->pushstr(): Pushes a string onto the top of this stack.
  *
  * @param stack qstack container pointer.
  * @param data  a pointer which points data memory.
@@ -241,17 +241,17 @@ static bool push(qstack_t *stack, const void *data, size_t size)
  *                limited number of elements.
  *  - ENOMEM    : Memory allocation failure.
  */
-static bool push_str(qstack_t *stack, const char *str)
+static bool pushstr(qstack_t *stack, const char *str)
 {
     if (str == NULL) {
         errno = EINVAL;
         return false;
     }
-    return stack->list->add_first(stack->list, str, strlen(str) + 1);
+    return stack->list->addfirst(stack->list, str, strlen(str) + 1);
 }
 
 /**
- * (qstack_t*)->push_int(): Pushes a integer onto the top of this stack.
+ * (qstack_t*)->pushint(): Pushes a integer onto the top of this stack.
  *
  * @param stack qstack container pointer.
  * @param num   integer data.
@@ -262,9 +262,9 @@ static bool push_str(qstack_t *stack, const char *str)
  *                limited number of elements.
  *  - ENOMEM    : Memory allocation failure.
  */
-static bool push_int(qstack_t *stack, int num)
+static bool pushint(qstack_t *stack, int num)
 {
-    return stack->list->add_first(stack->list, &num, sizeof(int));
+    return stack->list->addfirst(stack->list, &num, sizeof(int));
 }
 
 /**
@@ -281,11 +281,11 @@ static bool push_int(qstack_t *stack, int num)
  */
 static void *pop(qstack_t *stack, size_t *size)
 {
-    return stack->list->pop_first(stack->list, size);
+    return stack->list->popfirst(stack->list, size);
 }
 
 /**
- * (qstack_t*)->pop_str(): Removes a element at the top of this stack and
+ * (qstack_t*)->popstr(): Removes a element at the top of this stack and
  * returns that element.
  *
  * @param stack qstack container pointer.
@@ -296,12 +296,12 @@ static void *pop(qstack_t *stack, size_t *size)
  *  - ENOMEM    : Memory allocation failure.
  *
  * @note
- * The string element should be pushed through push_str().
+ * The string element should be pushed through pushstr().
  */
-static char *pop_str(qstack_t *stack)
+static char *popstr(qstack_t *stack)
 {
     size_t strsize;
-    char *str = stack->list->pop_first(stack->list, &strsize);
+    char *str = stack->list->popfirst(stack->list, &strsize);
     if (str != NULL) {
         str[strsize - 1] = '\0'; // just to make sure
     }
@@ -310,7 +310,7 @@ static char *pop_str(qstack_t *stack)
 }
 
 /**
- * (qstack_t*)->pop_int(): Removes a integer at the top of this stack and
+ * (qstack_t*)->popint(): Removes a integer at the top of this stack and
  * returns that element.
  *
  * @param stack qstack container pointer.
@@ -321,12 +321,12 @@ static char *pop_str(qstack_t *stack)
  *  - ENOMEM    : Memory allocation failure.
  *
  * @note
- * The integer element should be pushed through push_int().
+ * The integer element should be pushed through pushint().
  */
-static int pop_int(qstack_t *stack)
+static int popint(qstack_t *stack)
 {
     int num = 0;
-    int *pnum = stack->list->pop_first(stack->list, NULL);
+    int *pnum = stack->list->popfirst(stack->list, NULL);
     if (pnum != NULL) {
         num = *pnum;
         free(pnum);
@@ -336,7 +336,7 @@ static int pop_int(qstack_t *stack)
 }
 
 /**
- * (qstack_t*)->pop_at(): Returns and remove the element at the specified
+ * (qstack_t*)->popat(): Returns and remove the element at the specified
  * position in this stack.
  *
  * @param stack qstack container pointer.
@@ -353,9 +353,9 @@ static int pop_int(qstack_t *stack)
  *  this stack. For example, index -1 will always pop a element which is pushed
  *  at very first time.
  */
-static void *pop_at(qstack_t *stack, int index, size_t *size)
+static void *popat(qstack_t *stack, int index, size_t *size)
 {
-    return stack->list->pop_at(stack->list, index, size);
+    return stack->list->popat(stack->list, index, size);
 }
 
 /**
@@ -373,11 +373,11 @@ static void *pop_at(qstack_t *stack, int index, size_t *size)
  */
 static void *get(qstack_t *stack, size_t *size, bool newmem)
 {
-    return stack->list->get_first(stack->list, size, newmem);
+    return stack->list->getfirst(stack->list, size, newmem);
 }
 
 /**
- * (qstack_t*)->get_str(): Returns an string at the top of this stack without
+ * (qstack_t*)->getstr(): Returns an string at the top of this stack without
  * removing it.
  *
  * @param stack qstack container pointer.
@@ -388,12 +388,12 @@ static void *get(qstack_t *stack, size_t *size, bool newmem)
  *  - ENOMEM    : Memory allocation failure.
  *
  * @note
- * The string element should be pushed through push_str().
+ * The string element should be pushed through pushstr().
  */
-static char *get_str(qstack_t *stack)
+static char *getstr(qstack_t *stack)
 {
     size_t strsize;
-    char *str = stack->list->get_first(stack->list, &strsize, true);
+    char *str = stack->list->getfirst(stack->list, &strsize, true);
     if (str != NULL) {
         str[strsize - 1] = '\0'; // just to make sure
     }
@@ -402,7 +402,7 @@ static char *get_str(qstack_t *stack)
 }
 
 /**
- * (qstack_t*)->get_int(): Returns an integer at the top of this stack without
+ * (qstack_t*)->getint(): Returns an integer at the top of this stack without
  * removing it.
  *
  * @param stack qstack container pointer.
@@ -413,12 +413,12 @@ static char *get_str(qstack_t *stack)
  *  - ENOMEM    : Memory allocation failure.
  *
  * @note
- * The integer element should be pushed through push_int().
+ * The integer element should be pushed through pushint().
  */
-static int get_int(qstack_t *stack)
+static int getint(qstack_t *stack)
 {
     int num = 0;
-    int *pnum = stack->list->get_first(stack->list, NULL, true);
+    int *pnum = stack->list->getfirst(stack->list, NULL, true);
     if (pnum != NULL) {
         num = *pnum;
         free(pnum);
@@ -428,7 +428,7 @@ static int get_int(qstack_t *stack)
 }
 
 /**
- * (qstack_t*)->get_at(): Returns an element at the specified position in this
+ * (qstack_t*)->getat(): Returns an element at the specified position in this
  * stack without removing it.
  *
  * @param stack     qstack container pointer.
@@ -446,9 +446,9 @@ static int get_int(qstack_t *stack)
  * stack. For example, index -1 will always get a element which is pushed at
  * very first time.
  */
-static void *get_at(qstack_t *stack, int index, size_t *size, bool newmem)
+static void *getat(qstack_t *stack, int index, size_t *size, bool newmem)
 {
-    return stack->list->get_at(stack->list, index, size, newmem);
+    return stack->list->getat(stack->list, index, size, newmem);
 }
 
 /**

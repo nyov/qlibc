@@ -38,11 +38,23 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <errno.h>
 #include "qlibc.h"
 #include "qlibcext.h"
 #include "qinternal.h"
 
 #define _INCLUDE_DIRECTIVE  "@INCLUDE "
+
+#ifndef _DOXYGEN_SKIP
+#define _VAR        '$'
+#define _VAR_OPEN   '{'
+#define _VAR_CLOSE  '}'
+#define _VAR_CMD    '!'
+#define _VAR_ENV    '%'
+
+/* internal functions */
+static char *_parsestr(qlisttbl_t *tbl, const char *str);
+#endif
 
 /**
  * Load & parse configuration file
@@ -50,6 +62,8 @@
  * @param tbl       a pointer of qlisttbl_t. NULL can be used for empty.
  * @param filepath  configuration file path
  * @param sepchar   separater used in configuration file to divice key and value
+ * @param uniquekey false to allow key duplication, true for overwriting lastest
+ *                  key if there is a same key set already.
  *
  * @return a pointer of qlisttbl_t in case of successful,
  *  otherwise(file not found) returns NULL
@@ -91,7 +105,7 @@
  * @endcode
  *
  * @code
- *   qlisttbl_t *tbl = qconfig_parse_file(NULL, "config.conf", '=');
+ *   qlisttbl_t *tbl = qconfig_parse_file(NULL, "config.conf", '=', true);
  *   tbl->debug(tbl, stdout);
  *
  *   [Output]
@@ -111,7 +125,7 @@
  * @endcode
  */
 qlisttbl_t *qconfig_parse_file(qlisttbl_t *tbl, const char *filepath,
-                               char sepchar)
+                               char sepchar, bool uniquekey)
 {
     char *str = qfile_load(filepath, NULL);
     if (str == NULL) return NULL;
@@ -175,7 +189,7 @@ qlisttbl_t *qconfig_parse_file(qlisttbl_t *tbl, const char *filepath,
     }
 
     // parse
-    tbl = qconfig_parse_str(tbl, str, sepchar);
+    tbl = qconfig_parse_str(tbl, str, sepchar, uniquekey);
     free(str);
 
     return tbl;
@@ -187,6 +201,8 @@ qlisttbl_t *qconfig_parse_file(qlisttbl_t *tbl, const char *filepath,
  * @param tbl       a pointer of qlisttbl_t. NULL can be used for empty.
  * @param str       key, value pair strings
  * @param sepchar   separater used in configuration file to divice key and value
+ * @param uniquekey false to allow key duplication, true for overwriting lastest
+ *                  key if there is a same key set already.
  *
  * @return a pointer of qlisttbl_t in case of successful,
  *         otherwise(file not found) returns NULL
@@ -198,7 +214,8 @@ qlisttbl_t *qconfig_parse_file(qlisttbl_t *tbl, const char *filepath,
  *  tbl = qconfig_parse_str(NULL, "key = value\nhello = world", '=');
  * @endcode
  */
-qlisttbl_t *qconfig_parse_str(qlisttbl_t *tbl, const char *str, char sepchar)
+qlisttbl_t *qconfig_parse_str(qlisttbl_t *tbl, const char *str, char sepchar,
+                              bool uniquekey)
 {
     if (str == NULL) return NULL;
 
@@ -254,9 +271,9 @@ qlisttbl_t *qconfig_parse_str(qlisttbl_t *tbl, const char *str, char sepchar)
         }
 
         // get parsed string
-        char *newvalue = tbl->parse_str(tbl, value);
+        char *newvalue = _parsestr(tbl, value);
         if (newvalue != NULL) {
-            tbl->put_str(tbl, name, newvalue, true);
+            tbl->putstr(tbl, name, newvalue, uniquekey);
             free(newvalue);
         }
 
@@ -269,4 +286,124 @@ qlisttbl_t *qconfig_parse_str(qlisttbl_t *tbl, const char *str, char sepchar)
     return tbl;
 }
 
+#ifndef _DOXYGEN_SKIP
+
+/**
+ * (qlisttbl_t*)->parsestr(): Parse a string and replace variables in the
+ * string to the data in this list.
+ *
+ * @param tbl   qlisttbl container pointer.
+ * @param str   string value which may contain variables like ${...}
+ *
+ * @return malloced string if successful, otherwise returns NULL.
+ * @retval errno will be set in error condition.
+ *  - EINVAL : Invalid argument.
+ *
+ * @code
+ *  ${key_name}          - replace this with a matched value data in this list.
+ *  ${!system_command}   - run external command and put it's output here.
+ *  ${%PATH}             - get environment variable.
+ * @endcode
+ *
+ * @code
+ *  --[tbl Table]------------------------
+ *  NAME = qLibc
+ *  -------------------------------------
+ *
+ *  char *str = _parsestr(tbl, "${NAME}, ${%HOME}, ${!date -u}");
+ *  if(str != NULL) {
+ *    printf("%s\n", str);
+ *    free(str);
+ *  }
+ *
+ *  [Output]
+ *  qLibc, /home/qlibc, Wed Nov 24 00:30:58 UTC 2010
+ * @endcode
+ */
+static char *_parsestr(qlisttbl_t *tbl, const char *str)
+{
+    if (str == NULL) {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    tbl->lock(tbl);
+
+    bool loop;
+    char *value = strdup(str);
+    do {
+        loop = false;
+
+        // find ${
+        char *s, *e;
+        int openedbrakets;
+        for (s = value; *s != '\0'; s++) {
+            if (!(*s == _VAR && *(s+1) == _VAR_OPEN)) continue;
+
+            // found ${, try to find }. s points $
+            openedbrakets = 1; // braket open counter
+            for (e = s + 2; *e != '\0'; e++) {
+                if (*e == _VAR && *(e+1) == _VAR_OPEN) { // found internal ${
+                    // e is always bigger than s, negative overflow never occure
+                    s = e - 1;
+                    break;
+                } else if (*e == _VAR_OPEN) openedbrakets++;
+                else if (*e == _VAR_CLOSE) openedbrakets--;
+                else continue;
+
+                if (openedbrakets == 0) break;
+            }
+            if (*e == '\0') break; // braket mismatch
+            if (openedbrakets > 0) continue; // found internal ${
+
+            // pick string between ${, }
+            int varlen = e - s - 2; // length between ${ , }
+            char *varstr = (char *)malloc(varlen + 3 + 1);
+            if (varstr == NULL) continue;
+            strncpy(varstr, s + 2, varlen);
+            varstr[varlen] = '\0';
+
+            // get the new string to replace
+            char *newstr = NULL;
+            switch (varstr[0]) {
+                case _VAR_CMD : {
+                    if ((newstr = qstrtrim(qsyscmd(varstr + 1))) == NULL) {
+                        newstr = strdup("");
+                    }
+                    break;
+                }
+                case _VAR_ENV : {
+                    newstr = strdup(qsys_getenv(varstr + 1, ""));
+                    break;
+                }
+                default : {
+                    if ((newstr = tbl->getstr(tbl, varstr, true)) == NULL) {
+                        s = e; // not found
+                        continue;
+                    }
+                    break;
+                }
+            }
+
+            // replace
+            strncpy(varstr, s, varlen + 3); // ${str}
+            varstr[varlen + 3] = '\0';
+
+            s = qstrreplace("sn", value, varstr, newstr);
+            free(newstr);
+            free(varstr);
+            free(value);
+            value = s;
+
+            loop = true;
+            break;
+        }
+    } while (loop == true);
+
+    tbl->unlock(tbl);
+
+    return value;
+}
+
+#endif /* _DOXYGEN_SKIP */
 #endif /* DISABLE_QCONFIG */

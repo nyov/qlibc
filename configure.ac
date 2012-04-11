@@ -104,7 +104,7 @@ if test $ac_compiler_gnu = yes; then
 fi
 AC_PROG_CC_C99
 if test $ac_cv_prog_cc_c99 = no; then
-	AC_MSG_FAILURE([Compiler doesn't support C99 mode.])
+	AC_MSG_FAILURE([Compiler does not support C99 mode.])
 fi
 
 AC_PROG_INSTALL

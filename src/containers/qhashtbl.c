@@ -66,16 +66,16 @@
  *
  *  // put objects into table.
  *  tbl->put(tbl, "sample1", "binary", 6);
- *  tbl->put_str(tbl, "sample2", "string");
- *  tbl->put_int(tbl, "sample3", 1);
+ *  tbl->putstr(tbl, "sample2", "string");
+ *  tbl->putint(tbl, "sample3", 1);
  *
  *  // debug print out
  *  tbl->debug(tbl, stdout, true);
  *
  *  // get objects
  *  void *sample1 = tbl->get(tbl, "sample1", &size, true);
- *  char *sample2 = tbl->get_str(tbl, "sample2", false);
- *  int  sample3  = tbl->get_int(tbl, "sample3");
+ *  char *sample2 = tbl->getstr(tbl, "sample2", false);
+ *  int  sample3  = tbl->getint(tbl, "sample3");
  *
  *  // sample1 is memalloced
  *  if(sample1 != NULL) free(sample1);
@@ -103,16 +103,16 @@
 // member methods
 static bool put(qhashtbl_t *tbl, const char *name, const void *data,
                 size_t size);
-static bool put_str(qhashtbl_t *tbl, const char *name, const char *str);
-static bool put_strf(qhashtbl_t *tbl, const char *name, const char *format,
+static bool putstr(qhashtbl_t *tbl, const char *name, const char *str);
+static bool putstrf(qhashtbl_t *tbl, const char *name, const char *format,
                      ...);
-static bool put_int(qhashtbl_t *tbl, const char *name, int num);
+static bool putint(qhashtbl_t *tbl, const char *name, int num);
 
 static void *get(qhashtbl_t *tbl, const char *name, size_t *size, bool newmem);
-static char *get_str(qhashtbl_t *tbl, const char *name, bool newmem);
-static int  get_int(qhashtbl_t *tbl, const char *name);
+static char *getstr(qhashtbl_t *tbl, const char *name, bool newmem);
+static int  getint(qhashtbl_t *tbl, const char *name);
 
-static bool get_next(qhashtbl_t *tbl, qhnobj_t *obj, bool newmem);
+static bool getnext(qhashtbl_t *tbl, qhnobj_t *obj, bool newmem);
 
 static bool remove_(qhashtbl_t *tbl, const char *name);
 
@@ -168,15 +168,15 @@ qhashtbl_t *qhashtbl(size_t range)
 
     // assign methods
     tbl->put        = put;
-    tbl->put_str    = put_str;
-    tbl->put_strf   = put_strf;
-    tbl->put_int    = put_int;
+    tbl->putstr     = putstr;
+    tbl->putstrf    = putstrf;
+    tbl->putint     = putint;
 
     tbl->get        = get;
-    tbl->get_str    = get_str;
-    tbl->get_int    = get_int;
+    tbl->getstr     = getstr;
+    tbl->getint     = getint;
 
-    tbl->get_next   = get_next;
+    tbl->getnext    = getnext;
 
     tbl->remove     = remove_;
 
@@ -283,7 +283,7 @@ static bool put(qhashtbl_t *tbl, const char *name, const void *data,
 }
 
 /**
- * (qhashtbl_t*)->put_str(): Put a string into this table.
+ * (qhashtbl_t*)->putstr(): Put a string into this table.
  *
  * @param tbl       qhashtbl_t container pointer.
  * @param name      key name.
@@ -294,14 +294,14 @@ static bool put(qhashtbl_t *tbl, const char *name, const void *data,
  *  - EINVAL : Invalid argument.
  *  - ENOMEM : Memory allocation failure.
  */
-static bool put_str(qhashtbl_t *tbl, const char *name, const char *str)
+static bool putstr(qhashtbl_t *tbl, const char *name, const char *str)
 {
     size_t size = (str != NULL) ? (strlen(str) + 1) : 0;
     return put(tbl, name, str, size);
 }
 
 /**
- * (qhashtbl_t*)->put_strf(): Put a formatted string into this table.
+ * (qhashtbl_t*)->putstrf(): Put a formatted string into this table.
  *
  * @param tbl       qhashtbl_t container pointer.
  * @param name      key name.
@@ -312,7 +312,7 @@ static bool put_str(qhashtbl_t *tbl, const char *name, const char *str)
  *  - EINVAL : Invalid argument.
  *  - ENOMEM : Memory allocation failure.
  */
-static bool put_strf(qhashtbl_t *tbl, const char *name, const char *format, ...)
+static bool putstrf(qhashtbl_t *tbl, const char *name, const char *format, ...)
 {
     char *str;
     DYNAMIC_VSPRINTF(str, format);
@@ -321,13 +321,13 @@ static bool put_strf(qhashtbl_t *tbl, const char *name, const char *format, ...)
         return false;
     }
 
-    bool ret = put_str(tbl, name, str);
+    bool ret = putstr(tbl, name, str);
     free(str);
     return ret;
 }
 
 /**
- * (qhashtbl_t*)->put_int(): Put a integer into this table as string type.
+ * (qhashtbl_t*)->putint(): Put a integer into this table as string type.
  *
  * @param tbl       qhashtbl_t container pointer.
  * @param name      key name.
@@ -341,11 +341,11 @@ static bool put_strf(qhashtbl_t *tbl, const char *name, const char *format, ...)
  * @note
  * The integer will be converted to a string object and stored as string object.
  */
-static bool put_int(qhashtbl_t *tbl, const char *name, const int num)
+static bool putint(qhashtbl_t *tbl, const char *name, const int num)
 {
     char str[20+1];
     snprintf(str, sizeof(str), "%d", num);
-    return put_str(tbl, name, str);
+    return putstr(tbl, name, str);
 }
 
 /**
@@ -424,7 +424,7 @@ static void *get(qhashtbl_t *tbl, const char *name, size_t *size, bool newmem)
 }
 
 /**
- * (qhashtbl_t*)->get_str(): Finds an object with given name and returns as
+ * (qhashtbl_t*)->getstr(): Finds an object with given name and returns as
  * string type.
  *
  * @param tbl       qhashtbl_t container pointer.
@@ -441,13 +441,13 @@ static void *get(qhashtbl_t *tbl, const char *name, size_t *size, bool newmem)
  *  If newmem flag is set, returned data will be malloced and should be
  *  deallocated by user.
  */
-static char *get_str(qhashtbl_t *tbl, const char *name, bool newmem)
+static char *getstr(qhashtbl_t *tbl, const char *name, bool newmem)
 {
     return get(tbl, name, NULL, newmem);
 }
 
 /**
- * (qhashtbl_t*)->get_int(): Finds an object with given name and returns as
+ * (qhashtbl_t*)->getint(): Finds an object with given name and returns as
  * integer type.
  *
  * @param tbl       qhashtbl_t container pointer.
@@ -459,10 +459,10 @@ static char *get_str(qhashtbl_t *tbl, const char *name, bool newmem)
  *  - EINVAL : Invalid argument.
  *  - ENOMEM : Memory allocation failure.
  */
-static int get_int(qhashtbl_t *tbl, const char *name)
+static int getint(qhashtbl_t *tbl, const char *name)
 {
     int num = 0;
-    char *str = get_str(tbl, name, true);
+    char *str = getstr(tbl, name, true);
     if (str != NULL) {
         num = atoi(str);
         free(str);
@@ -472,7 +472,7 @@ static int get_int(qhashtbl_t *tbl, const char *name)
 }
 
 /**
- * (qhashtbl_t*)->get_next(): Get next element.
+ * (qhashtbl_t*)->getnext(): Get next element.
  *
  * @param tbl       qhashtbl_t container pointer.
  * @param obj       found data will be stored in this object
@@ -492,7 +492,7 @@ static int get_int(qhashtbl_t *tbl, const char *name)
  *  qhnobj_t obj;
  *  memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
  *  tbl->lock(tbl);
- *  while(tbl->get_next(tbl, &obj, false) == true) {
+ *  while(tbl->getnext(tbl, &obj, false) == true) {
  *     printf("NAME=%s, DATA=%s, SIZE=%zu\n",
  *     obj.name, (char*)obj.data, obj.size);
  *  }
@@ -502,7 +502,7 @@ static int get_int(qhashtbl_t *tbl, const char *name)
  *  qhnobj_t obj;
  *  memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
  *  tbl->lock(tbl);
- *  while(tbl->get_next(tbl, &obj, true) == true) {
+ *  while(tbl->getnext(tbl, &obj, true) == true) {
  *     printf("NAME=%s, DATA=%s, SIZE=%zu\n",
  *     obj.name, (char*)obj.data, obj.size);
  *     free(obj.name);
@@ -516,7 +516,7 @@ static int get_int(qhashtbl_t *tbl, const char *name)
  *  If newmem flag is true, user should de-allocate obj.name and obj.data
  *  resources.
  */
-static bool get_next(qhashtbl_t *tbl, qhnobj_t *obj, bool newmem)
+static bool getnext(qhashtbl_t *tbl, qhnobj_t *obj, bool newmem)
 {
     if (obj == NULL) {
         errno = EINVAL;
@@ -553,7 +553,7 @@ static bool get_next(qhashtbl_t *tbl, qhnobj_t *obj, bool newmem)
             obj->name = strdup(cursor->name);
             obj->data = malloc(cursor->size);
             if (obj->name == NULL || obj->data == NULL) {
-                DEBUG("get_next(): Unable to allocate memory.");
+                DEBUG("getnext(): Unable to allocate memory.");
                 if (obj->name != NULL) free(obj->name);
                 if (obj->data != NULL) free(obj->data);
                 unlock(tbl);
@@ -691,7 +691,7 @@ bool debug(qhashtbl_t *tbl, FILE *out)
     qhnobj_t obj;
     memset((void *)&obj, 0, sizeof(obj)); // must be cleared before call
     lock(tbl);
-    while (tbl->get_next(tbl, &obj, false) == true) {
+    while (tbl->getnext(tbl, &obj, false) == true) {
         fprintf(out, "%s=" , obj.name);
         _q_humanOut(out, obj.data, obj.size, MAX_HUMANOUT);
         fprintf(out, " (%zu, hash=%u)\n" , obj.size, obj.hash);
@@ -708,7 +708,7 @@ bool debug(qhashtbl_t *tbl, FILE *out)
  *
  * @note
  *  From user side, normally locking operation is only needed when traverse
- *  all elements using (qhashtbl_t*)->get_next(). Most of other operations do
+ *  all elements using (qhashtbl_t*)->getnext(). Most of other operations do
  *  necessary locking internally when it's compiled with --enable-threadsafe
  *  option.
  *

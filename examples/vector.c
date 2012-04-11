@@ -43,8 +43,8 @@ int main(void)
     vector->add_strf(vector, "%d", 12);  // for formatted string
     vector->add_str(vector, "CD");
 
+    char *final = vector->tostring(vector);
     // get the chunk as a string
-    char *final = vector->to_string(vector);
 
     // print out
     vector->debug(vector, stdout);

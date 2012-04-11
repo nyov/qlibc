@@ -565,7 +565,7 @@ qlist_t *qstr_tokenizer(const char *str, const char *delimiters)
     for (i = 1, token = qstrtok(dupstr, delimiters, NULL, &offset);
          token != NULL;
          token = qstrtok(dupstr, delimiters, NULL, &offset), i++) {
-        list->add_last(list, token, strlen(token) + 1);
+        list->addlast(list, token, strlen(token) + 1);
     }
     free(dupstr);
 

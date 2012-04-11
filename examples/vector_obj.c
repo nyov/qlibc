@@ -59,7 +59,7 @@ int main(void)
 
     // final
     struct sampleobj *final;
-    final = (struct sampleobj *)vector->to_array(vector, NULL);
+    final = (struct sampleobj *)vector->toarray(vector, NULL);
 
     // print out
     printf("Number of Objects = %zu\n", vector->size(vector));

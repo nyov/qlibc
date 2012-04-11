@@ -40,7 +40,7 @@ int main(void)
            "Compile qLibc without '--disable-qconfig' option.\n");
     return 1;
 #else
-    qlisttbl_t *tbl = qconfig_parse_file(NULL, CONF_PATH, '=');
+    qlisttbl_t *tbl = qconfig_parse_file(NULL, CONF_PATH, '=', true);
     if (tbl == NULL) {
         printf("Failed to open '" CONF_PATH "'.\n");
         return -1;

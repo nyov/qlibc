@@ -78,7 +78,7 @@ qlisttbl_t *qparse_queries(qlisttbl_t *tbl, const char *query, char equalchar,
         qurl_decode(name);
         qurl_decode(value);
 
-        if (tbl->put_str(tbl, name, value, false) == true) cnt++;
+        if (tbl->putstr(tbl, name, value, false) == true) cnt++;
         free(name);
         free(value);
     }

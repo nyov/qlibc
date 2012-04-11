@@ -567,7 +567,7 @@ static bool head(qhttpclient_t *client, const char *uri, int *rescode,
     }
 
     // add additional headers
-    reqheaders->put_str(reqheaders,  "Accept", "*/*", true);
+    reqheaders->putstr(reqheaders,  "Accept", "*/*", true);
 
     // send request
     bool sendret = send_request(client, "HEAD", uri, reqheaders);
@@ -703,7 +703,7 @@ static bool get(qhttpclient_t *client, const char *uri, int fd, off_t *savesize,
     }
 
     // add additional headers
-    reqheaders->put_str(reqheaders,  "Accept", "*/*", true);
+    reqheaders->putstr(reqheaders,  "Accept", "*/*", true);
 
     // send request
     bool sendret = send_request(client, "GET", uri, reqheaders);
@@ -865,7 +865,7 @@ static bool get(qhttpclient_t *client, const char *uri, int fd, off_t *savesize,
  *
  *     // set additional custom headers
  *     qlisttbl_t *reqheaders = qlisttbl();
- *     reqheaders->put_str(reqheaders, "X-FILE-MD5SUM", pFileMd5sum, true);
+ *     reqheaders->putstr(reqheaders, "X-FILE-MD5SUM", pFileMd5sum, true);
  *     reqheaders->putInt(reqheaders, "X-FILE-DATE", nFileDate, true);
  *
  *     // set userdata
@@ -925,8 +925,8 @@ static bool put(qhttpclient_t *client, const char *uri, int fd, off_t length,
     }
 
     // add additional headers
-    reqheaders->put_strf(reqheaders, true, "Content-Length", "%jd", length);
-    reqheaders->put_str(reqheaders,  "Expect", "100-continue", true);
+    reqheaders->putstrf(reqheaders, true, "Content-Length", "%jd", length);
+    reqheaders->putstr(reqheaders,  "Expect", "100-continue", true);
 
     // send request
     bool sendret =send_request(client, "PUT", uri, reqheaders);
@@ -1088,7 +1088,7 @@ static void *cmd(qhttpclient_t *client, const char *method, const char *uri,
     bool freeReqHeaders = false;
     if (reqheaders == NULL && data != NULL && size > 0) {
         reqheaders = qlisttbl();
-        reqheaders->put_strf(reqheaders, true, "Content-Length", "%jd", size);
+        reqheaders->putstrf(reqheaders, true, "Content-Length", "%jd", size);
         freeReqHeaders = true;
     }
 
@@ -1160,7 +1160,7 @@ static void *cmd(qhttpclient_t *client, const char *method, const char *uri,
  *
  * @code
  *   qlisttbl_t *reqheaders = qlisttbl();
- *   reqheaders->put_str(reqheaders,  "Date", qTimeGetGmtStaticStr(0), true);
+ *   reqheaders->putstr(reqheaders,  "Date", qTimeGetGmtStaticStr(0), true);
  *
  *   httpclient->send_request(client,
  *                            "DELETE", "/img/qdecoder.png", reqheaders);
@@ -1183,14 +1183,14 @@ static bool send_request(qhttpclient_t *client, const char *method,
 
     // append default headers
     if (reqheaders->caseget(reqheaders, "Host", NULL, false) == NULL) {
-        reqheaders->put_strf(reqheaders, true, "Host", "%s:%d",
+        reqheaders->putstrf(reqheaders, true, "Host", "%s:%d",
                              client->hostname, client->port);
     }
     if (reqheaders->caseget(reqheaders, "User-Agent", NULL, false) == NULL) {
-        reqheaders->put_str(reqheaders, "User-Agent", client->useragent, true);
+        reqheaders->putstr(reqheaders, "User-Agent", client->useragent, true);
     }
     if (reqheaders->caseget(reqheaders, "Connection", NULL, false) == NULL) {
-        reqheaders->put_str(reqheaders, "Connection",
+        reqheaders->putstr(reqheaders, "Connection",
                             (client->keepalive==true) ? "Keep-Alive" : "close",
                             true);
     }
@@ -1209,7 +1209,7 @@ static bool send_request(qhttpclient_t *client, const char *method,
     qdlnobj_t obj;
     memset((void *)&obj, 0, sizeof(obj)); // must be cleared before call
     reqheaders->lock(reqheaders);
-    while (reqheaders->get_next(reqheaders, &obj, NULL, false) == true) {
+    while (reqheaders->getnext(reqheaders, &obj, NULL, false) == true) {
         outBuf->add_strf(outBuf, "%s: %s\r\n", obj.name, (char *)obj.data);
     }
     reqheaders->unlock(reqheaders);
@@ -1218,7 +1218,7 @@ static bool send_request(qhttpclient_t *client, const char *method,
 
     // stream out
     size_t towrite = 0;
-    char *final = outBuf->to_array(outBuf, &towrite);
+    char *final = outBuf->toarray(outBuf, &towrite);
     ssize_t written = 0;
     if (final != NULL) {
         written = write_(client, final, towrite);
@@ -1298,7 +1298,7 @@ static int read_response(qhttpclient_t *client, qlisttbl_t *resheaders,
         }
 
         if (resheaders != NULL) {
-            resheaders->put_str(resheaders, name, value, true);
+            resheaders->putstr(resheaders, name, value, true);
         }
 
         // check Connection header

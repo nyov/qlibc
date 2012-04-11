@@ -48,13 +48,13 @@ int main(void)
     //
 
     // insert elements (key duplication is not allowed)
-    tbl->put_str(tbl, "e1", "a");
-    tbl->put_str(tbl, "e2", "b");
-    tbl->put_str(tbl, "e2", "c");
-    tbl->put_str(tbl, "e3", "d");
-    tbl->put_str(tbl, "e4", "e");
-    tbl->put_str(tbl, "e5", "f");
-    tbl->put_str(tbl, "12345678901234567890",
+    tbl->putstr(tbl, "e1", "a");
+    tbl->putstr(tbl, "e2", "b");
+    tbl->putstr(tbl, "e2", "c");
+    tbl->putstr(tbl, "e3", "d");
+    tbl->putstr(tbl, "e4", "e");
+    tbl->putstr(tbl, "e5", "f");
+    tbl->putstr(tbl, "12345678901234567890",
                       "1234567890123456789012345678901234567890");
 
     // print out
@@ -66,9 +66,9 @@ int main(void)
     //
 
     printf("\n--[Test 2 : many ways to find key]--\n");
-    char *e2 = tbl->get_str(tbl, "e2");
+    char *e2 = tbl->getstr(tbl, "e2");
     if (e2 != NULL) {
-        printf("get_str('e2') : %s\n", e2);
+        printf("getstr('e2') : %s\n", e2);
         free(e2);
     }
 
@@ -80,7 +80,7 @@ int main(void)
     printf("table size : %d elements\n", tbl->size(tbl, NULL, NULL));
     int idx = 0;
     qnobj_t obj;
-    while (tbl->get_next(tbl, &obj, &idx) == true) {
+    while (tbl->getnext(tbl, &obj, &idx) == true) {
         printf("NAME=%s, DATA=%s, SIZE=%zu\n",
                obj.name, (char *)obj.data, obj.size);
         free(obj.name);

@@ -40,27 +40,27 @@ int main(void)
     qstack_t *stack = qstack();
 
     // example: integer stack
-    stack->push_int(stack, 1);
-    stack->push_int(stack, 2);
-    stack->push_int(stack, 3);
+    stack->pushint(stack, 1);
+    stack->pushint(stack, 2);
+    stack->pushint(stack, 3);
 
-    printf("pop_int(): %d\n", stack->pop_int(stack));
-    printf("pop_int(): %d\n", stack->pop_int(stack));
-    printf("pop_int(): %d\n", stack->pop_int(stack));
+    printf("popint(): %d\n", stack->popint(stack));
+    printf("popint(): %d\n", stack->popint(stack));
+    printf("popint(): %d\n", stack->popint(stack));
 
     // example: string stack
-    stack->push_str(stack, "A string");
-    stack->push_str(stack, "B string");
-    stack->push_str(stack, "C string");
+    stack->pushstr(stack, "A string");
+    stack->pushstr(stack, "B string");
+    stack->pushstr(stack, "C string");
 
-    char *str = stack->pop_str(stack);
-    printf("pop_str(): %s\n", str);
+    char *str = stack->popstr(stack);
+    printf("popstr(): %s\n", str);
     free(str);
-    str = stack->pop_str(stack);
-    printf("pop_str(): %s\n", str);
+    str = stack->popstr(stack);
+    printf("popstr(): %s\n", str);
     free(str);
-    str = stack->pop_str(stack);
-    printf("pop_str(): %s\n", str);
+    str = stack->popstr(stack);
+    printf("popstr(): %s\n", str);
     free(str);
 
     // example: object stack

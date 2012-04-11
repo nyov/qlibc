@@ -80,16 +80,16 @@
  *  if(tbl == NULL) return;
  *
  *  // insert elements (key duplication does not allowed)
- *  tbl->put_str(tbl, "e1", "a");
- *  tbl->put_str(tbl, "e2", "b");
- *  tbl->put_str(tbl, "e3", "c");
+ *  tbl->putstr(tbl, "e1", "a");
+ *  tbl->putstr(tbl, "e2", "b");
+ *  tbl->putstr(tbl, "e3", "c");
  *
  *  // debug print out
  *  tbl->debug(tbl, stdout);
  *
- *  char *e2 = tbl->get_str(tbl, "e2");
+ *  char *e2 = tbl->getstr(tbl, "e2");
  *  if(e2 != NULL) {
- *     printf("get_str('e2') : %s\n", e2);
+ *     printf("getstr('e2') : %s\n", e2);
  *     free(e2);
  *  }
  * @endcode
@@ -140,14 +140,14 @@
 
 static bool put(qhasharr_t *tbl, const char *key, const void *value,
                 size_t size);
-static bool put_str(qhasharr_t *tbl, const char *key, const char *str);
-static bool put_strf(qhasharr_t *tbl, const char *key, const char *format, ...);
-static bool put_int(qhasharr_t *tbl, const char *key, int num);
+static bool putstr(qhasharr_t *tbl, const char *key, const char *str);
+static bool putstrf(qhasharr_t *tbl, const char *key, const char *format, ...);
+static bool putint(qhasharr_t *tbl, const char *key, int num);
 
 static void *get(qhasharr_t *tbl, const char *key, size_t *size);
-static char *get_str(qhasharr_t *tbl, const char *key);
-static int  get_int(qhasharr_t *tbl, const char *key);
-static bool get_next(qhasharr_t *tbl, qnobj_t *obj, int *idx);
+static char *getstr(qhasharr_t *tbl, const char *key);
+static int  getint(qhasharr_t *tbl, const char *key);
+static bool getnext(qhasharr_t *tbl, qnobj_t *obj, int *idx);
 
 static bool remove_(qhasharr_t *tbl, const char *key);
 
@@ -230,14 +230,14 @@ qhasharr_t *qhasharr(void *memory, size_t memsize)
 
     // assign methods
     tbl->put        = put;
-    tbl->put_str    = put_str;
-    tbl->put_strf   = put_strf;
-    tbl->put_int     = put_int;
+    tbl->putstr     = putstr;
+    tbl->putstrf    = putstrf;
+    tbl->putint     = putint;
 
     tbl->get        = get;
-    tbl->get_str     = get_str;
-    tbl->get_int     = get_int;
-    tbl->get_next    = get_next;
+    tbl->getstr     = getstr;
+    tbl->getint     = getint;
+    tbl->getnext    = getnext;
 
     tbl->remove     = remove_;
 
@@ -353,7 +353,7 @@ static bool put(qhasharr_t *tbl, const char *key, const void *value,
 }
 
 /**
- * (qhasharr_t*)->put_str(): Put a string into this table
+ * (qhasharr_t*)->putstr(): Put a string into this table
  *
  * @param tbl       qhasharr_t container pointer.
  * @param key       key string.
@@ -365,14 +365,14 @@ static bool put(qhasharr_t *tbl, const char *key, const void *value,
  *  - EINVAL    : Invalid argument.
  *  - EFAULT    : Unexpected error. Data structure is not constant.
  */
-static bool put_str(qhasharr_t *tbl, const char *key, const char *str)
+static bool putstr(qhasharr_t *tbl, const char *key, const char *str)
 {
     int size = (str != NULL) ? (strlen(str) + 1) : 0;
     return put(tbl, key, (void *)str, size);
 }
 
 /**
- * (qhasharr_t*)->put_strf(): Put a formatted string into this table.
+ * (qhasharr_t*)->putstrf(): Put a formatted string into this table.
  *
  * @param tbl       qhasharr_t container pointer.
  * @param key       key name.
@@ -385,7 +385,7 @@ static bool put_str(qhasharr_t *tbl, const char *key, const char *str)
  *  - EINVAL    : Invalid argument.
  *  - EFAULT    : Unexpected error. Data structure is not constant.
  */
-static bool put_strf(qhasharr_t *tbl, const char *key, const char *format, ...)
+static bool putstrf(qhasharr_t *tbl, const char *key, const char *format, ...)
 {
     char *str;
     DYNAMIC_VSPRINTF(str, format);
@@ -394,13 +394,13 @@ static bool put_strf(qhasharr_t *tbl, const char *key, const char *format, ...)
         return false;
     }
 
-    bool ret = put_str(tbl, key, str);
+    bool ret = putstr(tbl, key, str);
     free(str);
     return ret;
 }
 
 /**
- * (qhasharr_t*)->put_int(): Put an integer into this table as string type.
+ * (qhasharr_t*)->putint(): Put an integer into this table as string type.
  *
  * @param tbl       qhasharr_t container pointer.
  * @param key       key string
@@ -415,11 +415,11 @@ static bool put_strf(qhasharr_t *tbl, const char *key, const char *format, ...)
  * @note
  * The integer will be converted to a string object and stored as string object.
  */
-static bool put_int(qhasharr_t *tbl, const char *key, int num)
+static bool putint(qhasharr_t *tbl, const char *key, int num)
 {
     char str[20+1];
     snprintf(str, sizeof(str), "%d", num);
-    return put_str(tbl, key, str);
+    return putstr(tbl, key, str);
 }
 
 /**
@@ -459,7 +459,7 @@ static void *get(qhasharr_t *tbl, const char *key, size_t *size)
 }
 
 /**
- * (qhasharr_t*)->get_str(): Finds an object with given name and returns as
+ * (qhasharr_t*)->getstr(): Finds an object with given name and returns as
  * string type.
  *
  * @param tbl       qhasharr_t container pointer.
@@ -474,13 +474,13 @@ static void *get(qhasharr_t *tbl, const char *key, size_t *size)
  * @note
  * returned object must be freed after done using.
  */
-static char *get_str(qhasharr_t *tbl, const char *key)
+static char *getstr(qhasharr_t *tbl, const char *key)
 {
     return (char *)get(tbl, key, NULL);
 }
 
 /**
- * (qhasharr_t*)->get_int(): Finds an object with given name and returns as
+ * (qhasharr_t*)->getint(): Finds an object with given name and returns as
  * integer type.
  *
  * @param tbl       qhasharr_t container pointer.
@@ -492,10 +492,10 @@ static char *get_str(qhasharr_t *tbl, const char *key)
  *  - EINVAL    : Invalid argument.
  *  - ENOMEM    : Memory allocation failed.
  */
-static int get_int(qhasharr_t *tbl, const char *key)
+static int getint(qhasharr_t *tbl, const char *key)
 {
     int num = 0;
-    char *str = get_str(tbl, key);
+    char *str = getstr(tbl, key);
     if (str != NULL) {
         num = atoi(str);
         free(str);
@@ -505,7 +505,7 @@ static int get_int(qhasharr_t *tbl, const char *key)
 }
 
 /**
- * (qhasharr_t*)->get_next(): Get next element.
+ * (qhasharr_t*)->getnext(): Get next element.
  *
  * @param tbl       qhasharr_t container pointer.
  * @param idx       index pointer
@@ -519,7 +519,7 @@ static int get_int(qhasharr_t *tbl, const char *key)
  * @code
  *  int idx = 0;
  *  qnobj_t obj;
- *  while(tbl->get_next(tbl, &obj, &idx) == true) {
+ *  while(tbl->getnext(tbl, &obj, &idx) == true) {
  *    printf("NAME=%s, DATA=%s, SIZE=%zu\n",
  *           obj.name, (char*)obj.data, obj.size);
  *    free(obj.name);
@@ -532,7 +532,7 @@ static int get_int(qhasharr_t *tbl, const char *key)
  *  because key name is truncated when it put into the table if it's length is
  *  longer than _Q_HASHARR_KEYSIZE.
  */
-static bool get_next(qhasharr_t *tbl, qnobj_t *obj, int *idx)
+static bool getnext(qhasharr_t *tbl, qnobj_t *obj, int *idx)
 {
     if (obj == NULL || idx == NULL) {
         errno = EINVAL;
@@ -705,7 +705,7 @@ static bool debug(qhasharr_t *tbl, FILE *out)
 
     int idx = 0;
     qnobj_t obj;
-    while (tbl->get_next(tbl, &obj, &idx) == true) {
+    while (tbl->getnext(tbl, &obj, &idx) == true) {
         uint16_t keylen = tbl->slots[idx-1].data.pair.keylen;
         fprintf(out, "%s%s(%d)=" ,
                 obj.name, (keylen>_Q_HASHARR_KEYSIZE)?"...":"", keylen);

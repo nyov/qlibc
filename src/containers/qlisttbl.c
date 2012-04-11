@@ -34,7 +34,10 @@
  * qlisttbl container is a Linked-List-Table implementation.
  * Which maps keys to values. Key is a string and value is any non-null object.
  * These elements are stored sequentially in Doubly-Linked-List data structure.
- * In addition, qlisttbl allows to add multiple records with same keys.
+ *
+ * Compared to Hash-Table, List-Table is efficient when you need to keep
+ * duplicated keys since Hash-Table only keep unique keys. Of course, qlisttbl
+ * supports both behavior storing unique key or allowing key duplication.
  *
  * @code
  *  [Conceptional Data Structure Diagram]
@@ -58,24 +61,22 @@
  *  qlisttbl_t *tbl = qlisttbl();
  *
  *  // insert elements (key duplication allowed)
- *  tbl->put(tbl, "e1", "a", strlen("e1")+1, false); // equal to put_str();
- *  tbl->put_str(tbl, "e2", "b", false);
- *  tbl->put_str(tbl, "e2", "c", false);
- *  tbl->put_str(tbl, "e3", "d", false);
+ *  tbl->put(tbl, "e1", "a", strlen("e1")+1, false); // equal to putstr();
+ *  tbl->putstr(tbl, "e2", "b", false);
+ *  tbl->putstr(tbl, "e2", "c", false);
+ *  tbl->putstr(tbl, "e3", "d", false);
  *
  *  // debug output
  *  tbl->debug(tbl, stdout, true);
  *
  *  // get element
  *  printf("get('e2') : %s\n", (char*)tbl->get(tbl, "e2", NULL, false));
- *  printf("get_last('e2') : %s\n",
- *         (char*)tbl->get_last(tbl, "e2", NULL, false));
- *  printf("get_str('e2') : %s\n", tbl->get_str(tbl, "e2", false));
+ *  printf("getstr('e2') : %s\n", tbl->getstr(tbl, "e2", false));
  *
  *  // find every 'e2' elements
  *  qdlnobj_t obj;
  *  memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
- *  while(tbl->get_next(tbl, &obj, "e2", false) == true) {
+ *  while(tbl->getnext(tbl, &obj, "e2", false) == true) {
  *    printf("NAME=%s, DATA=%s, SIZE=%zu\n",
  *           obj.name, (char*)obj.data, obj.size);
  *  }
@@ -92,6 +93,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include <string.h>
 #include <stdarg.h>
 #include <unistd.h>
@@ -105,49 +108,35 @@
  */
 #ifndef _DOXYGEN_SKIP
 
-#define _VAR '$'
-#define _VAR_OPEN '{'
-#define _VAR_CLOSE '}'
-#define _VAR_CMD '!'
-#define _VAR_ENV '%'
-
 static bool put(qlisttbl_t *tbl, const char *name, const void *data,
                 size_t size, bool unique);
-
-static bool put_first(qlisttbl_t *tbl, const char *name, const void *data,
-                      size_t size, bool unique);
-static bool put_last(qlisttbl_t *tbl, const char *name, const void *data,
-                     size_t size, bool unique);
-
-static bool put_str(qlisttbl_t *tbl, const char *name, const char *str,
+static bool putstr(qlisttbl_t *tbl, const char *name, const char *str,
                     bool unique);
-static bool put_strf(qlisttbl_t *tbl, bool unique, const char *name,
+static bool putstrf(qlisttbl_t *tbl, bool unique, const char *name,
                      const char *format, ...);
-static bool put_int(qlisttbl_t *tbl, const char *name, int num, bool unique);
+static bool putint(qlisttbl_t *tbl, const char *name, int64_t num, bool unique);
 
 static void *get(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem);
-static void *get_last(qlisttbl_t *tbl, const char *name, size_t *size,
-                      bool newmem);
-
-static char *get_str(qlisttbl_t *tbl, const char *name, bool newmem);
-static int get_int(qlisttbl_t *tbl, const char *name);
+static char *getstr(qlisttbl_t *tbl, const char *name, bool newmem);
+static int getint(qlisttbl_t *tbl, const char *name);
 
 static void *caseget(qlisttbl_t *tbl, const char *name, size_t *size,
                      bool newmem);
-static char *caseget_str(qlisttbl_t *tbl, const char *name, bool newmem);
-static int caseget_int(qlisttbl_t *tbl, const char *name);
+static char *casegetstr(qlisttbl_t *tbl, const char *name, bool newmem);
+static int casegetint(qlisttbl_t *tbl, const char *name);
 
-static bool get_next(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
-                     bool newmem);
+static bool getnext(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
+                    bool newmem);
 
 static bool remove_(qlisttbl_t *tbl, const char *name);
 
-static bool set_putdir(qlisttbl_t *tbl, bool first);
+static bool setputdir(qlisttbl_t *tbl, bool first);
+static bool setgetdir(qlisttbl_t *tbl, bool forward);
+static bool setnextdir(qlisttbl_t *tbl, bool reverse);
 static size_t size(qlisttbl_t *tbl);
 static void reverse(qlisttbl_t *tbl);
 static void clear(qlisttbl_t *tbl);
 
-static char *parse_str(qlisttbl_t *tbl, const char *str);
 static bool save(qlisttbl_t *tbl, const char *filepath, char sepchar,
                  bool encode);
 static ssize_t load(qlisttbl_t *tbl, const char *filepath, char sepchar,
@@ -163,7 +152,7 @@ static void free_(qlisttbl_t *tbl);
 static bool _put(qlisttbl_t *tbl, const char *name, const void *data,
                  size_t size, bool unique, bool first);
 static void *_get(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem,
-                  bool backward, int (*cmp)(const char *s1, const char *s2));
+                  bool forward, int (*cmp)(const char *s1, const char *s2));
 
 #endif
 
@@ -192,33 +181,29 @@ qlisttbl_t *qlisttbl(void)
 
     // member methods
     tbl->put        = put;
-    tbl->put_first  = put_first;
-    tbl->put_last   = put_last;
-
-    tbl->put_str    = put_str;
-    tbl->put_strf   = put_strf;
-    tbl->put_int    = put_int;
+    tbl->putstr     = putstr;
+    tbl->putstrf    = putstrf;
+    tbl->putint     = putint;
 
     tbl->get        = get;
-    tbl->get_last   = get_last;
-
-    tbl->get_str    = get_str;
-    tbl->get_int    = get_int;
+    tbl->getstr     = getstr;
+    tbl->getint     = getint;
 
     tbl->caseget    = caseget;
-    tbl->caseget_str = caseget_str;
-    tbl->caseget_int = caseget_int;
+    tbl->casegetstr = casegetstr;
+    tbl->casegetint = casegetint;
 
-    tbl->get_next   = get_next;
+    tbl->getnext    = getnext;
 
     tbl->remove     = remove_;
 
-    tbl->set_putdir = set_putdir;
+    tbl->setputdir  = setputdir;
+    tbl->setgetdir  = setgetdir;
+    tbl->setnextdir  = setnextdir;
     tbl->size       = size;
     tbl->reverse    = reverse;
     tbl->clear      = clear;
 
-    tbl->parse_str  = parse_str;
     tbl->save       = save;
     tbl->load       = load;
     tbl->debug      = debug;
@@ -231,15 +216,19 @@ qlisttbl_t *qlisttbl(void)
     // initialize recrusive mutex
     Q_MUTEX_INIT(tbl->qmutex, true);
 
+    setputdir(tbl, false); // to bottom
+    setgetdir(tbl, false); // backward
+    setnextdir(tbl, false); // forward
+
     return tbl;
 }
 
 /**
  * (qlisttbl_t*)->put(): Put an element to this table.
  * Default behavior is adding an element at the end of this table unless changed
- * by set_putdir().
+ * by setputdir().
  *
- * @param tbl       qlisttbl_t container pointer.
+ * @param tbl       qlisttbl container pointer.
  * @param name      element name.
  * @param data      a pointer which points data memory.
  * @param size      size of the data.
@@ -266,7 +255,7 @@ qlisttbl_t *qlisttbl(void)
  *
  * @note
  *  The default behavior is adding an object at the end of this table unless
- *  it's changed by set_putdir().
+ *  it's changed by setputdir().
  */
 static bool put(qlisttbl_t *tbl, const char *name, const void *data,
                 size_t size, bool unique)
@@ -275,51 +264,9 @@ static bool put(qlisttbl_t *tbl, const char *name, const void *data,
 }
 
 /**
- * (qlisttbl_t*)->put_first(): Put an element at the beginning of this table.
+ * (qlisttbl_t*)->putstr(): Put a string into this table.
  *
- * @param tbl       qlisttbl_t container pointer.
- * @param name      element name.
- * @param data      a pointer which points data memory.
- * @param size      size of the data.
- * @param unique    set true to remove existing elements of same name if exists,
- *                  false for adding.
- *
- * @return true if successful, otherwise returns false.
- * @retval errno will be set in error condition.
- *  - ENOMEM : Memory allocation failure.
- *  - EINVAL : Invalid argument.
- */
-static bool put_first(qlisttbl_t *tbl, const char *name, const void *data,
-                      size_t size, bool unique)
-{
-    return _put(tbl, name, data, size, unique, true);
-}
-
-/**
- * (qlisttbl_t*)->put_last(): Put an object at the end of this table.
- *
- * @param tbl       qlisttbl_t container pointer.
- * @param name      element name.
- * @param data      a pointer which points data memory.
- * @param size      size of the data.
- * @param unique    set true to remove existing elements of same name if exists,
- *                  false for adding.
- *
- * @return true if successful, otherwise returns false.
- * @retval errno will be set in error condition.
- *  - ENOMEM : Memory allocation failure.
- *  - EINVAL : Invalid argument.
- */
-static bool put_last(qlisttbl_t *tbl, const char *name, const void *data,
-                     size_t size, bool unique)
-{
-    return _put(tbl, name, data, size, unique, false);
-}
-
-/**
- * (qlisttbl_t*)->put_str(): Put a string into this table.
- *
- * @param tbl       qlisttbl_t container pointer.
+ * @param tbl       qlisttbl container pointer.
  * @param name      element name.
  * @param str       string data.
  * @param unique    set true to remove existing elements of same name if exists,
@@ -332,9 +279,9 @@ static bool put_last(qlisttbl_t *tbl, const char *name, const void *data,
  *
  * @note
  *  The default behavior is adding object at the end of this list unless it's
- *  changed by calling set_putdir().
+ *  changed by calling setputdir().
  */
-static bool put_str(qlisttbl_t *tbl, const char *name, const char *str,
+static bool putstr(qlisttbl_t *tbl, const char *name, const char *str,
                     bool unique)
 {
     size_t size = (str!=NULL) ? (strlen(str) + 1) : 0;
@@ -342,9 +289,9 @@ static bool put_str(qlisttbl_t *tbl, const char *name, const char *str,
 }
 
 /**
- * (qlisttbl_t*)->put_strf(): Put a formatted string into this table.
+ * (qlisttbl_t*)->putstrf(): Put a formatted string into this table.
  *
- * @param tbl       qlisttbl_t container pointer.
+ * @param tbl       qlisttbl container pointer.
  * @param unique    set true to remove existing elements of same name if exists,
  *                  false for adding.
  * @param name      element name.
@@ -357,9 +304,9 @@ static bool put_str(qlisttbl_t *tbl, const char *name, const char *str,
  *
  * @note
  *  The default behavior is adding object at the end of this list unless it's
- *  changed by calling set_putdir().
+ *  changed by calling setputdir().
  */
-static bool put_strf(qlisttbl_t *tbl, bool unique, const char *name,
+static bool putstrf(qlisttbl_t *tbl, bool unique, const char *name,
                      const char *format, ...)
 {
     char *str;
@@ -369,7 +316,7 @@ static bool put_strf(qlisttbl_t *tbl, bool unique, const char *name,
         return false;
     }
 
-    bool ret = put_str(tbl, name, str, unique);
+    bool ret = putstr(tbl, name, str, unique);
     free(str);
 
     return ret;
@@ -378,7 +325,7 @@ static bool put_strf(qlisttbl_t *tbl, bool unique, const char *name,
 /**
  * (qlisttbl_t*)->putInt(): Put an integer into this table as string type.
  *
- * @param tbl       qlisttbl_t container pointer.
+ * @param tbl       qlisttbl container pointer.
  * @param name      element name.
  * @param num       number data.
  * @param unique    set true to remove existing elements of same name if exists,
@@ -392,19 +339,24 @@ static bool put_strf(qlisttbl_t *tbl, bool unique, const char *name,
  * @note
  *  The integer will be converted to a string object and stored as a string
  *  object. The default behavior is adding object at the end of this list unless
- *  it's changed by calling set_putdir().
+ *  it's changed by calling setputdir().
  */
-static bool put_int(qlisttbl_t *tbl, const char *name, int num, bool unique)
+static bool putint(qlisttbl_t *tbl, const char *name, int64_t num, bool unique)
 {
     char str[20+1];
-    snprintf(str, sizeof(str), "%d", num);
-    return put_str(tbl, name, str, unique);
+    snprintf(str, sizeof(str), "%"PRId64, num);
+    return putstr(tbl, name, str, unique);
 }
 
 /**
  * (qlisttbl_t*)->get(): Finds an object with given name.
+ * If there are duplicate keys in the list, this will return the first matched
+ * one from the top or bottom depending on setgetdir() setting. By default,
+ * it'll return the first matched one from the bottom of list. So in case,
+ * there are duplicated keys, it'll return the newly inserted one unless
+ * setputdir() is set in the other way.
  *
- * @param tbl       qlisttbl_t container pointer.
+ * @param tbl       qlisttbl container pointer.
  * @param name      element name.
  * @param size      if size is not NULL, data size will be stored.
  * @param newmem    whether or not to allocate memory for the data.
@@ -439,39 +391,14 @@ static bool put_int(qlisttbl_t *tbl, const char *name, int num, bool unique)
  */
 static void *get(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem)
 {
-    return _get(tbl, name, size, newmem, false, strcmp);
+    return _get(tbl, name, size, newmem, tbl->getdir, strcmp);
 }
 
 /**
- * (qlisttbl_t*)->get_last(): Finds an object backward from the last of list
- * with given name.
- *
- * @param tbl qlisttbl_t container pointer.
- * @param name element name.
- * @param size if size is not NULL, data size will be stored.
- * @param newmem whether or not to allocate memory for the data.
- *
- * @return a pointer of data if key is found, otherwise returns NULL.
- * @retval errno will be set in error condition.
- *  - ENOENT : No such key found.
- *  - EINVAL : Invalid argument.
- *  - ENOMEM : Memory allocation failure.
- *
- * @note
- *  This can be used for find last matched element if there are multiple objects
- *  with same name.
- */
-static void *get_last(qlisttbl_t *tbl, const char *name, size_t *size,
-                      bool newmem)
-{
-    return _get(tbl, name, size, newmem, true, strcmp);
-}
-
-/**
- * (qlisttbl_t*)->get_str():  Finds an object with given name and returns as
+ * (qlisttbl_t*)->getstr():  Finds an object with given name and returns as
  * string type.
  *
- * @param tbl qlisttbl_t container pointer.
+ * @param tbl qlisttbl container pointer.
  * @param name element name.
  * @param newmem whether or not to allocate memory for the data.
  *
@@ -481,16 +408,16 @@ static void *get_last(qlisttbl_t *tbl, const char *name, size_t *size,
  *  - EINVAL : Invalid argument.
  *  - ENOMEM : Memory allocation failure.
 */
-static char *get_str(qlisttbl_t *tbl, const char *name, bool newmem)
+static char *getstr(qlisttbl_t *tbl, const char *name, bool newmem)
 {
     return (char *)get(tbl, name, NULL, newmem);
 }
 
 /**
- * (qlisttbl_t*)->get_int():  Finds an object with given name and returns as
+ * (qlisttbl_t*)->getint():  Finds an object with given name and returns as
  * integer type.
  *
- * @param tbl qlisttbl_t container pointer.
+ * @param tbl qlisttbl container pointer.
  * @param name element name.
  *
  * @return an integer value of the integer object, otherwise returns 0.
@@ -499,10 +426,10 @@ static char *get_str(qlisttbl_t *tbl, const char *name, bool newmem)
  *  - EINVAL : Invalid argument.
  *  - ENOMEM : Memory allocation failure.
  */
-static int get_int(qlisttbl_t *tbl, const char *name)
+static int getint(qlisttbl_t *tbl, const char *name)
 {
     int num = 0;
-    char *str = get_str(tbl, name, true);
+    char *str = getstr(tbl, name, true);
     if (str != NULL) {
         num = atoi(str);
         free(str);
@@ -512,8 +439,13 @@ static int get_int(qlisttbl_t *tbl, const char *name)
 
 /**
  * (qlisttbl_t*)->caseget(): Finds an object with given name. (case-insensitive)
+ * If there are duplicate keys in the list, this will return the first matched
+ * one from the top or bottom depending on setgetdir() setting. By default,
+ * it'll return the first matched one from the bottom of list. So in case,
+ * there are duplicated keys, it'll return the newly inserted one unless
+ * setputdir() is set in the other way.
  *
- * @param tbl qlisttbl_t container pointer.
+ * @param tbl qlisttbl container pointer.
  * @param name element name.
  * @param size if size is not NULL, data size will be stored.
  * @param newmem whether or not to allocate memory for the data.
@@ -527,13 +459,13 @@ static int get_int(qlisttbl_t *tbl, const char *name)
 static void *caseget(qlisttbl_t *tbl, const char *name, size_t *size,
                      bool newmem)
 {
-    return _get(tbl, name, size, newmem, false, strcasecmp);
+    return _get(tbl, name, size, newmem, tbl->getdir, strcasecmp);
 }
 
 /**
- * (qlisttbl_t*)->caseget_str(): same as get_str() but case-insensitive.
+ * (qlisttbl_t*)->casegetstr(): same as getstr() but case-insensitive.
  *
- * @param tbl qlisttbl_t container pointer.
+ * @param tbl qlisttbl container pointer.
  * @param name element name.
  * @param newmem whether or not to allocate memory for the data.
  *
@@ -543,15 +475,15 @@ static void *caseget(qlisttbl_t *tbl, const char *name, size_t *size,
  *  - EINVAL : Invalid argument.
  *  - ENOMEM : Memory allocation failure.
  */
-static char *caseget_str(qlisttbl_t *tbl, const char *name, bool newmem)
+static char *casegetstr(qlisttbl_t *tbl, const char *name, bool newmem)
 {
     return (char *)caseget(tbl, name, NULL, newmem);
 }
 
 /**
- * (qlisttbl_t*)->caseget_int(): same as get_int() but case-insensitive.
+ * (qlisttbl_t*)->casegetint(): same as getint() but case-insensitive.
  *
- * @param tbl qlisttbl_t container pointer.
+ * @param tbl qlisttbl container pointer.
  * @param name element name.
  *
  * @return an integer value of the integer object, otherwise returns 0.
@@ -560,7 +492,7 @@ static char *caseget_str(qlisttbl_t *tbl, const char *name, bool newmem)
  *  - EINVAL : Invalid argument.
  *  - ENOMEM : Memory allocation failure.
  */
-static int caseget_int(qlisttbl_t *tbl, const char *name)
+static int casegetint(qlisttbl_t *tbl, const char *name)
 {
     int num = 0;
     char *str = caseget(tbl, name, NULL, true);
@@ -572,9 +504,11 @@ static int caseget_int(qlisttbl_t *tbl, const char *name)
 }
 
 /**
- * (qlisttbl_t*)->get_next(): Get next element.
+ * (qlisttbl_t*)->getnext(): Get next element.
+ * Default searching direction is forward, from the top to to bottom,
+ * unless it's changed by setnextdir().
  *
- * @param tbl       qlisttbl_t container pointer.
+ * @param tbl       qlisttbl container pointer.
  * @param obj       found data will be stored in this object
  * @param name      element name., if key name is NULL search every objects in
  *                  the list.
@@ -586,7 +520,7 @@ static int caseget_int(qlisttbl_t *tbl, const char *name)
  *  - ENOMEM : Memory allocation failure.
  *
  * @note
- *  obj should be initialized with 0 by using memset() before first call.
+ *  The obj should be initialized with 0 by using memset() before first call.
  *  If newmem flag is true, user should de-allocate obj.name and obj.data
  *  resources.
  *
@@ -597,7 +531,7 @@ static int caseget_int(qlisttbl_t *tbl, const char *name)
  *  // non-thread usages
  *  qdlnobj_t obj;
  *  memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
- *  while(tbl->get_next(tbl, &obj, NULL, false) == true) {
+ *  while(tbl->getnext(tbl, &obj, NULL, false) == true) {
  *    printf("NAME=%s, DATA=%s, SIZE=%zu\n",
  *           obj.name, (char*)obj.data, obj.size);
  *  }
@@ -606,7 +540,7 @@ static int caseget_int(qlisttbl_t *tbl, const char *name)
  *  qdlnobj_t obj;
  *  memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
  *  tbl->lock(tbl);
- *  while(tbl->get_next(tbl, &obj, "key_name", true) == true) {
+ *  while(tbl->getnext(tbl, &obj, "key_name", true) == true) {
  *    printf("NAME=%s, DATA=%s, SIZE=%zu\n",
  *           obj.name, (char*)obj.data, obj.size);
  *    free(obj.name);
@@ -615,7 +549,7 @@ static int caseget_int(qlisttbl_t *tbl, const char *name)
  *  tbl->unlock(tbl);
  * @endcode
  */
-static bool get_next(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
+static bool getnext(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
                      bool newmem)
 {
     if (obj == NULL) return NULL;
@@ -623,8 +557,13 @@ static bool get_next(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
     lock(tbl);
 
     qdlnobj_t *cont = NULL;
-    if (obj->size == 0) cont = tbl->first;
-    else cont = obj->next;
+    if (obj->size == 0) {
+        if (tbl->nextdir == false) cont = tbl->first;
+        else cont = tbl->last;
+    } else {
+        if (tbl->nextdir == false) cont = obj->next;
+        else cont = obj->prev;
+    }
 
     if (cont == NULL) {
         errno = ENOENT;
@@ -633,7 +572,7 @@ static bool get_next(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
     }
 
     bool ret = false;
-    for (; cont != NULL; cont = cont->next) {
+    while (cont != NULL) {
         if (name == NULL || !strcmp(cont->name, name)) {
             if (newmem == true) {
                 obj->name = strdup(cont->name);
@@ -659,6 +598,9 @@ static bool get_next(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
             ret = true;
             break;
         }
+
+        if (tbl->nextdir == false) cont = cont->next;
+        else cont = cont->prev;
     }
 
     unlock(tbl);
@@ -668,7 +610,7 @@ static bool get_next(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
 /**
  * (qlisttbl_t*)->remove(): Remove matched objects as given name.
  *
- * @param tbl   qlisttbl_t container pointer.
+ * @param tbl   qlisttbl container pointer.
  * @param name  element name.
  *
  * @return a number of removed objects.
@@ -720,21 +662,16 @@ static bool remove_(qlisttbl_t *tbl, const char *name)
 }
 
 /**
- * (qlisttbl_t*)->set_putdir(): Sets default adding direction(first or
- * last).
+ * (qlisttbl_t*)->setputdir(): Sets adding direction(at last of first).
+ * The default direction is adding new element at the end of list.
  *
- * @param tbl       qlisttbl_t container pointer.
- * @param first     direction flag. false for adding at the end of this list by
- *                  default, true for adding at the beginning of this list by
- *                  default. (default is false)
+ * @param tbl       qlisttbl container pointer.
+ * @param first     direction flag. false(default) for adding at the end of
+ *                  this list, true for adding at the beginning of this list.
  *
  * @return previous direction.
- *
- * @note
- *  The default direction is false which means adding new element at the end of
- *  list.
  */
-static bool set_putdir(qlisttbl_t *tbl, bool first)
+static bool setputdir(qlisttbl_t *tbl, bool first)
 {
     bool prevdir = tbl->putdir;
     tbl->putdir = first;
@@ -743,9 +680,48 @@ static bool set_putdir(qlisttbl_t *tbl, bool first)
 }
 
 /**
+ * (qlisttbl_t*)->setgetdir(): Sets lookup direction(backward or forward).
+ * The default direction is backward(from the bottom to the top), so if
+ * there are duplicated keys then later added one will be picked up first.
+ *
+ * @param tbl       qlisttbl container pointer.
+ * @param forward   direction flag. false(default) for searching from the
+ *                  bottom of this list. true for searching from the top of
+ *                  this list.
+ *
+ * @return previous direction.
+ */
+static bool setgetdir(qlisttbl_t *tbl, bool forward)
+{
+    bool prevdir = tbl->getdir;
+    tbl->getdir = forward;
+
+    return prevdir;
+}
+
+/**
+ * (qlisttbl_t*)->setnextdir(): Sets list traversal direction(forward or
+ * backward). The default direction is forward(from the top to the bottom).
+ *
+ * @param tbl       qlisttbl container pointer.
+ * @param reverse   direction flag. false(default) for traversal from the top
+ *                  of this list, true for searching from the bottom of this
+ *                  list.
+ *
+ * @return previous direction.
+ */
+static bool setnextdir(qlisttbl_t *tbl, bool reverse)
+{
+    bool prevdir = tbl->nextdir;
+    tbl->nextdir = reverse;
+
+    return prevdir;
+}
+
+/**
  * (qlisttbl_t*)->size(): Returns the number of elements in this list.
  *
- * @param tbl qlisttbl_t container pointer.
+ * @param tbl qlisttbl container pointer.
  *
  * @return the number of elements in this list.
  */
@@ -757,7 +733,7 @@ static size_t size(qlisttbl_t *tbl)
 /**
  * (qlisttbl_t*)->reverse(): Reverse the order of elements.
  *
- * @param tbl qlisttbl_t container pointer.
+ * @param tbl qlisttbl container pointer.
  *
  * @return true if successful otherwise returns false.
  */
@@ -782,7 +758,7 @@ static void reverse(qlisttbl_t *tbl)
 /**
  * (qlisttbl_t*)->clear(): Removes all of the elements from this list.
  *
- * @param tbl qlisttbl_t container pointer.
+ * @param tbl qlisttbl container pointer.
  */
 static void clear(qlisttbl_t *tbl)
 {
@@ -803,126 +779,11 @@ static void clear(qlisttbl_t *tbl)
 }
 
 /**
- * (qlisttbl_t*)->parse_str(): Parse a string and replace variables in the
- * string to the data in this list.
+ * (qlisttbl_t*)->save(): Save qlisttbl as plain text format
+ * Dumping direction is always forward(from the top to the bottom) to preserve
+ * the order when we load the file again.
  *
- * @param tbl   qlisttbl_t container pointer.
- * @param str   string value which may contain variables like ${...}
- *
- * @return malloced string if successful, otherwise returns NULL.
- * @retval errno will be set in error condition.
- *  - EINVAL : Invalid argument.
- *
- * @code
- *  ${key_name}          - replace this with a matched value data in this list.
- *  ${!system_command}   - run external command and put it's output here.
- *  ${%PATH}             - get environment variable.
- * @endcode
- *
- * @code
- *  --[tbl Table]------------------------
- *  NAME = qLibc
- *  -------------------------------------
- *
- *  char *str = tbl->parse_str(tbl, "${NAME}, ${%HOME}, ${!date -u}");
- *  if(info != NULL) {
- *    printf("%s\n", str);
- *    free(str);
- *  }
- *
- *  [Output]
- *  qLibc, /home/qlibc, Wed Nov 24 00:30:58 UTC 2010
- * @endcode
- */
-static char *parse_str(qlisttbl_t *tbl, const char *str)
-{
-    if (str == NULL) {
-        errno = EINVAL;
-        return NULL;
-    }
-
-    lock(tbl);
-
-    bool loop;
-    char *value = strdup(str);
-    do {
-        loop = false;
-
-        // find ${
-        char *s, *e;
-        int openedbrakets;
-        for (s = value; *s != '\0'; s++) {
-            if (!(*s == _VAR && *(s+1) == _VAR_OPEN)) continue;
-
-            // found ${, try to find }. s points $
-            openedbrakets = 1; // braket open counter
-            for (e = s + 2; *e != '\0'; e++) {
-                if (*e == _VAR && *(e+1) == _VAR_OPEN) { // found internal ${
-                    // e is always bigger than s, negative overflow never occure
-                    s = e - 1;
-                    break;
-                } else if (*e == _VAR_OPEN) openedbrakets++;
-                else if (*e == _VAR_CLOSE) openedbrakets--;
-                else continue;
-
-                if (openedbrakets == 0) break;
-            }
-            if (*e == '\0') break; // braket mismatch
-            if (openedbrakets > 0) continue; // found internal ${
-
-            // pick string between ${, }
-            int varlen = e - s - 2; // length between ${ , }
-            char *varstr = (char *)malloc(varlen + 3 + 1);
-            if (varstr == NULL) continue;
-            strncpy(varstr, s + 2, varlen);
-            varstr[varlen] = '\0';
-
-            // get the new string to replace
-            char *newstr = NULL;
-            switch (varstr[0]) {
-                case _VAR_CMD : {
-                    if ((newstr = qstrtrim(qsyscmd(varstr + 1))) == NULL) {
-                        newstr = strdup("");
-                    }
-                    break;
-                }
-                case _VAR_ENV : {
-                    newstr = strdup(qsys_getenv(varstr + 1, ""));
-                    break;
-                }
-                default : {
-                    if ((newstr = get_str(tbl, varstr, true)) == NULL) {
-                        s = e; // not found
-                        continue;
-                    }
-                    break;
-                }
-            }
-
-            // replace
-            strncpy(varstr, s, varlen + 3); // ${str}
-            varstr[varlen + 3] = '\0';
-
-            s = qstrreplace("sn", value, varstr, newstr);
-            free(newstr);
-            free(varstr);
-            free(value);
-            value = s;
-
-            loop = true;
-            break;
-        }
-    } while (loop == true);
-
-    unlock(tbl);
-
-    return value;
-}
-
-/**
- * (qlisttbl_t*)->save(): Save qlisttbl_t as plain text format
- *
- * @param tbl       qlisttbl_t container pointer.
+ * @param tbl       qlisttbl container pointer.
  * @param filepath  save file path
  * @param sepchar   separator character between name and value. normally '=' is
  *                  used.
@@ -963,8 +824,10 @@ static bool save(qlisttbl_t *tbl, const char *filepath, char sepchar,
 
 /**
  * (qlisttbl_t*)->load(): Load and append entries from given filepath
+ * Loading direction is always appending at the bottom of the list to preserve
+ * the order as it was.
  *
- * @param tbl       qlisttbl_t container pointer.
+ * @param tbl       qlisttbl container pointer.
  * @param filepath  save file path
  * @param sepchar   separator character between name and value. normally '=' is
  *                  used
@@ -996,17 +859,17 @@ static ssize_t load(qlisttbl_t *tbl, const char *filepath, char sepchar,
         if ((buf[0] == '#') || (buf[0] == '\0')) continue;
 
         // parse
-        char *value = strdup(buf);
-        char *name  = _q_makeword(value, sepchar);
-        qstrtrim(value);
+        char *data = strdup(buf);
+        char *name  = _q_makeword(data, sepchar);
+        qstrtrim(data);
         qstrtrim(name);
-        if (decode == true) qurl_decode(value);
+        if (decode == true) qurl_decode(data);
 
-        // append
-        put_str(tbl, name, value, false);
+        // append at the bottom of list.
+        _put(tbl, name, data, strlen(data) + 1, false, false);
 
         free(name);
-        free(value);
+        free(data);
     }
     unlock(tbl);
     free(str);
@@ -1017,7 +880,7 @@ static ssize_t load(qlisttbl_t *tbl, const char *filepath, char sepchar,
 /**
  * (qlisttbl_t*)->debug(): Print out stored elements for debugging purpose.
  *
- * @param tbl qlisttbl_t container pointer.
+ * @param tbl qlisttbl container pointer.
  * @param out output stream FILE descriptor such like stdout, stderr.
  *
  * @return true if successful, otherwise returns false.
@@ -1046,11 +909,11 @@ static bool debug(qlisttbl_t *tbl, FILE *out)
 /**
  * (qlisttbl_t*)->lock(): Enter critical section.
  *
- * @param tbl qlisttbl_t container pointer.
+ * @param tbl qlisttbl container pointer.
  *
  * @note
  *  From user side, normally locking operation is only needed when traverse all
- *  elements using (qlisttbl_t*)->get_next(). Most of other operations do
+ *  elements using (qlisttbl_t*)->getnext(). Most of other operations do
  *  necessary locking internally when it's compiled with --enable-threadsafe
  *  option.
  *
@@ -1067,7 +930,7 @@ static void lock(qlisttbl_t *tbl)
 /**
  * (qlisttbl_t*)->unlock(): Leave critical section.
  *
- * @param tbl qlisttbl_t container pointer.
+ * @param tbl qlisttbl container pointer.
  *
  * @note
  *  This operation will be activated only when --enable-threadsafe option is
@@ -1082,7 +945,7 @@ static void unlock(qlisttbl_t *tbl)
 /**
  * (qlisttbl_t*)->free(): Free qlisttbl_t
  *
- * @param tbl qlisttbl_t container pointer.
+ * @param tbl qlisttbl container pointer.
  */
 static void free_(qlisttbl_t *tbl)
 {
@@ -1161,7 +1024,7 @@ static bool _put(qlisttbl_t *tbl, const char *name, const void *data,
 }
 
 static void *_get(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem,
-                  bool backward, int (*cmp)(const char *s1, const char *s2))
+                  bool forward, int (*cmp)(const char *s1, const char *s2))
 {
     if (name == NULL) {
         errno = EINVAL;
@@ -1172,7 +1035,7 @@ static void *_get(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem,
     void *data = NULL;
     qdlnobj_t *obj;
 
-    if (backward == false) obj = tbl->first;
+    if (forward == true) obj = tbl->first;
     else obj = tbl->last;
 
     while (obj != NULL) {
@@ -1192,7 +1055,7 @@ static void *_get(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem,
             break;
         }
 
-        if (backward == false) obj = obj->next;
+        if (forward == true) obj = obj->next;
         else obj = obj->prev;
     }
     unlock(tbl);

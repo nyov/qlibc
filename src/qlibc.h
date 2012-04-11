@@ -130,32 +130,32 @@ extern qlist_t *qlist(void);  /*!< qlist constructor */
  */
 struct qlist_t {
     /* capsulated member functions */
-    bool (*add_first)(qlist_t *list, const void *data, size_t size);
-    bool (*add_last)(qlist_t *list, const void *data, size_t size);
-    bool (*add_at)(qlist_t *list, int index, const void *data, size_t size);
+    bool (*addfirst)(qlist_t *list, const void *data, size_t size);
+    bool (*addlast)(qlist_t *list, const void *data, size_t size);
+    bool (*addat)(qlist_t *list, int index, const void *data, size_t size);
 
-    void *(*get_first)(qlist_t *list, size_t *size, bool newmem);
-    void *(*get_last)(qlist_t *list, size_t *size, bool newmem);
-    void *(*get_at)(qlist_t *list, int index, size_t *size, bool newmem);
-    bool (*get_next)(qlist_t *list, qdlobj_t *obj, bool newmem);
+    void *(*getfirst)(qlist_t *list, size_t *size, bool newmem);
+    void *(*getlast)(qlist_t *list, size_t *size, bool newmem);
+    void *(*getat)(qlist_t *list, int index, size_t *size, bool newmem);
+    bool (*getnext)(qlist_t *list, qdlobj_t *obj, bool newmem);
 
-    void *(*pop_first)(qlist_t *list, size_t *size);
-    void *(*pop_last)(qlist_t *list, size_t *size);
-    void *(*pop_at)(qlist_t *list, int index, size_t *size);
+    void *(*popfirst)(qlist_t *list, size_t *size);
+    void *(*poplast)(qlist_t *list, size_t *size);
+    void *(*popat)(qlist_t *list, int index, size_t *size);
 
-    bool (*remove_first)(qlist_t *list);
-    bool (*remove_last)(qlist_t *list);
-    bool (*remove_at)(qlist_t *list, int index);
+    bool (*removefirst)(qlist_t *list);
+    bool (*removelast)(qlist_t *list);
+    bool (*removeat)(qlist_t *list, int index);
 
     void (*reverse)(qlist_t *list);
     void (*clear)(qlist_t *list);
 
-    size_t (*set_size)(qlist_t *list, size_t max);
+    size_t (*setsize)(qlist_t *list, size_t max);
     size_t (*size)(qlist_t *list);
     size_t (*datasize)(qlist_t *list);
 
-    void *(*to_array)(qlist_t *list, size_t *size);
-    char *(*to_string)(qlist_t *list);
+    void *(*toarray)(qlist_t *list, size_t *size);
+    char *(*tostring)(qlist_t *list);
     bool (*debug)(qlist_t *list, FILE *out);
 
     void (*lock)(qlist_t *list);
@@ -191,39 +191,34 @@ struct qlisttbl_t {
     /* capsulated member functions */
     bool (*put)(qlisttbl_t *tbl, const char *name, const void *data,
                 size_t size, bool replace);
-    bool (*put_first)(qlisttbl_t *tbl, const char *name, const void *data,
-                      size_t size, bool replace);
-    bool (*put_last)(qlisttbl_t *tbl, const char *name, const void *data,
-                     size_t size, bool replace);
-
-    bool (*put_str)(qlisttbl_t *tbl, const char *name, const char *str,
+    bool (*putstr)(qlisttbl_t *tbl, const char *name, const char *str,
                     bool replace);
-    bool (*put_strf)(qlisttbl_t *tbl, bool replace, const char *name,
+    bool (*putstrf)(qlisttbl_t *tbl, bool replace, const char *name,
                      const char *format, ...);
-    bool (*put_int)(qlisttbl_t *tbl, const char *name, int num, bool replace);
+    bool (*putint)(qlisttbl_t *tbl, const char *name, int64_t num,
+                   bool replace);
 
     void *(*get)(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem);
-    void *(*get_last)(qlisttbl_t *tbl, const char *name, size_t *size,
-                      bool newmem);
-    char *(*get_str)(qlisttbl_t *tbl, const char *name, bool newmem);
-    int  (*get_int)(qlisttbl_t *tbl, const char *name);
+    char *(*getstr)(qlisttbl_t *tbl, const char *name, bool newmem);
+    int  (*getint)(qlisttbl_t *tbl, const char *name);
 
     void *(*caseget)(qlisttbl_t *tbl, const char *name, size_t *size,
                      bool newmem);
-    char *(*caseget_str)(qlisttbl_t *tbl, const char *name, bool newmem);
-    int  (*caseget_int)(qlisttbl_t *tbl, const char *name);
+    char *(*casegetstr)(qlisttbl_t *tbl, const char *name, bool newmem);
+    int  (*casegetint)(qlisttbl_t *tbl, const char *name);
 
-    bool (*get_next)(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
+    bool (*getnext)(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
                      bool newmem);
 
     bool (*remove)(qlisttbl_t *tbl, const char *name);
 
-    bool (*set_putdir)(qlisttbl_t *tbl, bool first);
+    bool (*setputdir)(qlisttbl_t *tbl, bool first);
+    bool (*setgetdir)(qlisttbl_t *tbl, bool backward);
+    bool (*setnextdir)(qlisttbl_t *tbl, bool reverse);
     size_t (*size)(qlisttbl_t *tbl);
     void (*reverse)(qlisttbl_t *tbl);
     void (*clear)(qlisttbl_t *tbl);
 
-    char *(*parse_str)(qlisttbl_t *tbl, const char *str);
     bool (*save)(qlisttbl_t *tbl, const char *filepath, char sepchar,
                  bool encode);
     ssize_t (*load)(qlisttbl_t *tbl, const char *filepath, char sepchar,
@@ -239,7 +234,9 @@ struct qlisttbl_t {
     qmutex_t qmutex;  /*!< activated if compiled with --enable-threadsafe */
 
     size_t num;   /*!< number of elements */
-    bool putdir;  /*!< object appending direction for put(). false:put_last */
+    bool putdir;  /*!< object appending direction for put(). false: to bottom */
+    bool getdir;  /*!< object lookup direction for get(). false:from bottom */
+    bool nextdir; /*!< object traversal direction for next(). false:from top */
 
     qdlnobj_t *first;  /*!< first object pointer */
     qdlnobj_t *last;   /*!< last object pointer */
@@ -263,16 +260,16 @@ struct qhashtbl_t {
     /* capsulated member functions */
     bool (*put)(qhashtbl_t *tbl, const char *name, const void *data,
                 size_t size);
-    bool (*put_str)(qhashtbl_t *tbl, const char *name, const char *str);
-    bool (*put_strf)(qhashtbl_t *tbl, const char *name, const char *format,
+    bool (*putstr)(qhashtbl_t *tbl, const char *name, const char *str);
+    bool (*putstrf)(qhashtbl_t *tbl, const char *name, const char *format,
                      ...);
-    bool (*put_int)(qhashtbl_t *tbl, const char *name, int num);
+    bool (*putint)(qhashtbl_t *tbl, const char *name, int num);
 
     void *(*get)(qhashtbl_t *tbl, const char *name, size_t *size, bool newmem);
-    char *(*get_str)(qhashtbl_t *tbl, const char *name, bool newmem);
-    int (*get_int)(qhashtbl_t *tbl, const char *name);
+    char *(*getstr)(qhashtbl_t *tbl, const char *name, bool newmem);
+    int (*getint)(qhashtbl_t *tbl, const char *name);
 
-    bool (*get_next)(qhashtbl_t *tbl, qhnobj_t *obj, bool newmem);
+    bool (*getnext)(qhashtbl_t *tbl, qhnobj_t *obj, bool newmem);
 
     bool (*remove)(qhashtbl_t *tbl, const char *name);
 
@@ -344,14 +341,14 @@ struct qhasharr_t {
     /* capsulated member functions */
     bool (*put)(qhasharr_t *tbl, const char *key, const void *value,
                 size_t size);
-    bool (*put_str)(qhasharr_t *tbl, const char *key, const char *str);
-    bool (*put_strf)(qhasharr_t *tbl, const char *key, const char *format, ...);
-    bool (*put_int)(qhasharr_t *tbl, const char *key, int num);
+    bool (*putstr)(qhasharr_t *tbl, const char *key, const char *str);
+    bool (*putstrf)(qhasharr_t *tbl, const char *key, const char *format, ...);
+    bool (*putint)(qhasharr_t *tbl, const char *key, int num);
 
     void *(*get)(qhasharr_t *tbl, const char *key, size_t *size);
-    char *(*get_str)(qhasharr_t *tbl, const char *key);
-    int  (*get_int)(qhasharr_t *tbl, const char *key);
-    bool (*get_next)(qhasharr_t *tbl, qnobj_t *obj, int *idx);
+    char *(*getstr)(qhasharr_t *tbl, const char *key);
+    int  (*getint)(qhasharr_t *tbl, const char *key);
+    bool (*getnext)(qhasharr_t *tbl, qnobj_t *obj, int *idx);
 
     bool (*remove)(qhasharr_t *tbl, const char *key);
 
@@ -387,8 +384,8 @@ struct qvector_t {
     bool (*add_str) (qvector_t *vector, const char *str);
     bool (*add_strf) (qvector_t *vector, const char *format, ...);
 
-    void *(*to_array) (qvector_t *vector, size_t *size);
-    char *(*to_string) (qvector_t *vector);
+    void *(*toarray) (qvector_t *vector, size_t *size);
+    char *(*tostring) (qvector_t *vector);
 
     size_t (*size) (qvector_t *vector);
     size_t (*datasize) (qvector_t *vector);
@@ -417,21 +414,21 @@ extern qqueue_t *qqueue();
  */
 struct qqueue_t {
     /* capsulated member functions */
-    size_t (*set_size) (qqueue_t *stack, size_t max);
+    size_t (*setsize) (qqueue_t *stack, size_t max);
 
     bool (*push) (qqueue_t *stack, const void *data, size_t size);
-    bool (*push_str) (qqueue_t *stack, const char *str);
-    bool (*push_int) (qqueue_t *stack, int num);
+    bool (*pushstr) (qqueue_t *stack, const char *str);
+    bool (*pushint) (qqueue_t *stack, int num);
 
     void *(*pop) (qqueue_t *stack, size_t *size);
-    char *(*pop_str) (qqueue_t *stack);
-    int (*pop_int) (qqueue_t *stack);
-    void *(*pop_at) (qqueue_t *stack, int index, size_t *size);
+    char *(*popstr) (qqueue_t *stack);
+    int (*popint) (qqueue_t *stack);
+    void *(*popat) (qqueue_t *stack, int index, size_t *size);
 
     void *(*get) (qqueue_t *stack, size_t *size, bool newmem);
-    char *(*get_str) (qqueue_t *stack);
-    int (*get_int) (qqueue_t *stack);
-    void *(*get_at) (qqueue_t *stack, int index, size_t *size, bool newmem);
+    char *(*getstr) (qqueue_t *stack);
+    int (*getint) (qqueue_t *stack);
+    void *(*getat) (qqueue_t *stack, int index, size_t *size, bool newmem);
 
     size_t (*size) (qqueue_t *stack);
     void (*clear) (qqueue_t *stack);
@@ -458,21 +455,21 @@ extern qstack_t *qstack();
  */
 struct qstack_t {
     /* capsulated member functions */
-    size_t (*set_size) (qstack_t *stack, size_t max);
+    size_t (*setsize) (qstack_t *stack, size_t max);
 
     bool (*push) (qstack_t *stack, const void *data, size_t size);
-    bool (*push_str) (qstack_t *stack, const char *str);
-    bool (*push_int) (qstack_t *stack, int num);
+    bool (*pushstr) (qstack_t *stack, const char *str);
+    bool (*pushint) (qstack_t *stack, int num);
 
     void *(*pop) (qstack_t *stack, size_t *size);
-    char *(*pop_str) (qstack_t *stack);
-    int (*pop_int) (qstack_t *stack);
-    void *(*pop_at) (qstack_t *stack, int index, size_t *size);
+    char *(*popstr) (qstack_t *stack);
+    int (*popint) (qstack_t *stack);
+    void *(*popat) (qstack_t *stack, int index, size_t *size);
 
     void *(*get) (qstack_t *stack, size_t *size, bool newmem);
-    char *(*get_str) (qstack_t *stack);
-    int (*get_int) (qstack_t *stack);
-    void *(*get_at) (qstack_t *stack, int index, size_t *size, bool newmem);
+    char *(*getstr) (qstack_t *stack);
+    int (*getint) (qstack_t *stack);
+    void *(*getat) (qstack_t *stack, int index, size_t *size, bool newmem);
 
     size_t (*size) (qstack_t *stack);
     void (*clear) (qstack_t *stack);

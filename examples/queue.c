@@ -40,27 +40,27 @@ int main(void)
     qqueue_t *queue = qqueue();
 
     // example: integer queue
-    queue->push_int(queue, 1);
-    queue->push_int(queue, 2);
-    queue->push_int(queue, 3);
+    queue->pushint(queue, 1);
+    queue->pushint(queue, 2);
+    queue->pushint(queue, 3);
 
-    printf("pop_int(): %d\n", queue->pop_int(queue));
-    printf("pop_int(): %d\n", queue->pop_int(queue));
-    printf("pop_int(): %d\n", queue->pop_int(queue));
+    printf("popint(): %d\n", queue->popint(queue));
+    printf("popint(): %d\n", queue->popint(queue));
+    printf("popint(): %d\n", queue->popint(queue));
 
     // example: string queue
-    queue->push_str(queue, "A string");
-    queue->push_str(queue, "B string");
-    queue->push_str(queue, "C string");
+    queue->pushstr(queue, "A string");
+    queue->pushstr(queue, "B string");
+    queue->pushstr(queue, "C string");
 
-    char *str = queue->pop_str(queue);
-    printf("pop_str(): %s\n", str);
+    char *str = queue->popstr(queue);
+    printf("popstr(): %s\n", str);
     free(str);
-    str = queue->pop_str(queue);
-    printf("pop_str(): %s\n", str);
+    str = queue->popstr(queue);
+    printf("popstr(): %s\n", str);
     free(str);
-    str = queue->pop_str(queue);
-    printf("pop_str(): %s\n", str);
+    str = queue->popstr(queue);
+    printf("popstr(): %s\n", str);
     free(str);
 
     // example: object queue

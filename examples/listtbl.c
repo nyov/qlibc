@@ -44,10 +44,10 @@ int main(void)
     //
 
     // insert elements (key duplication allowed)
-    tbl->put_str(tbl, "e1", "a", false);
-    tbl->put_str(tbl, "e2", "b", false);
-    tbl->put_str(tbl, "e2", "c", false);
-    tbl->put_str(tbl, "e2", "d", false);
+    tbl->putstr(tbl, "e1", "a", false);
+    tbl->putstr(tbl, "e2", "b", false);
+    tbl->putstr(tbl, "e2", "c", false);
+    tbl->putstr(tbl, "e2", "d", false);
     tbl->put(tbl, "e3", "e", strlen("e")+1, false); // equal to add_str();
 
     // print out
@@ -60,12 +60,10 @@ int main(void)
 
     printf("\n--[Test 2 : many ways to find key]--\n");
     printf("get('e2') : %s\n", (char *)tbl->get(tbl, "e2", NULL, false));
-    printf("get_last('e2') : %s\n",
-           (char *)tbl->get_last(tbl, "e2", NULL, false));
-    printf("get_str('e2') : %s\n", tbl->get_str(tbl, "e2", false));
+    printf("getstr('e2') : %s\n", tbl->getstr(tbl, "e2", false));
 
-    char *e2 = tbl->get_str(tbl, "e2", true);
-    printf("get_str('e2') with newmem parameter: %s\n", e2);
+    char *e2 = tbl->getstr(tbl, "e2", true);
+    printf("getstr('e2') with newmem parameter: %s\n", e2);
     free(e2);
 
     //
@@ -77,7 +75,7 @@ int main(void)
     qdlnobj_t obj;
     memset((void *)&obj, 0, sizeof(obj)); // must be cleared before call
     tbl->lock(tbl);
-    while (tbl->get_next(tbl, &obj, NULL, true) == true) {
+    while (tbl->getnext(tbl, &obj, NULL, true) == true) {
         printf("NAME=%s, DATA=%s, SIZE=%zu\n",
                obj.name, (char *)obj.data, obj.size);
         free(obj.name);
@@ -92,7 +90,7 @@ int main(void)
     printf("\n--[Test 4 : travesal a particular key 'e2']--\n");
     memset((void *)&obj, 0, sizeof(obj)); // must be cleared before call
     tbl->lock(tbl);
-    while (tbl->get_next(tbl, &obj, "e2", false) == true) {
+    while (tbl->getnext(tbl, &obj, "e2", false) == true) {
         printf("NAME=%s, DATA=%s, SIZE=%zu\n",
                obj.name, (char *)obj.data, obj.size);
     }
@@ -101,9 +99,9 @@ int main(void)
     //
     // TEST 5 : changed put direction and added 'e4' and 'e5' element.
     //
-    tbl->set_putdir(tbl, true);
-    tbl->put_str(tbl, "e4", "f", false);
-    tbl->put_str(tbl, "e5", "g", false);
+    tbl->setputdir(tbl, true);
+    tbl->putstr(tbl, "e4", "f", false);
+    tbl->putstr(tbl, "e5", "g", false);
 
     // print out
     printf("\n--[Test 5 : changed adding direction then"
@@ -113,7 +111,7 @@ int main(void)
     //
     // TEST 6 :  add element 'e2' with replace option.
     //
-    tbl->put_str(tbl, "e2", "h", true);
+    tbl->putstr(tbl, "e2", "h", true);
 
     // print out
     printf("\n--[Test 6 : add element 'e2' with replace option]--\n");

@@ -52,9 +52,9 @@ extern "C" {
 
 /* public functions */
 extern qlisttbl_t *qconfig_parse_file(qlisttbl_t *tbl, const char *filepath,
-                                      char sepchar);
+                                      char sepchar, bool uniquekey);
 extern qlisttbl_t *qconfig_parse_str(qlisttbl_t *tbl, const char *str,
-                                     char sepchar);
+                                     char sepchar, bool uniquekey);
 
 /******************************************************************************
  * Rotating file logger.
@@ -237,11 +237,11 @@ struct qdb_t {
  */
 struct qdbresult_t {
     /* capsulated member functions */
-    const char *(*get_str) (qdbresult_t *result, const char *field);
+    const char *(*getstr) (qdbresult_t *result, const char *field);
     const char *(*get_str_at) (qdbresult_t *result, int idx);
-    int (*get_int) (qdbresult_t *result, const char *field);
+    int (*getint) (qdbresult_t *result, const char *field);
     int (*get_int_at) (qdbresult_t *result, int idx);
-    bool (*get_next) (qdbresult_t *result);
+    bool (*getnext) (qdbresult_t *result);
 
     int (*get_cols) (qdbresult_t *result);
     int (*get_rows) (qdbresult_t *result);

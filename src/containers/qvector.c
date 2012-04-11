@@ -45,7 +45,7 @@
  *  vector->add_str(vector, "CD");
  *
  *  // get the chunk as a string
- *  char *final = vector->to_string(vector);
+ *  char *final = vector->tostring(vector);
  *
  *  // print out
  *  printf("Number of elements = %zu\n", vector->size(vector));
@@ -85,7 +85,7 @@
  *
  *  // final
  *  struct sampleobj *final;
- *  final = (struct sampleobj *)vector->to_array(vector, NULL);
+ *  final = (struct sampleobj *)vector->toarray(vector, NULL);
  *
  *  // print out
  *  printf("Number of Objects = %zu\n", vector->size(vector));
@@ -125,8 +125,8 @@
 static bool add(qvector_t *vector, const void *object, size_t size);
 static bool add_str(qvector_t *vector, const char *str);
 static bool add_strf(qvector_t *vector, const char *format, ...);
-static void *to_array(qvector_t *vector, size_t *size);
-static char *to_string(qvector_t *vector);
+static void *toarray(qvector_t *vector, size_t *size);
+static char *tostring(qvector_t *vector);
 static size_t size(qvector_t *vector);
 static size_t datasize(qvector_t *vector);
 static void clear(qvector_t *vector);
@@ -168,8 +168,8 @@ qvector_t *qvector(void)
     vector->add_str     = add_str;
     vector->add_strf    = add_strf;
 
-    vector->to_array    = to_array;
-    vector->to_string   = to_string;
+    vector->toarray     = toarray;
+    vector->tostring    = tostring;
 
     vector->size        = size;
     vector->datasize    = datasize;
@@ -194,7 +194,7 @@ qvector_t *qvector(void)
  */
 static bool add(qvector_t *vector, const void *data, size_t size)
 {
-    return vector->list->add_last(vector->list, data, size);
+    return vector->list->addlast(vector->list, data, size);
 }
 
 /**
@@ -210,7 +210,7 @@ static bool add(qvector_t *vector, const void *data, size_t size)
  */
 static bool add_str(qvector_t *vector, const char *str)
 {
-    return vector->list->add_last(vector->list, str, strlen(str));
+    return vector->list->addlast(vector->list, str, strlen(str));
 }
 
 /**
@@ -240,7 +240,7 @@ static bool add_strf(qvector_t *vector, const char *format, ...)
 }
 
 /**
- * (qvector_t*)->to_array(): Returns the serialized chunk containing all the
+ * (qvector_t*)->toarray(): Returns the serialized chunk containing all the
  * elements in this vector.
  *
  * @param vector    qvector_t container pointer.
@@ -252,13 +252,13 @@ static bool add_strf(qvector_t *vector, const char *format, ...)
  *  - ENOENT    : Vector is empty.
  *  - ENOMEM    : Memory allocation failure.
  */
-static void *to_array(qvector_t *vector, size_t *size)
+static void *toarray(qvector_t *vector, size_t *size)
 {
-    return vector->list->to_array(vector->list, size);
+    return vector->list->toarray(vector->list, size);
 }
 
 /**
- * (qvector_t*)->to_string(): Returns a string representation of this vector,
+ * (qvector_t*)->tostring(): Returns a string representation of this vector,
  * containing string representation of each element.
  *
  * @param vector    qvector_t container pointer.
@@ -271,9 +271,9 @@ static void *to_array(qvector_t *vector, size_t *size)
  * @note
  * Return string is always terminated by '\0'.
  */
-static char *to_string(qvector_t *vector)
+static char *tostring(qvector_t *vector)
 {
-    return vector->list->to_string(vector->list);
+    return vector->list->tostring(vector->list);
 }
 
 /**
