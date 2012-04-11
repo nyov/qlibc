@@ -38,6 +38,8 @@ int main(void)
 {
     // create a list-table.
     qlisttbl_t *tbl = qlisttbl();
+    qdlnobj_t obj;
+    int i;
 
     //
     // TEST 1 : adding elements.
@@ -67,24 +69,20 @@ int main(void)
     free(e2);
 
     //
-    // TEST 3 : travesal a list.
+    // TEST 3 : getmulti() - fetch all duplicated 'e2' keys.
     //
 
-    printf("--[Test 3 : travesal a list]--\n");
-    printf("list size : %zu elements\n", tbl->size(tbl));
-    qdlnobj_t obj;
-    memset((void *)&obj, 0, sizeof(obj)); // must be cleared before call
-    tbl->lock(tbl);
-    while (tbl->getnext(tbl, &obj, NULL, true) == true) {
-        printf("NAME=%s, DATA=%s, SIZE=%zu\n",
-               obj.name, (char *)obj.data, obj.size);
-        free(obj.name);
-        free(obj.data);
+    printf("\n--[Test 3 : getmulti() - fetch all duplicated 'e2' keys]--\n");
+    size_t numobjs = 0;
+    qobj_t * objs = tbl->getmulti(tbl, "e2", true, &numobjs);
+    printf("getmulti('e2') : %d objects found.\n", numobjs);
+    for (i = 0; objs[i].data != NULL; i++) {
+        printf("objs[%d], DATA=%s, SIZE=%zu\n", i, (char *)objs[i].data, objs[i].size);
     }
-    tbl->unlock(tbl);
-
+    tbl->freemulti(objs);
+    
     //
-    // TEST 4 :  travesal a particular key 'e2'.
+    // TEST 4 : travesal a particular key 'e2'.
     //
 
     printf("\n--[Test 4 : travesal a particular key 'e2']--\n");
@@ -97,34 +95,50 @@ int main(void)
     tbl->unlock(tbl);
 
     //
-    // TEST 5 : changed put direction and added 'e4' and 'e5' element.
+    // TEST 5 : travesal a list.
+    //
+
+    printf("\n--[Test 5 : travesal a list]--\n");
+    printf("list size : %zu elements\n", tbl->size(tbl));
+    memset((void *)&obj, 0, sizeof(obj)); // must be cleared before call
+    tbl->lock(tbl);
+    while (tbl->getnext(tbl, &obj, NULL, true) == true) {
+        printf("NAME=%s, DATA=%s, SIZE=%zu\n",
+               obj.name, (char *)obj.data, obj.size);
+        free(obj.name);
+        free(obj.data);
+    }
+    tbl->unlock(tbl);
+
+    //
+    // TEST 6 : changed put direction and added 'e4' and 'e5' element.
     //
     tbl->setputdir(tbl, true);
     tbl->putstr(tbl, "e4", "f", false);
     tbl->putstr(tbl, "e5", "g", false);
 
     // print out
-    printf("\n--[Test 5 : changed adding direction then"
+    printf("\n--[Test 6 : changed adding direction then"
            " added 'e4' and 'e5' element]--\n");
     tbl->debug(tbl, stdout);
 
     //
-    // TEST 6 :  add element 'e2' with replace option.
+    // TEST 7 :  add element 'e2' with replace option.
     //
     tbl->putstr(tbl, "e2", "h", true);
 
     // print out
-    printf("\n--[Test 6 : add element 'e2' with replace option]--\n");
+    printf("\n--[Test 7 : add element 'e2' with replace option]--\n");
     tbl->debug(tbl, stdout);
 
     //
-    // TEST 7 :  reverse list
+    // TEST 8 :  reverse list
     //
 
     tbl->reverse(tbl);
 
     // print out
-    printf("\n--[Test 7 : reverse]--\n");
+    printf("\n--[Test 8 : reverse]--\n");
     tbl->debug(tbl, stdout);
 
     // free object

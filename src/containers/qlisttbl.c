@@ -125,10 +125,14 @@ static void *caseget(qlisttbl_t *tbl, const char *name, size_t *size,
 static char *casegetstr(qlisttbl_t *tbl, const char *name, bool newmem);
 static int64_t casegetint(qlisttbl_t *tbl, const char *name);
 
+static qobj_t *getmulti(qlisttbl_t *tbl, const char *name, bool newmem,
+                        size_t *numfound);
+static void freemulti(qobj_t *objs);
 static bool getnext(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
                     bool newmem);
 
-static bool remove_(qlisttbl_t *tbl, const char *name);
+static size_t remove_(qlisttbl_t *tbl, const char *name);
+static bool removeobj(qlisttbl_t *tbl, const qdlnobj_t *obj);
 
 static bool setputdir(qlisttbl_t *tbl, bool first);
 static bool setgetdir(qlisttbl_t *tbl, bool forward);
@@ -193,9 +197,13 @@ qlisttbl_t *qlisttbl(void)
     tbl->casegetstr = casegetstr;
     tbl->casegetint = casegetint;
 
+    tbl->getmulti   = getmulti;
+    tbl->freemulti  = freemulti;
+
     tbl->getnext    = getnext;
 
     tbl->remove     = remove_;
+    tbl->removeobj  = removeobj;
 
     tbl->setputdir  = setputdir;
     tbl->setgetdir  = setgetdir;
@@ -503,6 +511,68 @@ static int64_t casegetint(qlisttbl_t *tbl, const char *name)
     return num;
 }
 
+static qobj_t *getmulti(qlisttbl_t *tbl, const char *name, bool newmem, size_t *numfound)
+{
+    qobj_t *objs = NULL;  // objects container
+    size_t allocobjs = 0;  // allocated number of objs
+    size_t foundcnt = 0;  // number of keys found
+
+    qdlnobj_t obj;
+    memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
+    lock(tbl);
+    while(tbl->getnext(tbl, &obj, name, newmem) == true) {
+        foundcnt++;
+
+        // allocate object array.
+        if (foundcnt >= allocobjs) {
+            if (allocobjs == 0) allocobjs = 10;  // start from 10
+            else allocobjs *= 2;  // double size
+            objs = (qobj_t *)realloc(objs, sizeof(qobj_t) * allocobjs);
+            if (objs == NULL) {
+                DEBUG("qlisttbl->getmulti(): Memory reallocation failure.");
+                errno = ENOMEM;
+                break;
+            }
+        }
+
+        // copy reference
+        qobj_t *newobj = &objs[foundcnt - 1];
+        newobj->data = obj.data;
+        newobj->size = obj.size;
+        newobj->type = (newmem == false) ? 1 : 2;
+
+        // release resource
+        if (newmem == true) {
+            if (obj.name != NULL) free(obj.name);
+        }
+
+        // clear next block
+        newobj = &objs[foundcnt];
+        memset((void *)newobj, '\0', sizeof(qobj_t));
+        newobj->type = 0;  // mark, end of objects
+    }
+    unlock(tbl);
+ 
+    // return found counter
+    if (numfound != NULL) {
+        *numfound = foundcnt;
+    }
+
+    return objs;
+}
+
+static void freemulti(qobj_t *objs)
+{
+    if (objs == NULL) return;
+
+    qobj_t *obj;
+    for (obj = &objs[0]; obj->type == 2; obj++) {
+        if (obj->data != NULL) free(obj->data);
+    }
+
+    free(objs);
+}
+
 /**
  * (qlisttbl_t*)->getnext(): Get next element.
  * Default searching direction is forward, from the top to to bottom,
@@ -617,48 +687,78 @@ static bool getnext(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
  * @retval errno will be set in error condition.
  *  - ENOENT : No such key found.
  */
-static bool remove_(qlisttbl_t *tbl, const char *name)
+static size_t remove_(qlisttbl_t *tbl, const char *name)
 {
     if (name == NULL) return false;
 
-    lock(tbl);
+    size_t numremoved = 0;
 
-    bool removed = false;
+    lock(tbl);
     qdlnobj_t *obj;
     for (obj = tbl->first; obj != NULL;) {
         if (!strcmp(obj->name, name)) { // found
             // copy next chain
-            qdlnobj_t *prev = obj->prev;
             qdlnobj_t *next = obj->next;
 
-            // adjust counter
-            tbl->num--;
-            removed = true;
+            // remove object
+            bool removed = removeobj(tbl, obj);
+            numremoved += (removed == false) ? 0 : 1;
 
-            // remove list itself
-            free(obj->name);
-            free(obj->data);
-            free(obj);
-
-            // adjust chain links
-            if (prev == NULL) tbl->first = next; // if the object is first one
-            else prev->next = next;  // not the first one
-
-            if (next == NULL) tbl->last = prev; // if the object is last one
-            else next->prev = prev;  // not the first one
-
-            // set next list
+            // set next object
             obj = next;
         } else {
-            // set next list
+            // set next object
             obj = obj->next;
         }
     }
+    unlock(tbl);
+
+    if (numremoved == 0) errno = ENOENT;
+    return numremoved;
+}
+
+static bool removeobj(qlisttbl_t *tbl, const qdlnobj_t *obj)
+{
+    if (obj == NULL) return false;
+
+    lock(tbl);
+
+    // copy chains
+    qdlnobj_t *prev = obj->prev;
+    qdlnobj_t *next = obj->next;
+
+    // find this object
+    qdlnobj_t *this = NULL;
+    if (prev != NULL) this = prev->next; 
+    else if (next != NULL) this = next->prev;
+    else this = tbl->first;  // list has only one object.
+
+    // double check
+    if (this == NULL) {
+        unlock(tbl);
+        DEBUG("qlisttbl->removeobj(): Can't veryfy object.");
+        errno = ENOENT;
+        return false;
+    }
+    
+    // adjust chain links
+    if (prev == NULL) tbl->first = next; // if the object is first one
+    else prev->next = next;  // not the first one
+
+    if (next == NULL) tbl->last = prev; // if the object is last one
+    else next->prev = prev;  // not the first one
+
+    // adjust counter
+    tbl->num--;
 
     unlock(tbl);
 
-    if (removed == false) errno = ENOENT;
-    return removed;
+    // free object
+    free(this->name);
+    free(this->data);
+    free(this);
+
+    return true;
 }
 
 /**
