@@ -327,8 +327,6 @@ static char *_parsestr(qlisttbl_t *tbl, const char *str)
         return NULL;
     }
 
-    tbl->lock(tbl);
-
     bool loop;
     char *value = strdup(str);
     do {
@@ -400,10 +398,10 @@ static char *_parsestr(qlisttbl_t *tbl, const char *str)
         }
     } while (loop == true);
 
-    tbl->unlock(tbl);
-
     return value;
 }
 
 #endif /* _DOXYGEN_SKIP */
+
 #endif /* DISABLE_QCONFIG */
+

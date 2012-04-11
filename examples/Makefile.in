@@ -36,9 +36,10 @@ CC		= @CC@
 CFLAGS		= @CFLAGS@
 CPPFLAGS	= -I../src/ @CPPFLAGS@
 RM		= @RM@
+DEPLIBS		= @DEPLIBS@
 
 TARGETS		= list listtbl hashtbl hasharr vector vector_obj queue stack config
-LIBQLIBC	= ../src/libqlibc.a
+LIBQLIBC	= ../src/libqlibc.a ${DEPLIBS}
 LIBQLIBCEXT	= ../src/libqlibcext.a
 
 ## Main

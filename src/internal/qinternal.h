@@ -74,7 +74,7 @@
 #include <pthread.h>
 
 #define Q_MUTEX_INIT(x,r) do {                                          \
-        memset((void*)&x, 0, sizeof(Q_MUTEX_T));                        \
+        memset((void*)&x, 0, sizeof(qmutex_t));                         \
         pthread_mutexattr_t _mutexattr;                                 \
         pthread_mutexattr_init(&_mutexattr);                            \
         if(r == true) {                                                 \

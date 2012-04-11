@@ -82,6 +82,7 @@ AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile src/Makefile examples/Makefile])
 AC_SUBST(BUILD_TARGETS, ["qlibc qlibcext"])
 AC_SUBST(INSTALL_TARGETS, ["install-qlibc install-qlibcext"])
+AC_SUBST(DEPLIBS, [""])
 
 ## Set path
 PATH="$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
@@ -148,6 +149,7 @@ AC_TYPE_OFF_T
 Q_ARG_ENABLE([threadsafe], [Enable thread-safe feature. When it's enabled, user applications need to link pthread library. (ex: -lpthread)], [-DENABLE_THREADSAFE])
 if test "$enableval" = yes; then
 	AC_CHECK_LIB([pthread], [main], [], AC_MSG_ERROR([Cannot find pthread library.]))
+	AC_SUBST(DEPLIBS, ["-lpthread"])
 fi
 
 Q_ARG_ENABLE([debug], [Enable debugging output. This will print out internal debugging messages to stdout.], [-DBUILD_DEBUG])
