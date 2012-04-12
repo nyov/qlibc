@@ -55,7 +55,7 @@ int main(void)
     tbl->putstr(tbl, "e4", "e");
     tbl->putstr(tbl, "e5", "f");
     tbl->putstr(tbl, "12345678901234567890",
-                      "1234567890123456789012345678901234567890");
+                "1234567890123456789012345678901234567890");
 
     // print out
     printf("--[Test 1 : adding elements]--\n");

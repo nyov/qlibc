@@ -195,7 +195,7 @@ qqueue_t *qqueue(void)
 }
 
 /**
- * (qqueue_t*)->setsize(): Sets maximum number of elements allowed in this
+ * qqueue->setsize(): Sets maximum number of elements allowed in this
  * queue.
  *
  * @param queue qqueue container pointer.
@@ -209,7 +209,7 @@ static size_t setsize(qqueue_t *queue, size_t max)
 }
 
 /**
- * (qqueue_t*)->push(): Pushes an element onto the top of this queue.
+ * qqueue->push(): Pushes an element onto the top of this queue.
  *
  * @param queue qqueue container pointer.
  * @param data  a pointer which points data memory.
@@ -228,7 +228,7 @@ static bool push(qqueue_t *queue, const void *data, size_t size)
 }
 
 /**
- * (qqueue_t*)->pushstr(): Pushes a string onto the top of this queue.
+ * qqueue->pushstr(): Pushes a string onto the top of this queue.
  *
  * @param queue qqueue container pointer.
  * @param data  a pointer which points data memory.
@@ -251,7 +251,7 @@ static bool pushstr(qqueue_t *queue, const char *str)
 }
 
 /**
- * (qqueue_t*)->pushint(): Pushes a integer onto the top of this queue.
+ * qqueue->pushint(): Pushes a integer onto the top of this queue.
  *
  * @param queue qqueue container pointer.
  * @param num   integer data.
@@ -268,7 +268,7 @@ static bool pushint(qqueue_t *queue, int64_t num)
 }
 
 /**
- * (qqueue_t*)->pop(): Removes a element at the top of this queue and returns
+ * qqueue->pop(): Removes a element at the top of this queue and returns
  * that element.
  *
  * @param queue qqueue container pointer.
@@ -285,7 +285,7 @@ static void *pop(qqueue_t *queue, size_t *size)
 }
 
 /**
- * (qqueue_t*)->popstr(): Removes a element at the top of this queue and
+ * qqueue->popstr(): Removes a element at the top of this queue and
  * returns that element.
  *
  * @param queue qqueue container pointer.
@@ -310,7 +310,7 @@ static char *popstr(qqueue_t *queue)
 }
 
 /**
- * (qqueue_t*)->popint(): Removes a integer at the top of this queue and
+ * qqueue->popint(): Removes a integer at the top of this queue and
  * returns that element.
  *
  * @param queue qqueue container pointer.
@@ -336,7 +336,7 @@ static int64_t popint(qqueue_t *queue)
 }
 
 /**
- * (qqueue_t*)->popat(): Returns and remove the element at the specified
+ * qqueue->popat(): Returns and remove the element at the specified
  * position in this queue.
  *
  * @param queue qqueue container pointer.
@@ -359,7 +359,7 @@ static void *popat(qqueue_t *queue, int index, size_t *size)
 }
 
 /**
- * (qqueue_t*)->get(): Returns an element at the top of this queue without
+ * qqueue->get(): Returns an element at the top of this queue without
  * removing it.
  *
  * @param queue     qqueue container pointer.
@@ -377,7 +377,7 @@ static void *get(qqueue_t *queue, size_t *size, bool newmem)
 }
 
 /**
- * (qqueue_t*)->getstr(): Returns an string at the top of this queue without
+ * qqueue->getstr(): Returns an string at the top of this queue without
  * removing it.
  *
  * @param queue qqueue container pointer.
@@ -402,7 +402,7 @@ static char *getstr(qqueue_t *queue)
 }
 
 /**
- * (qqueue_t*)->getint(): Returns an integer at the top of this queue without
+ * qqueue->getint(): Returns an integer at the top of this queue without
  * removing it.
  *
  * @param queue qqueue container pointer.
@@ -428,7 +428,7 @@ static int64_t getint(qqueue_t *queue)
 }
 
 /**
- * (qqueue_t*)->getat(): Returns an element at the specified position in this
+ * qqueue->getat(): Returns an element at the specified position in this
  * queue without removing it.
  *
  * @param queue     qqueue container pointer.
@@ -452,7 +452,7 @@ static void *getat(qqueue_t *queue, int index, size_t *size, bool newmem)
 }
 
 /**
- * (qqueue_t*)->size(): Returns the number of elements in this queue.
+ * qqueue->size(): Returns the number of elements in this queue.
  *
  * @param queue qqueue container pointer.
  *
@@ -464,7 +464,7 @@ static size_t size(qqueue_t *queue)
 }
 
 /**
- * (qqueue_t*)->clear(): Removes all of the elements from this queue.
+ * qqueue->clear(): Removes all of the elements from this queue.
  *
  * @param queue qqueue container pointer.
  */
@@ -474,7 +474,7 @@ static void clear(qqueue_t *queue)
 }
 
 /**
- * (qqueue_t*)->debug(): Print out stored elements for debugging purpose.
+ * qqueue->debug(): Print out stored elements for debugging purpose.
  *
  * @param queue     qqueue container pointer.
  * @param out       output stream FILE descriptor such like stdout, stderr.
@@ -487,7 +487,7 @@ static bool debug(qqueue_t *queue, FILE *out)
 }
 
 /**
- * (qqueue_t*)->free(): Free qqueue_t
+ * qqueue->free(): Free qqueue_t
  *
  * @param queue qqueue container pointer.
  *

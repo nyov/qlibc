@@ -195,7 +195,7 @@ qstack_t *qstack(void)
 }
 
 /**
- * (qstack_t*)->setsize(): Sets maximum number of elements allowed in this
+ * qstack->setsize(): Sets maximum number of elements allowed in this
  * stack.
  *
  * @param stack qstack container pointer.
@@ -209,7 +209,7 @@ static size_t setsize(qstack_t *stack, size_t max)
 }
 
 /**
- * (qstack_t*)->push(): Pushes an element onto the top of this stack.
+ * qstack->push(): Pushes an element onto the top of this stack.
  *
  * @param stack qstack container pointer.
  * @param data  a pointer which points data memory.
@@ -228,7 +228,7 @@ static bool push(qstack_t *stack, const void *data, size_t size)
 }
 
 /**
- * (qstack_t*)->pushstr(): Pushes a string onto the top of this stack.
+ * qstack->pushstr(): Pushes a string onto the top of this stack.
  *
  * @param stack qstack container pointer.
  * @param data  a pointer which points data memory.
@@ -251,7 +251,7 @@ static bool pushstr(qstack_t *stack, const char *str)
 }
 
 /**
- * (qstack_t*)->pushint(): Pushes a integer onto the top of this stack.
+ * qstack->pushint(): Pushes a integer onto the top of this stack.
  *
  * @param stack qstack container pointer.
  * @param num   integer data.
@@ -268,7 +268,7 @@ static bool pushint(qstack_t *stack, int64_t num)
 }
 
 /**
- * (qstack_t*)->pop(): Removes a element at the top of this stack and returns
+ * qstack->pop(): Removes a element at the top of this stack and returns
  * that element.
  *
  * @param stack qstack container pointer.
@@ -285,7 +285,7 @@ static void *pop(qstack_t *stack, size_t *size)
 }
 
 /**
- * (qstack_t*)->popstr(): Removes a element at the top of this stack and
+ * qstack->popstr(): Removes a element at the top of this stack and
  * returns that element.
  *
  * @param stack qstack container pointer.
@@ -310,7 +310,7 @@ static char *popstr(qstack_t *stack)
 }
 
 /**
- * (qstack_t*)->popint(): Removes a integer at the top of this stack and
+ * qstack->popint(): Removes a integer at the top of this stack and
  * returns that element.
  *
  * @param stack qstack container pointer.
@@ -336,7 +336,7 @@ static int64_t popint(qstack_t *stack)
 }
 
 /**
- * (qstack_t*)->popat(): Returns and remove the element at the specified
+ * qstack->popat(): Returns and remove the element at the specified
  * position in this stack.
  *
  * @param stack qstack container pointer.
@@ -359,7 +359,7 @@ static void *popat(qstack_t *stack, int index, size_t *size)
 }
 
 /**
- * (qstack_t*)->get(): Returns an element at the top of this stack without
+ * qstack->get(): Returns an element at the top of this stack without
  * removing it.
  *
  * @param stack     qstack container pointer.
@@ -377,7 +377,7 @@ static void *get(qstack_t *stack, size_t *size, bool newmem)
 }
 
 /**
- * (qstack_t*)->getstr(): Returns an string at the top of this stack without
+ * qstack->getstr(): Returns an string at the top of this stack without
  * removing it.
  *
  * @param stack qstack container pointer.
@@ -402,7 +402,7 @@ static char *getstr(qstack_t *stack)
 }
 
 /**
- * (qstack_t*)->getint(): Returns an integer at the top of this stack without
+ * qstack->getint(): Returns an integer at the top of this stack without
  * removing it.
  *
  * @param stack qstack container pointer.
@@ -428,7 +428,7 @@ static int64_t getint(qstack_t *stack)
 }
 
 /**
- * (qstack_t*)->getat(): Returns an element at the specified position in this
+ * qstack->getat(): Returns an element at the specified position in this
  * stack without removing it.
  *
  * @param stack     qstack container pointer.
@@ -452,7 +452,7 @@ static void *getat(qstack_t *stack, int index, size_t *size, bool newmem)
 }
 
 /**
- * (qstack_t*)->size(): Returns the number of elements in this stack.
+ * qstack->size(): Returns the number of elements in this stack.
  *
  * @param stack qstack container pointer.
  *
@@ -464,7 +464,7 @@ static size_t size(qstack_t *stack)
 }
 
 /**
- * (qstack_t*)->clear(): Removes all of the elements from this stack.
+ * qstack->clear(): Removes all of the elements from this stack.
  *
  * @param stack qstack container pointer.
  */
@@ -474,7 +474,7 @@ static void clear(qstack_t *stack)
 }
 
 /**
- * (qstack_t*)->debug(): Print out stored elements for debugging purpose.
+ * qstack->debug(): Print out stored elements for debugging purpose.
  *
  * @param stack     qstack container pointer.
  * @param out       output stream FILE descriptor such like stdout, stderr.
@@ -487,7 +487,7 @@ static bool debug(qstack_t *stack, FILE *out)
 }
 
 /**
- * (qstack_t*)->free(): Free qstack_t
+ * qstack->free(): Free qstack_t
  *
  * @param stack qstack container pointer.
  *

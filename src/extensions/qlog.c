@@ -137,7 +137,7 @@ qlog_t *qlog(const char *filepathfmt, mode_t mode, int rotateinterval,
 }
 
 /**
- * qlog_t->write(): Log messages
+ * qlog->write(): Log messages
  *
  * @param log       a pointer of qlog_t
  * @param str       message string
@@ -174,7 +174,7 @@ static bool write_(qlog_t *log, const char *str)
 }
 
 /**
- * qlog_t->writef(): Log messages
+ * qlog->writef(): Log messages
  *
  * @param log       a pointer of qlog_t
  * @param format    messages format
@@ -196,7 +196,7 @@ static bool writef(qlog_t *log, const char *format, ...)
 }
 
 /**
- * qlog_t->duplicate(): Duplicate log string into other stream
+ * qlog->duplicate(): Duplicate log string into other stream
  *
  * @param log       a pointer of qlog_t
  * @param fp        logging messages will be printed out into this stream.
@@ -224,7 +224,7 @@ static bool duplicate(qlog_t *log, FILE *outfp, bool flush)
 }
 
 /**
- * qlog_t->flush(): Flush buffered log
+ * qlog->flush(): Flush buffered log
  *
  * @param log       a pointer of qlog_t
  *
@@ -244,7 +244,7 @@ static bool flush_(qlog_t *log)
 }
 
 /**
- * qlog_t->free(): Close ratating-log file & de-allocate resources
+ * qlog->free(): Close ratating-log file & de-allocate resources
  *
  * @param log       a pointer of qlog_t
  *

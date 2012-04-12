@@ -181,7 +181,7 @@ qvector_t *qvector(void)
 }
 
 /**
- * (qvector_t*)->add(): Stack object
+ * qvector->add(): Stack object
  *
  * @param vector    qvector_t container pointer.
  * @param object    a pointer of object data
@@ -198,7 +198,7 @@ static bool add(qvector_t *vector, const void *data, size_t size)
 }
 
 /**
- * (qvector_t*)->addstr(): Stack string
+ * qvector->addstr(): Stack string
  *
  * @param vector    qvector_t container pointer.
  * @param str        a pointer of string
@@ -214,7 +214,7 @@ static bool addstr(qvector_t *vector, const char *str)
 }
 
 /**
- * (qvector_t*)->addstrf(): Stack formatted string
+ * qvector->addstrf(): Stack formatted string
  *
  * @param vector    qvector_t container pointer.
  * @param format    string format
@@ -240,7 +240,7 @@ static bool addstrf(qvector_t *vector, const char *format, ...)
 }
 
 /**
- * (qvector_t*)->toarray(): Returns the serialized chunk containing all the
+ * qvector->toarray(): Returns the serialized chunk containing all the
  * elements in this vector.
  *
  * @param vector    qvector_t container pointer.
@@ -258,7 +258,7 @@ static void *toarray(qvector_t *vector, size_t *size)
 }
 
 /**
- * (qvector_t*)->tostring(): Returns a string representation of this vector,
+ * qvector->tostring(): Returns a string representation of this vector,
  * containing string representation of each element.
  *
  * @param vector    qvector_t container pointer.
@@ -277,7 +277,7 @@ static char *tostring(qvector_t *vector)
 }
 
 /**
- * (qvector_t*)->size(): Returns the number of elements in this vector.
+ * qvector->size(): Returns the number of elements in this vector.
  *
  * @param vector    qvector_t container pointer.
  *
@@ -289,7 +289,7 @@ static size_t size(qvector_t *vector)
 }
 
 /**
- * (qvector_t*)->datasize(): Returns the sum of total element size in this
+ * qvector->datasize(): Returns the sum of total element size in this
  * vector.
  *
  * @param vector    qvector_t container pointer.
@@ -302,7 +302,7 @@ static size_t datasize(qvector_t *vector)
 }
 
 /**
- * (qvector_t*)->clear(): Removes all of the elements from this vector.
+ * qvector->clear(): Removes all of the elements from this vector.
  *
  * @param vector    qvector_t container pointer.
  */
@@ -312,7 +312,7 @@ static void clear(qvector_t *vector)
 }
 
 /**
- * (qvector_t*)->debug(): Print out stored elements for debugging purpose.
+ * qvector->debug(): Print out stored elements for debugging purpose.
  *
  * @param vector    qvector_t container pointer.
  * @param out       output stream FILE descriptor such like stdout, stderr.
@@ -327,7 +327,7 @@ static bool debug(qvector_t *vector, FILE *out)
 }
 
 /**
- * (qvector_t*)->free(): De-allocate vector
+ * qvector->free(): De-allocate vector
  *
  * @param vector    qvector_t container pointer.
  */

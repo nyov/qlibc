@@ -311,7 +311,7 @@ qhttpclient_t *qhttpclient(const char *destname, int port)
 }
 
 /**
- * (qhttpclient_t*)->set_ssl(): Sets connection to HTTPS connection
+ * qhttpclient->set_ssl(): Sets connection to HTTPS connection
  *
  * @param client    qhttpclient object pointer
  *
@@ -350,7 +350,7 @@ static bool set_ssl(qhttpclient_t *client)
 }
 
 /**
- * (qhttpclient_t*)->set_timeout(): Sets connection wait timeout.
+ * qhttpclient->set_timeout(): Sets connection wait timeout.
  *
  * @param client    qhttpclient object pointer
  * @param timeoutms timeout mili-seconds. 0 for system defaults
@@ -367,7 +367,7 @@ static void set_timeout(qhttpclient_t *client, int timeoutms)
 }
 
 /**
- * (qhttpclient_t*)->set_keepalive(): Sets KEEP-ALIVE feature on/off.
+ * qhttpclient->set_keepalive(): Sets KEEP-ALIVE feature on/off.
  *
  * @param client    qhttpclient object pointer
  * @param keepalive true to set keep-alive on, false to set keep-alive off
@@ -383,7 +383,7 @@ static void set_keepalive(qhttpclient_t *client, bool keepalive)
 }
 
 /**
- * (qhttpclient_t*)->set_useragent(): Sets user-agent string.
+ * qhttpclient->set_useragent(): Sets user-agent string.
  *
  * @param client    qhttpclient object pointer
  * @param useragent user-agent string
@@ -399,7 +399,7 @@ static void set_useragent(qhttpclient_t *client, const char *useragent)
 }
 
 /**
- * (qhttpclient_t*)->open(): Opens a connection to the remote host.
+ * qhttpclient->open(): Opens a connection to the remote host.
  *
  * @param client    qhttpclient object pointer
  *
@@ -505,7 +505,7 @@ static bool open_(qhttpclient_t *client)
 }
 
 /**
- * (qhttpclient_t*)->head(): Sends a HEAD request.
+ * qhttpclient->head(): Sends a HEAD request.
  *
  * @param client        qhttpclient object pointer.
  * @param uri           URL encoded remote URI for downloading file.
@@ -599,7 +599,7 @@ static bool head(qhttpclient_t *client, const char *uri, int *rescode,
 }
 
 /**
- * (qhttpclient_t*)->get(): Downloads a file from the remote host using GET
+ * qhttpclient->get(): Downloads a file from the remote host using GET
  * method.
  *
  * @param client    qhttpclient object pointer.
@@ -822,7 +822,7 @@ static bool get(qhttpclient_t *client, const char *uri, int fd, off_t *savesize,
 }
 
 /**
- * (qhttpclient_t*)->put(): Uploads a file to the remote host using PUT method.
+ * qhttpclient->put(): Uploads a file to the remote host using PUT method.
  *
  * @param client    qhttpclient object pointer.
  * @param uri       remote URL for uploading file.
@@ -1030,7 +1030,7 @@ static bool put(qhttpclient_t *client, const char *uri, int fd, off_t length,
 }
 
 /**
- * (qhttpclient_t*)->cmd(): Sends a custom request(method) to the remote host
+ * qhttpclient->cmd(): Sends a custom request(method) to the remote host
  * and reads it's response.
  *
  * @param client    qhttpclient object pointer.
@@ -1144,7 +1144,7 @@ static void *cmd(qhttpclient_t *client, const char *method, const char *uri,
 }
 
 /**
- * (qhttpclient_t*)->sendrequest(): Sends a HTTP request to the remote host.
+ * qhttpclient->sendrequest(): Sends a HTTP request to the remote host.
  *
  * @param client    qhttpclient object pointer
  * @param method    HTTP method name
@@ -1167,7 +1167,7 @@ static void *cmd(qhttpclient_t *client, const char *method, const char *uri,
  * @endcode
  */
 static bool sendrequest(qhttpclient_t *client, const char *method,
-                         const char *uri, qlisttbl_t *reqheaders)
+                        const char *uri, qlisttbl_t *reqheaders)
 {
     if (open_(client) == false) {
         return false;
@@ -1184,15 +1184,15 @@ static bool sendrequest(qhttpclient_t *client, const char *method,
     // append default headers
     if (reqheaders->caseget(reqheaders, "Host", NULL, false) == NULL) {
         reqheaders->putstrf(reqheaders, true, "Host", "%s:%d",
-                             client->hostname, client->port);
+                            client->hostname, client->port);
     }
     if (reqheaders->caseget(reqheaders, "User-Agent", NULL, false) == NULL) {
         reqheaders->putstr(reqheaders, "User-Agent", client->useragent, true);
     }
     if (reqheaders->caseget(reqheaders, "Connection", NULL, false) == NULL) {
         reqheaders->putstr(reqheaders, "Connection",
-                            (client->keepalive==true) ? "Keep-Alive" : "close",
-                            true);
+                           (client->keepalive==true) ? "Keep-Alive" : "close",
+                           true);
     }
 
     // create stream buffer
@@ -1234,7 +1234,7 @@ static bool sendrequest(qhttpclient_t *client, const char *method,
 }
 
 /**
- * (qhttpclient_t*)->readresponse(): Reads HTTP response header from the
+ * qhttpclient->readresponse(): Reads HTTP response header from the
  * remote host.
  *
  * @param client        qhttpclient object pointer
@@ -1261,10 +1261,10 @@ static bool sendrequest(qhttpclient_t *client, const char *method,
  *
  * @note
  *  Data of content body must be read by a application side, if you want to use
- *  Keep-Alive session. Please refer (qhttpclient_t*)->read().
+ *  Keep-Alive session. Please refer qhttpclient->read().
  */
 static int readresponse(qhttpclient_t *client, qlisttbl_t *resheaders,
-                         off_t *contentlength)
+                        off_t *contentlength)
 {
     if (contentlength != NULL) {
         *contentlength = 0;
@@ -1324,7 +1324,7 @@ static int readresponse(qhttpclient_t *client, qlisttbl_t *resheaders,
 }
 
 /**
- * (qhttpclient_t*)->gets(): Reads a text line from a HTTP/HTTPS stream.
+ * qhttpclient->gets(): Reads a text line from a HTTP/HTTPS stream.
  *
  * @param   client      qhttpclient object pointer
  * @param   buf         data buffer pointer
@@ -1385,7 +1385,7 @@ static ssize_t gets_(qhttpclient_t *client, char *buf, size_t bufsize)
 }
 
 /**
- * (qhttpclient_t*)->read(): Reads data from a HTTP/HTTPS stream.
+ * qhttpclient->read(): Reads data from a HTTP/HTTPS stream.
  *
  * @param client    qhttpclient object pointer.
  * @param buf       a buffer pointer for storing content. (can be NULL, then
@@ -1450,7 +1450,7 @@ static ssize_t read_(qhttpclient_t *client, void *buf, size_t nbytes)
 }
 
 /**
- * (qhttpclient_t*)->write(): Writes data to a HTTP/HTTPS stream.
+ * qhttpclient->write(): Writes data to a HTTP/HTTPS stream.
  *
  * @param client    qhttpclient object pointer.
  * @param buf       a data pointer.
@@ -1494,7 +1494,7 @@ static ssize_t write_(qhttpclient_t *client, const void *buf, size_t nbytes)
 }
 
 /**
- * (qhttpclient_t*)->recvfile(): Reads data from a HTTP/HTTPS stream and save
+ * qhttpclient->recvfile(): Reads data from a HTTP/HTTPS stream and save
  * into a file descriptor.
  *
  * @param   client      qhttpclient object pointer.
@@ -1536,7 +1536,7 @@ static off_t recvfile(qhttpclient_t *client, int fd, off_t nbytes)
 }
 
 /**
- * (qhttpclient_t*)->sendfile(): Send file data to a HTTP/HTTPS stream.
+ * qhttpclient->sendfile(): Send file data to a HTTP/HTTPS stream.
  *
  * @param   client      qhttpclient object pointer.
  * @param   fd          input file descriptor
@@ -1577,7 +1577,7 @@ static off_t sendfile_(qhttpclient_t *client, int fd, off_t nbytes)
 }
 
 /**
- * (qhttpclient_t*)->close(): Closes the connection.
+ * qhttpclient->close(): Closes the connection.
  *
  * @param qhttpclient_t  HTTP object pointer
  *
@@ -1626,7 +1626,7 @@ static bool _close(qhttpclient_t *client)
 }
 
 /**
- * (qhttpclient_t*)->free(): Free object.
+ * qhttpclient->free(): Free object.
  *
  * @param qhttpclient_t  HTTP object pointer
  *

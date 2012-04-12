@@ -218,7 +218,7 @@ struct qlisttbl_t {
     int64_t (*casegetint)(qlisttbl_t *tbl, const char *name);
 
     qobj_t *(*getmulti)(qlisttbl_t *tbl, const char *name, bool newmem,
-             size_t *numfound);
+             size_t *numobjs);
     void (*freemulti)(qobj_t *objs);
 
     bool (*getnext)(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,

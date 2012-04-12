@@ -230,7 +230,7 @@ qdb_t *qdb(const char *dbtype, const char *addr, int port, const char *username,
 }
 
 /**
- * (qdb_t*)->open(): Connect to database server
+ * qdb->open(): Connect to database server
  *
  * @param db        a pointer of qdb_t object
  *
@@ -317,15 +317,15 @@ static bool open_(qdb_t *db)
 }
 
 /**
- * (qdb_t*)->close(): Disconnect from database server
+ * qdb->close(): Disconnect from database server
  *
  * @param db        a pointer of qdb_t object
  *
  * @return true if successful, otherwise returns false.
  *
  * @note
- *  Unless you call (qdb_t*)->free(), qdb_t object will keep the database
- *  information. So you can re-connect to database using (qdb_t*)->open().
+ *  Unless you call qdb->free(), qdb_t object will keep the database
+ *  information. So you can re-connect to database using qdb->open().
  */
 static bool close_(qdb_t *db)
 {
@@ -349,7 +349,7 @@ static bool close_(qdb_t *db)
 }
 
 /**
- * (qdb_t*)->execute_update(): Executes the update DML
+ * qdb->execute_update(): Executes the update DML
  *
  * @param db        a pointer of qdb_t object
  * @param query     query string
@@ -380,7 +380,7 @@ static int execute_update(qdb_t *db, const char *query)
 }
 
 /**
- * (qdb_t*)->execute_updatef(): Executes the formatted update DML
+ * qdb->execute_updatef(): Executes the formatted update DML
  *
  * @param db        a pointer of qdb_t object
  * @param format    query string format
@@ -400,7 +400,7 @@ static int execute_updatef(qdb_t *db, const char *format, ...)
 }
 
 /**
- * (qdb_t*)->execute_query(): Executes the query
+ * qdb->execute_query(): Executes the query
  *
  * @param db        a pointer of qdb_t object
  * @param query     query string
@@ -457,7 +457,7 @@ static qdbresult_t *execute_query(qdb_t *db, const char *query)
 }
 
 /**
- * (qdb_t*)->execute_queryf(): Executes the formatted query
+ * qdb->execute_queryf(): Executes the formatted query
  *
  * @param db        a pointer of qdb_t object
  * @param format    query string format
@@ -476,7 +476,7 @@ static qdbresult_t *execute_queryf(qdb_t *db, const char *format, ...)
 }
 
 /**
- * (qdb_t*)->begin_tran(): Start transaction
+ * qdb->begin_tran(): Start transaction
  *
  * @param db        a pointer of qdb_t object
  *
@@ -491,7 +491,7 @@ static qdbresult_t *execute_queryf(qdb_t *db, const char *format, ...)
  * @note
  *  This operation will raise lock if you compile "--enable-threadsafe" option
  *  to protect thread-safe operation. In this case, before calling
- *  (qdb_t*)->commit() or (qdb_t*)->rollback(), another threads will be hold.
+ *  qdb->commit() or qdb->rollback(), another threads will be hold.
  */
 static bool begin_tran(qdb_t *db)
 {
@@ -518,7 +518,7 @@ static bool begin_tran(qdb_t *db)
 }
 
 /**
- * (qdb_t*)->commit(): Commit transaction
+ * qdb->commit(): Commit transaction
  *
  * @param db        a pointer of qdb_t object
  *
@@ -544,7 +544,7 @@ static bool commit(qdb_t *db)
 }
 
 /**
- * (qdb_t*)->rellback(): Roll-back and abort transaction
+ * qdb->rellback(): Roll-back and abort transaction
  *
  * @param db        a pointer of qdb_t object
  *
@@ -570,7 +570,7 @@ static bool rollback(qdb_t *db)
 }
 
 /**
- * (qdb_t*)->set_fetchtype(): Set result fetching type
+ * qdb->set_fetchtype(): Set result fetching type
  *
  * @param db        a pointer of qdb_t object
  * @param fromdb    false for storing the results to client (default mode),
@@ -579,12 +579,12 @@ static bool rollback(qdb_t *db)
  * @return true if successful otherwise returns false
  *
  * @note
- *  If (qdb_t*)->set_fetchtype(db, true) is called, the results does not
+ *  If qdb->set_fetchtype(db, true) is called, the results does not
  *  actually read into the client. Instead, each row must be retrieved
- *  individually by making calls to (qdbresult_t*)->get_next().
+ *  individually by making calls to qdbresult->get_next().
  *  This reads the result of a query directly from the server without storing
  *  it in local buffer, which is somewhat faster and uses much less memory than
- *  default behavior (qdb_t*)->set_fetchtype(db, false).
+ *  default behavior qdb->set_fetchtype(db, false).
  */
 static bool set_fetchtype(qdb_t *db, bool fromdb)
 {
@@ -594,7 +594,7 @@ static bool set_fetchtype(qdb_t *db, bool fromdb)
 }
 
 /**
- * (qdb_t*)->get_conn_status(): Get last connection status
+ * qdb->get_conn_status(): Get last connection status
  *
  * @param db        a pointer of qdb_t object
  *
@@ -611,7 +611,7 @@ static bool get_conn_status(qdb_t *db)
 }
 
 /**
- * (qdb_t*)->ping(): Checks whether the connection to the server is working.
+ * qdb->ping(): Checks whether the connection to the server is working.
  *
  * @param db        a pointer of qdb_t object
  *
@@ -642,7 +642,7 @@ static bool ping(qdb_t *db)
 }
 
 /**
- * (qdb_t*)->get_error(): Get error number and message
+ * qdb->get_error(): Get error number and message
  *
  * @param db        a pointer of qdb_t object
  * @param errorno   if not NULL, error number will be stored
@@ -671,7 +671,7 @@ static const char *get_error(qdb_t *db, unsigned int *errorno)
 }
 
 /**
- * (qdb_t*)->free(): De-allocate qdb_t structure
+ * qdb->free(): De-allocate qdb_t structure
  *
  * @param db        a pointer of qdb_t object
  *
@@ -699,7 +699,7 @@ static bool free_(qdb_t *db)
 }
 
 /**
- * (qdbresult_t*)->get_str(): Get the result as string by field name
+ * qdbresult->get_str(): Get the result as string by field name
  *
  * @param result    a pointer of qdbresult_t
  * @param field     column name
@@ -730,7 +730,7 @@ static const char *_resultGetStr(qdbresult_t *result, const char *field)
 }
 
 /**
- * (qdbresult_t*)->get_str_at(): Get the result as string by column number
+ * qdbresult->get_str_at(): Get the result as string by column number
  *
  * @param result    a pointer of qdbresult_t
  * @param idx       column number (first column is 1)
@@ -754,7 +754,7 @@ static const char *_resultGetStrAt(qdbresult_t *result, int idx)
 }
 
 /**
- * (qdbresult_t*)->get_int(): Get the result as integer by field name
+ * qdbresult->get_int(): Get the result as integer by field name
  *
  * @param result    a pointer of qdbresult_t
  * @param field     column name
@@ -769,7 +769,7 @@ static int _resultGetInt(qdbresult_t *result, const char *field)
 }
 
 /**
- * (qdbresult_t*)->get_int_at(): Get the result as integer by column number
+ * qdbresult->get_int_at(): Get the result as integer by column number
  *
  * @param result    a pointer of qdbresult_t
  * @param idx       column number (first column is 1)
@@ -784,7 +784,7 @@ static int _resultGetIntAt(qdbresult_t *result, int idx)
 }
 
 /**
- * (qdbresult_t*)->get_next(): Retrieves the next row of a result set
+ * qdbresult->get_next(): Retrieves the next row of a result set
  *
  * @param result    a pointer of qdbresult_t
  *
@@ -805,7 +805,7 @@ static bool _resultGetNext(qdbresult_t *result)
 }
 
 /**
- * (qdbresult_t*)->get_cols(): Get the number of columns in the result set
+ * qdbresult->get_cols(): Get the number of columns in the result set
  *
  * @param result    a pointer of qdbresult_t
  *
@@ -822,7 +822,7 @@ static int result_get_cols(qdbresult_t *result)
 }
 
 /**
- * (qdbresult_t*)->get_rows(): Get the number of rows in the result set
+ * qdbresult->get_rows(): Get the number of rows in the result set
  *
  * @param result    a pointer of qdbresult_t
  *
@@ -839,7 +839,7 @@ static int result_get_rows(qdbresult_t *result)
 }
 
 /**
- * (qdbresult_t*)->get_row(): Get the current row number
+ * qdbresult->get_row(): Get the current row number
  *
  * @param result    a pointer of qdbresult_t
  *
@@ -859,7 +859,7 @@ static int result_get_row(qdbresult_t *result)
 }
 
 /**
- * (qdbresult_t*)->free(): De-allocate the result
+ * qdbresult->free(): De-allocate the result
  *
  * @param result    a pointer of qdbresult_t
  *

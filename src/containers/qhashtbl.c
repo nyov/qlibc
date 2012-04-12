@@ -201,7 +201,7 @@ qhashtbl_t *qhashtbl(size_t range)
 }
 
 /**
- * (qhashtbl_t*)->put(): Put a object into this table.
+ * qhashtbl->put(): Put a object into this table.
  *
  * @param tbl       qhashtbl_t container pointer.
  * @param name      key name
@@ -285,7 +285,7 @@ static bool put(qhashtbl_t *tbl, const char *name, const void *data,
 }
 
 /**
- * (qhashtbl_t*)->putstr(): Put a string into this table.
+ * qhashtbl->putstr(): Put a string into this table.
  *
  * @param tbl       qhashtbl_t container pointer.
  * @param name      key name.
@@ -303,7 +303,7 @@ static bool putstr(qhashtbl_t *tbl, const char *name, const char *str)
 }
 
 /**
- * (qhashtbl_t*)->putstrf(): Put a formatted string into this table.
+ * qhashtbl->putstrf(): Put a formatted string into this table.
  *
  * @param tbl       qhashtbl_t container pointer.
  * @param name      key name.
@@ -329,7 +329,7 @@ static bool putstrf(qhashtbl_t *tbl, const char *name, const char *format, ...)
 }
 
 /**
- * (qhashtbl_t*)->putint(): Put a integer into this table as string type.
+ * qhashtbl->putint(): Put a integer into this table as string type.
  *
  * @param tbl       qhashtbl_t container pointer.
  * @param name      key name.
@@ -351,7 +351,7 @@ static bool putint(qhashtbl_t *tbl, const char *name, int64_t num)
 }
 
 /**
- * (qhashtbl_t*)->get(): Get a object from this table.
+ * qhashtbl->get(): Get a object from this table.
  *
  * @param tbl       qhashtbl_t container pointer.
  * @param name      key name.
@@ -426,7 +426,7 @@ static void *get(qhashtbl_t *tbl, const char *name, size_t *size, bool newmem)
 }
 
 /**
- * (qhashtbl_t*)->getstr(): Finds an object with given name and returns as
+ * qhashtbl->getstr(): Finds an object with given name and returns as
  * string type.
  *
  * @param tbl       qhashtbl_t container pointer.
@@ -449,7 +449,7 @@ static char *getstr(qhashtbl_t *tbl, const char *name, bool newmem)
 }
 
 /**
- * (qhashtbl_t*)->getint(): Finds an object with given name and returns as
+ * qhashtbl->getint(): Finds an object with given name and returns as
  * integer type.
  *
  * @param tbl       qhashtbl_t container pointer.
@@ -474,7 +474,7 @@ static int64_t getint(qhashtbl_t *tbl, const char *name)
 }
 
 /**
- * (qhashtbl_t*)->getnext(): Get next element.
+ * qhashtbl->getnext(): Get next element.
  *
  * @param tbl       qhashtbl_t container pointer.
  * @param obj       found data will be stored in this object
@@ -582,7 +582,7 @@ static bool getnext(qhashtbl_t *tbl, qhnobj_t *obj, bool newmem)
 }
 
 /**
- * (qhashtbl_t*)->remove(): Remove an object from this table.
+ * qhashtbl->remove(): Remove an object from this table.
  *
  * @param tbl   qhashtbl_t container pointer.
  * @param name  key name
@@ -635,7 +635,7 @@ static bool remove_(qhashtbl_t *tbl, const char *name)
 }
 
 /**
- * (qhashtbl_t*)->size(): Returns the number of keys in this hashtable.
+ * qhashtbl->size(): Returns the number of keys in this hashtable.
  *
  * @param tbl   qhashtbl_t container pointer.
  *
@@ -647,7 +647,7 @@ static size_t size(qhashtbl_t *tbl)
 }
 
 /**
- * (qhashtbl_t*)->clear(): Clears this hashtable so that it contains no keys.
+ * qhashtbl->clear(): Clears this hashtable so that it contains no keys.
  *
  * @param tbl   qhashtbl_t container pointer.
  */
@@ -674,7 +674,7 @@ void clear(qhashtbl_t *tbl)
 }
 
 /**
- * (qhashtbl_t*)->debug(): Print hash table for debugging purpose
+ * qhashtbl->debug(): Print hash table for debugging purpose
  *
  * @param tbl   qhashtbl_t container pointer.
  * @param out   output stream
@@ -704,13 +704,13 @@ bool debug(qhashtbl_t *tbl, FILE *out)
 }
 
 /**
- * (qhashtbl_t*)->lock(): Enter critical section.
+ * qhashtbl->lock(): Enter critical section.
  *
  * @param tbl   qhashtbl_t container pointer.
  *
  * @note
  *  From user side, normally locking operation is only needed when traverse
- *  all elements using (qhashtbl_t*)->getnext(). Most of other operations do
+ *  all elements using qhashtbl->getnext(). Most of other operations do
  *  necessary locking internally when it's compiled with --enable-threadsafe
  *  option.
  *
@@ -725,7 +725,7 @@ static void lock(qhashtbl_t *tbl)
 }
 
 /**
- * (qhashtbl_t*)->unlock(): Leave critical section.
+ * qhashtbl->unlock(): Leave critical section.
  *
  * @param tbl   qhashtbl_t container pointer.
  *
@@ -740,7 +740,7 @@ static void unlock(qhashtbl_t *tbl)
 }
 
 /**
- * (qhashtbl_t*)->free(): De-allocate hash table
+ * qhashtbl->free(): De-allocate hash table
  *
  * @param tbl   qhashtbl_t container pointer.
  */

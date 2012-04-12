@@ -208,7 +208,7 @@ qlist_t *qlist(void)
 }
 
 /**
- * (qlist_t*)->addfirst(): Inserts a element at the beginning of this list.
+ * qlist->addfirst(): Inserts a element at the beginning of this list.
  *
  * @param list  qlist_t container pointer.
  * @param data  a pointer which points data memory.
@@ -236,7 +236,7 @@ static bool addfirst(qlist_t *list, const void *data, size_t size)
 }
 
 /**
- * (qlist_t*)->addlast(): Appends a element to the end of this list.
+ * qlist->addlast(): Appends a element to the end of this list.
  *
  * @param list  qlist_t container pointer.
  * @param data  a pointer which points data memory.
@@ -255,7 +255,7 @@ static bool addlast(qlist_t *list, const void *data, size_t size)
 }
 
 /**
- * (qlist_t*)->addat(): Inserts a element at the specified position in this
+ * qlist->addat(): Inserts a element at the specified position in this
  * list.
  *
  * @param list   qlist_t container pointer.
@@ -288,7 +288,7 @@ static bool addlast(qlist_t *list, const void *data, size_t size)
  *  Index starts from 0.
  */
 static bool addat(qlist_t *list,
-                   int index, const void *data, size_t size)
+                  int index, const void *data, size_t size)
 {
     // check arguments
     if (data == NULL || size <= 0) {
@@ -377,7 +377,7 @@ static bool addat(qlist_t *list,
 }
 
 /**
- * (qlist_t*)->getfirst(): Returns the first element in this list.
+ * qlist->getfirst(): Returns the first element in this list.
  *
  * @param list    qlist_t container pointer.
  * @param size    if size is not NULL, element size will be stored.
@@ -403,7 +403,7 @@ static void *getfirst(qlist_t *list, size_t *size, bool newmem)
 }
 
 /**
- * (qlist_t*)->getlast(): Returns the last element in this list.
+ * qlist->getlast(): Returns the last element in this list.
  *
  * @param list    qlist_t container pointer.
  * @param size    if size is not NULL, element size will be stored.
@@ -420,7 +420,7 @@ static void *getlast(qlist_t *list, size_t *size, bool newmem)
 }
 
 /**
- * (qlist_t*)->getat(): Returns the element at the specified position in this
+ * qlist->getat(): Returns the element at the specified position in this
  * list.
  *
  * @param list    qlist_t container pointer.
@@ -452,7 +452,7 @@ static void *getat(qlist_t *list, int index, size_t *size, bool newmem)
 }
 
 /**
- * (qlist_t*)->getnext(): Get next element in this list.
+ * qlist->getnext(): Get next element in this list.
  *
  * @param list    qlist_t container pointer.
  * @param obj     found data will be stored in this structure
@@ -520,7 +520,7 @@ static bool getnext(qlist_t *list, qdlobj_t *obj, bool newmem)
 }
 
 /**
- * (qlist_t*)->popfirst(): Returns and remove the first element in this list.
+ * qlist->popfirst(): Returns and remove the first element in this list.
  *
  * @param list  qlist_t container pointer.
  * @param size  if size is not NULL, element size will be stored.
@@ -537,7 +537,7 @@ static void *popfirst(qlist_t *list, size_t *size)
 
 
 /**
- * (qlist_t*)->getlast(): Returns and remove the last element in this list.
+ * qlist->getlast(): Returns and remove the last element in this list.
  *
  * @param list  qlist_t container pointer.
  * @param size  if size is not NULL, element size will be stored.
@@ -553,7 +553,7 @@ static void *poplast(qlist_t *list, size_t *size)
 }
 
 /**
- * (qlist_t*)->popat(): Returns and remove the element at the specified
+ * qlist->popat(): Returns and remove the element at the specified
  * position in this list.
  *
  * @param list   qlist_t container pointer.
@@ -583,7 +583,7 @@ static void *popat(qlist_t *list, int index, size_t *size)
 }
 
 /**
- * (qlist_t*)->removefirst(): Removes the first element in this list.
+ * qlist->removefirst(): Removes the first element in this list.
  *
  * @param list  qlist_t container pointer.
  *
@@ -597,7 +597,7 @@ static bool removefirst(qlist_t *list)
 }
 
 /**
- * (qlist_t*)->removelast(): Removes the last element in this list.
+ * qlist->removelast(): Removes the last element in this list.
  *
  * @param list  qlist_t container pointer.
  *
@@ -611,7 +611,7 @@ static bool removelast(qlist_t *list)
 }
 
 /**
- * (qlist_t*)->removeat(): Removes the element at the specified position in
+ * qlist->removeat(): Removes the element at the specified position in
  * this list.
  *
  * @param list   qlist_t container pointer.
@@ -640,7 +640,7 @@ static bool removeat(qlist_t *list, int index)
 }
 
 /**
- * (qlist_t*)->setsize(): Sets maximum number of elements allowed in this
+ * qlist->setsize(): Sets maximum number of elements allowed in this
  * list.
  *
  * @param list  qlist_t container pointer.
@@ -661,7 +661,7 @@ static size_t setsize(qlist_t *list, size_t max)
 }
 
 /**
- * (qlist_t*)->size(): Returns the number of elements in this list.
+ * qlist->size(): Returns the number of elements in this list.
  *
  * @param list  qlist_t container pointer.
  *
@@ -673,7 +673,7 @@ static size_t size(qlist_t *list)
 }
 
 /**
- * (qlist_t*)->size(): Returns the sum of total element size.
+ * qlist->size(): Returns the sum of total element size.
  *
  * @param list  qlist_t container pointer.
  *
@@ -685,7 +685,7 @@ static size_t datasize(qlist_t *list)
 }
 
 /**
- * (qlist_t*)->reverse(): Reverse the order of elements.
+ * qlist->reverse(): Reverse the order of elements.
  *
  * @param list  qlist_t container pointer.
  */
@@ -708,7 +708,7 @@ static void reverse(qlist_t *list)
 }
 
 /**
- * (qlist_t*)->clear(): Removes all of the elements from this list.
+ * qlist->clear(): Removes all of the elements from this list.
  *
  * @param list  qlist_t container pointer.
  */
@@ -731,7 +731,7 @@ static void clear(qlist_t *list)
 }
 
 /**
- * (qlist_t*)->toarray(): Returns the serialized chunk containing all the
+ * qlist->toarray(): Returns the serialized chunk containing all the
  * elements in this list.
  *
  * @param list  qlist_t container pointer.
@@ -773,7 +773,7 @@ static void *toarray(qlist_t *list, size_t *size)
 }
 
 /**
- * (qlist_t*)->tostring(): Returns a string representation of this list,
+ * qlist->tostring(): Returns a string representation of this list,
  * containing string representation of each element.
  *
  * @param list  qlist_t container pointer.
@@ -819,7 +819,7 @@ static char *tostring(qlist_t *list)
 }
 
 /**
- * (qlist_t*)->debug(): Prints out stored elements for debugging purpose.
+ * qlist->debug(): Prints out stored elements for debugging purpose.
  *
  * @param list  qlist_t container pointer.
  * @param out   output stream FILE descriptor such like stdout, stderr.
@@ -849,13 +849,13 @@ static bool debug(qlist_t *list, FILE *out)
 }
 
 /**
- * (qlist_t*)->lock(): Enters critical section.
+ * qlist->lock(): Enters critical section.
  *
  * @param list  qlist_t container pointer.
  *
  * @note
  *  From user side, normally locking operation is only needed when traverse all
- *  elements using (qlist_t*)->getnext(). Most of other operations do
+ *  elements using qlist->getnext(). Most of other operations do
  *  necessary locking internally when it's compiled with --enable-threadsafe
  *  option.
  *
@@ -870,7 +870,7 @@ static void lock(qlist_t *list)
 }
 
 /**
- * (qlist_t*)->unlock(): Leaves critical section.
+ * qlist->unlock(): Leaves critical section.
  *
  * @param list  qlist_t container pointer.
  *
@@ -885,7 +885,7 @@ static void unlock(qlist_t *list)
 }
 
 /**
- * (qlist_t*)->free(): Free qlist_t.
+ * qlist->free(): Free qlist_t.
  *
  * @param list  qlist_t container pointer.
  */

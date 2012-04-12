@@ -251,7 +251,7 @@ qhasharr_t *qhasharr(void *memory, size_t memsize)
 }
 
 /**
- * (qhasharr_t*)->put(): Put an object into this table.
+ * qhasharr->put(): Put an object into this table.
  *
  * @param tbl       qhasharr_t container pointer.
  * @param key       key string
@@ -355,7 +355,7 @@ static bool put(qhasharr_t *tbl, const char *key, const void *value,
 }
 
 /**
- * (qhasharr_t*)->putstr(): Put a string into this table
+ * qhasharr->putstr(): Put a string into this table
  *
  * @param tbl       qhasharr_t container pointer.
  * @param key       key string.
@@ -374,7 +374,7 @@ static bool putstr(qhasharr_t *tbl, const char *key, const char *str)
 }
 
 /**
- * (qhasharr_t*)->putstrf(): Put a formatted string into this table.
+ * qhasharr->putstrf(): Put a formatted string into this table.
  *
  * @param tbl       qhasharr_t container pointer.
  * @param key       key name.
@@ -402,7 +402,7 @@ static bool putstrf(qhasharr_t *tbl, const char *key, const char *format, ...)
 }
 
 /**
- * (qhasharr_t*)->putint(): Put an integer into this table as string type.
+ * qhasharr->putint(): Put an integer into this table as string type.
  *
  * @param tbl       qhasharr_t container pointer.
  * @param key       key string
@@ -425,7 +425,7 @@ static bool putint(qhasharr_t *tbl, const char *key, int64_t num)
 }
 
 /**
- * (qhasharr_t*)->get(): Get an object from this table
+ * qhasharr->get(): Get an object from this table
  *
  * @param tbl       qhasharr_t container pointer.
  * @param key       key string
@@ -461,7 +461,7 @@ static void *get(qhasharr_t *tbl, const char *key, size_t *size)
 }
 
 /**
- * (qhasharr_t*)->getstr(): Finds an object with given name and returns as
+ * qhasharr->getstr(): Finds an object with given name and returns as
  * string type.
  *
  * @param tbl       qhasharr_t container pointer.
@@ -482,7 +482,7 @@ static char *getstr(qhasharr_t *tbl, const char *key)
 }
 
 /**
- * (qhasharr_t*)->getint(): Finds an object with given name and returns as
+ * qhasharr->getint(): Finds an object with given name and returns as
  * integer type.
  *
  * @param tbl       qhasharr_t container pointer.
@@ -507,7 +507,7 @@ static int64_t getint(qhasharr_t *tbl, const char *key)
 }
 
 /**
- * (qhasharr_t*)->getnext(): Get next element.
+ * qhasharr->getnext(): Get next element.
  *
  * @param tbl       qhasharr_t container pointer.
  * @param idx       index pointer
@@ -573,7 +573,7 @@ static bool getnext(qhasharr_t *tbl, qnobj_t *obj, int *idx)
 }
 
 /**
- * (qhasharr_t*)->remove(): Remove an object from this table.
+ * qhasharr->remove(): Remove an object from this table.
  *
  * @param tbl       qhasharr_t container pointer.
  * @param key       key string
@@ -652,7 +652,7 @@ static bool remove_(qhasharr_t *tbl, const char *key)
 }
 
 /**
- * (qhasharr_t*)->size(): Returns the number of objects in this table.
+ * qhasharr->size(): Returns the number of objects in this table.
  *
  * @param tbl       qhasharr_t container pointer.
  *
@@ -669,7 +669,7 @@ static int size(qhasharr_t *tbl, int *maxslots, int *usedslots)
 }
 
 /**
- * (qhasharr_t*)->clear(): Clears this table so that it contains no keys.
+ * qhasharr->clear(): Clears this table so that it contains no keys.
  *
  * @param tbl       qhasharr_t container pointer.
  *
@@ -689,7 +689,7 @@ static void clear(qhasharr_t *tbl)
 }
 
 /**
- * (qhasharr_t*)->debug(): Print hash table for debugging purpose
+ * qhasharr->debug(): Print hash table for debugging purpose
  *
  * @param tbl       qhasharr_t container pointer.
  * @param out       output stream
