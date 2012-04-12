@@ -44,7 +44,7 @@
  *
  *  last~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
  *                                                          |
- *          +-----------+  doubly  +-----------+  doubly  +-|---------+
+ *          +-----------+  doubly  +-----------+  doubly  +-v---------+
  *  first~~~|~>   0   <~|~~~~~~~~~~|~>   1   <~|~~~~~~~~~~|~>   N     |
  *          +--|-----|--+  linked  +--|-----|--+  linked  +--|-----|--+
  *             |     |                |     |                |     |
@@ -108,6 +108,10 @@
  */
 #ifndef _DOXYGEN_SKIP
 
+static bool setputdir(qlisttbl_t *tbl, bool before);
+static bool setgetdir(qlisttbl_t *tbl, bool forward);
+static bool setnextdir(qlisttbl_t *tbl, bool backward);
+
 static bool put(qlisttbl_t *tbl, const char *name, const void *data,
                 size_t size, bool unique);
 static bool putstr(qlisttbl_t *tbl, const char *name, const char *str,
@@ -134,10 +138,8 @@ static bool getnext(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
 static size_t remove_(qlisttbl_t *tbl, const char *name);
 static bool removeobj(qlisttbl_t *tbl, const qdlnobj_t *obj);
 
-static bool setputdir(qlisttbl_t *tbl, bool first);
-static bool setgetdir(qlisttbl_t *tbl, bool forward);
-static bool setnextdir(qlisttbl_t *tbl, bool reverse);
 static size_t size(qlisttbl_t *tbl);
+static void sort(qlisttbl_t *tbl, bool descending);
 static void reverse(qlisttbl_t *tbl);
 static void clear(qlisttbl_t *tbl);
 
@@ -184,6 +186,10 @@ qlisttbl_t *qlisttbl(void)
     memset((void *)tbl, 0, sizeof(qlisttbl_t));
 
     // member methods
+    tbl->setputdir  = setputdir;
+    tbl->setgetdir  = setgetdir;
+    tbl->setnextdir  = setnextdir;
+
     tbl->put        = put;
     tbl->putstr     = putstr;
     tbl->putstrf    = putstrf;
@@ -205,10 +211,9 @@ qlisttbl_t *qlisttbl(void)
     tbl->remove     = remove_;
     tbl->removeobj  = removeobj;
 
-    tbl->setputdir  = setputdir;
-    tbl->setgetdir  = setgetdir;
-    tbl->setnextdir  = setnextdir;
+
     tbl->size       = size;
+    tbl->sort       = sort;
     tbl->reverse    = reverse;
     tbl->clear      = clear;
 
@@ -229,6 +234,63 @@ qlisttbl_t *qlisttbl(void)
     setnextdir(tbl, false); // forward
 
     return tbl;
+}
+
+/**
+ * qlisttbl->setputdir(): Sets adding direction(at last of first).
+ * The default direction is adding new element at the end of list.
+ *
+ * @param tbl       qlisttbl container pointer.
+ * @param before    direction flag. false(default) for adding at the end of
+ *                  this list, true for adding at the beginning of this list.
+ *
+ * @return previous direction.
+ */
+static bool setputdir(qlisttbl_t *tbl, bool before)
+{
+    bool prevdir = tbl->putdir;
+    tbl->putdir = before;
+
+    return prevdir;
+}
+
+/**
+ * qlisttbl->setgetdir(): Sets lookup direction(backward or forward).
+ * The default direction is backward(from the bottom to the top), so if
+ * there are duplicated keys then later added one will be picked up first.
+ *
+ * @param tbl       qlisttbl container pointer.
+ * @param forward   direction flag. false(default) for searching from the
+ *                  bottom of this list. true for searching from the top of
+ *                  this list.
+ *
+ * @return previous direction.
+ */
+static bool setgetdir(qlisttbl_t *tbl, bool forward)
+{
+    bool prevdir = tbl->getdir;
+    tbl->getdir = forward;
+
+    return prevdir;
+}
+
+/**
+ * qlisttbl->setnextdir(): Sets list traversal direction(forward or
+ * backward). The default direction is forward(from the top to the bottom).
+ *
+ * @param tbl       qlisttbl container pointer.
+ * @param backward  direction flag. false(default) for traversal from the top
+ *                  of this list, true for searching from the bottom of this
+ *                  list.
+ *
+ * @return previous direction.
+ */
+static bool setnextdir(qlisttbl_t *tbl, bool backward)
+{
+    bool prevdir = tbl->nextdir;
+    tbl->nextdir = backward;
+
+    return prevdir;
 }
 
 /**
@@ -837,63 +899,6 @@ static bool removeobj(qlisttbl_t *tbl, const qdlnobj_t *obj)
 }
 
 /**
- * qlisttbl->setputdir(): Sets adding direction(at last of first).
- * The default direction is adding new element at the end of list.
- *
- * @param tbl       qlisttbl container pointer.
- * @param first     direction flag. false(default) for adding at the end of
- *                  this list, true for adding at the beginning of this list.
- *
- * @return previous direction.
- */
-static bool setputdir(qlisttbl_t *tbl, bool first)
-{
-    bool prevdir = tbl->putdir;
-    tbl->putdir = first;
-
-    return prevdir;
-}
-
-/**
- * qlisttbl->setgetdir(): Sets lookup direction(backward or forward).
- * The default direction is backward(from the bottom to the top), so if
- * there are duplicated keys then later added one will be picked up first.
- *
- * @param tbl       qlisttbl container pointer.
- * @param forward   direction flag. false(default) for searching from the
- *                  bottom of this list. true for searching from the top of
- *                  this list.
- *
- * @return previous direction.
- */
-static bool setgetdir(qlisttbl_t *tbl, bool forward)
-{
-    bool prevdir = tbl->getdir;
-    tbl->getdir = forward;
-
-    return prevdir;
-}
-
-/**
- * qlisttbl->setnextdir(): Sets list traversal direction(forward or
- * backward). The default direction is forward(from the top to the bottom).
- *
- * @param tbl       qlisttbl container pointer.
- * @param reverse   direction flag. false(default) for traversal from the top
- *                  of this list, true for searching from the bottom of this
- *                  list.
- *
- * @return previous direction.
- */
-static bool setnextdir(qlisttbl_t *tbl, bool reverse)
-{
-    bool prevdir = tbl->nextdir;
-    tbl->nextdir = reverse;
-
-    return prevdir;
-}
-
-/**
  * qlisttbl->size(): Returns the number of elements in this list.
  *
  * @param tbl qlisttbl container pointer.
@@ -903,6 +908,37 @@ static bool setnextdir(qlisttbl_t *tbl, bool reverse)
 static size_t size(qlisttbl_t *tbl)
 {
     return tbl->num;
+}
+
+static void sort(qlisttbl_t *tbl, bool descending)
+{
+    // run bubble sort
+    lock(tbl);
+    qdlnobj_t *obj1, *obj2;
+    qdlnobj_t tmpobj;
+    int n, n2, i;
+    int adjustcmp = (descending == false) ? 1 : -1;
+    for (n = tbl->num; n > 0;) {
+        n2 = 0;
+        for (i = 0, obj1 = tbl->first; i < (n - 1); i++, obj1 = obj1->next) {
+            obj2 = obj1->next;  // this can't be null.
+            if ((strcmp(obj1->name, obj2->name) * adjustcmp) > 0) {
+                // for performance, we swap contents of object rather than
+                // adjusting chains.
+                tmpobj = *obj1;
+                obj1->name = obj2->name;
+                obj1->data = obj2->data;
+                obj1->size = obj2->size;
+                obj2->name = tmpobj.name;
+                obj2->data = tmpobj.data;
+                obj2->size = tmpobj.size;
+
+                n2 = i + 1;
+            }
+        }
+        n = n2;  // skip sorted tailing elements
+    }
+    unlock(tbl);
 }
 
 /**

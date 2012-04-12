@@ -75,7 +75,7 @@ int main(void)
     printf("\n--[Test 3 : getmulti() - fetch all duplicated 'e2' keys]--\n");
     size_t numobjs = 0;
     qobj_t *objs = tbl->getmulti(tbl, "e2", true, &numobjs);
-    printf("getmulti('e2') : %d objects found.\n", numobjs);
+    printf("getmulti('e2') : %d objects found.\n", (int)numobjs);
     for (i = 0; objs[i].data != NULL; i++) {
         printf("objs[%d], DATA=%s, SIZE=%zu\n", i, (char *)objs[i].data, objs[i].size);
     }

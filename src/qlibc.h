@@ -140,6 +140,8 @@ extern qlist_t *qlist(void);  /*!< qlist constructor */
  */
 struct qlist_t {
     /* capsulated member functions */
+    size_t (*setsize)(qlist_t *list, size_t max);
+
     bool (*addfirst)(qlist_t *list, const void *data, size_t size);
     bool (*addlast)(qlist_t *list, const void *data, size_t size);
     bool (*addat)(qlist_t *list, int index, const void *data, size_t size);
@@ -160,7 +162,6 @@ struct qlist_t {
     void (*reverse)(qlist_t *list);
     void (*clear)(qlist_t *list);
 
-    size_t (*setsize)(qlist_t *list, size_t max);
     size_t (*size)(qlist_t *list);
     size_t (*datasize)(qlist_t *list);
 
@@ -199,6 +200,10 @@ extern qlisttbl_t *qlisttbl(void);  /*!< qlisttbl constructor */
  */
 struct qlisttbl_t {
     /* capsulated member functions */
+    bool (*setputdir)(qlisttbl_t *tbl, bool before);
+    bool (*setgetdir)(qlisttbl_t *tbl, bool forward);
+    bool (*setnextdir)(qlisttbl_t *tbl, bool backward);
+
     bool (*put)(qlisttbl_t *tbl, const char *name, const void *data,
                 size_t size, bool replace);
     bool (*putstr)(qlisttbl_t *tbl, const char *name, const char *str,
@@ -227,10 +232,8 @@ struct qlisttbl_t {
     size_t (*remove)(qlisttbl_t *tbl, const char *name);
     bool (*removeobj)(qlisttbl_t *tbl, const qdlnobj_t *obj);
 
-    bool (*setputdir)(qlisttbl_t *tbl, bool first);
-    bool (*setgetdir)(qlisttbl_t *tbl, bool backward);
-    bool (*setnextdir)(qlisttbl_t *tbl, bool reverse);
     size_t (*size)(qlisttbl_t *tbl);
+    void (*sort)(qlisttbl_t *tbl, bool descending);
     void (*reverse)(qlisttbl_t *tbl);
     void (*clear)(qlisttbl_t *tbl);
 

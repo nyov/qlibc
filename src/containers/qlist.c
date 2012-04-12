@@ -106,6 +106,8 @@
  * Member method protos
  */
 #ifndef _DOXYGEN_SKIP
+static size_t setsize(qlist_t *list, size_t max);
+
 static bool addfirst(qlist_t *list, const void *data, size_t size);
 static bool addlast(qlist_t *list, const void *data, size_t size);
 static bool addat(qlist_t *list, int index, const void *data, size_t size);
@@ -123,7 +125,6 @@ static bool removefirst(qlist_t *list);
 static bool removelast(qlist_t *list);
 static bool removeat(qlist_t *list, int index);
 
-static size_t setsize(qlist_t *list, size_t max);
 static size_t size(qlist_t *list);
 static size_t datasize(qlist_t *list);
 static void reverse(qlist_t *list);
@@ -168,6 +169,8 @@ qlist_t *qlist(void)
     memset((void *)list, 0, sizeof(qlist_t));
 
     /* member methods */
+    list->setsize       = setsize;
+
     list->addfirst      = addfirst;
     list->addlast       = addlast;
     list->addat         = addat;
@@ -188,7 +191,6 @@ qlist_t *qlist(void)
     list->reverse       = reverse;
     list->clear         = clear;
 
-    list->setsize       = setsize;
     list->size          = size;
     list->datasize      = datasize;
 
@@ -205,6 +207,26 @@ qlist_t *qlist(void)
     Q_MUTEX_INIT(list->qmutex, true);
 
     return list;
+}
+
+/**
+ * qlist->setsize(): Limit maximum number of elements allowed in this list.
+ *
+ * @param list  qlist_t container pointer.
+ * @param max   maximum number of elements. 0 means no limit.
+ *
+ * @return previous maximum number.
+ *
+ * @note
+ *  The default maximum number of elements is unlimited.
+ */
+static size_t setsize(qlist_t *list, size_t max)
+{
+    lock(list);
+    size_t old = list->max;
+    list->max = max;
+    unlock(list);
+    return old;
 }
 
 /**
@@ -637,27 +659,6 @@ static bool removeat(qlist_t *list, int index)
     unlock(list);
 
     return ret;
-}
-
-/**
- * qlist->setsize(): Sets maximum number of elements allowed in this
- * list.
- *
- * @param list  qlist_t container pointer.
- * @param max   maximum number of elements. 0 means no limit.
- *
- * @return previous maximum number.
- *
- * @note
- *  The default maximum number of elements is unlimited.
- */
-static size_t setsize(qlist_t *list, size_t max)
-{
-    lock(list);
-    size_t old = list->max;
-    list->max = max;
-    unlock(list);
-    return old;
 }
 
 /**
