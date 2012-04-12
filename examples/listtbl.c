@@ -46,11 +46,11 @@ int main(void)
     //
 
     // insert elements (key duplication allowed)
-    tbl->putstr(tbl, "e1", "a", false);
-    tbl->putstr(tbl, "e2", "b", false);
-    tbl->putstr(tbl, "e2", "c", false);
-    tbl->putstr(tbl, "e2", "d", false);
-    tbl->put(tbl, "e3", "e", strlen("e")+1, false); // equal to add_str();
+    tbl->put(tbl, "e2", "object1", strlen("object1")+1, false);
+    tbl->putstr(tbl, "e1", "object2", false);
+    tbl->putstr(tbl, "e2", "object3", false);
+    tbl->putstr(tbl, "e3", "object4", false);
+    tbl->putint(tbl, "e2", 5, false);
 
     // print out
     printf("--[Test 1 : adding elements]--\n");
@@ -65,7 +65,7 @@ int main(void)
     printf("getstr('e2') : %s\n", tbl->getstr(tbl, "e2", false));
 
     char *e2 = tbl->getstr(tbl, "e2", true);
-    printf("getstr('e2') with newmem parameter: %s\n", e2);
+    printf("getstr('e2', newmem) : %s\n", e2);
     free(e2);
 
     //
@@ -77,7 +77,8 @@ int main(void)
     qobj_t *objs = tbl->getmulti(tbl, "e2", true, &numobjs);
     printf("getmulti('e2') : %d objects found.\n", (int)numobjs);
     for (i = 0; objs[i].data != NULL; i++) {
-        printf("objs[%d], DATA=%s, SIZE=%zu\n", i, (char *)objs[i].data, objs[i].size);
+        printf("getmulti('e2')[%d]=%s (%zu)\n",
+               i, (char *)objs[i].data, objs[i].size);
     }
     tbl->freemulti(objs);
 
@@ -111,21 +112,21 @@ int main(void)
     tbl->unlock(tbl);
 
     //
-    // TEST 6 : changed put direction and added 'e4' and 'e5' element.
+    // TEST 6 : changed put direction then add 'e3' and 'e4' element.
     //
     tbl->setputdir(tbl, true);
-    tbl->putstr(tbl, "e4", "f", false);
-    tbl->putstr(tbl, "e5", "g", false);
+    tbl->putstr(tbl, "e3", "object6", false);
+    tbl->putstr(tbl, "e4", "object7", false);
 
     // print out
     printf("\n--[Test 6 : changed adding direction then"
-           " added 'e4' and 'e5' element]--\n");
+           " add 'e3' and 'e4' element]--\n");
     tbl->debug(tbl, stdout);
 
     //
     // TEST 7 :  add element 'e2' with replace option.
     //
-    tbl->putstr(tbl, "e2", "h", true);
+    tbl->putstr(tbl, "e2", "object8", true);
 
     // print out
     printf("\n--[Test 7 : add element 'e2' with replace option]--\n");
@@ -134,11 +135,46 @@ int main(void)
     //
     // TEST 8 :  reverse list
     //
-
     tbl->reverse(tbl);
 
     // print out
     printf("\n--[Test 8 : reverse]--\n");
+    tbl->debug(tbl, stdout);
+
+    //
+    // TEST 9 : revert put direction then add some more elements.
+    //
+    tbl->setputdir(tbl, false);
+    tbl->putstr(tbl, "e4", "object9", false);
+    tbl->putstr(tbl, "e5", "object10", false);
+    tbl->putstr(tbl, "e6", "object11", false);
+    tbl->putstr(tbl, "e7", "object12", false);
+    tbl->putstr(tbl, "e4", "object13", false);
+    tbl->putstr(tbl, "e6", "object14", false);
+
+    // print out
+    printf("\n--[Test 9 : revert put direction then add some more"
+           " elements.]--\n");
+    tbl->debug(tbl, stdout);
+
+    //
+    // TEST 10 : turn on setsort() option.
+    //
+    tbl->setsort(tbl, true, false);
+
+    // print out
+    printf("\n--[Test 10 : turn on setsort() option.\n");
+    tbl->debug(tbl, stdout);
+
+    //
+    // TEST 11 : add new elements 'e1', 'e5' and 'e8'.
+    //
+    tbl->putstr(tbl, "e1", "object15", false);
+    tbl->putint(tbl, "e5", 16, false);
+    tbl->putstr(tbl, "e8", "object17", false);
+
+    // print out
+    printf("\n--[Test 11 : add new elements 'e1', 'e5' and 'e8'\n");
     tbl->debug(tbl, stdout);
 
     // free object

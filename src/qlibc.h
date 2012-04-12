@@ -200,6 +200,7 @@ extern qlisttbl_t *qlisttbl(void);  /*!< qlisttbl constructor */
  */
 struct qlisttbl_t {
     /* capsulated member functions */
+    int (*setsort)(qlisttbl_t *tbl, bool sort, bool descending);
     bool (*setputdir)(qlisttbl_t *tbl, bool before);
     bool (*setgetdir)(qlisttbl_t *tbl, bool forward);
     bool (*setnextdir)(qlisttbl_t *tbl, bool backward);
@@ -249,13 +250,13 @@ struct qlisttbl_t {
     void (*free)(qlisttbl_t *tbl);
 
     /* private variables - do not access directly */
-    qmutex_t qmutex;  /*!< activated if compiled with --enable-threadsafe */
-
-    size_t num;   /*!< number of elements */
+    int  sortflag;  /*!< sort flag. 0:disabled, 1:ascending, 2:descending */
     bool putdir;  /*!< object appending direction for put(). false: to bottom */
     bool getdir;  /*!< object lookup direction for get(). false:from bottom */
     bool nextdir; /*!< object traversal direction for next(). false:from top */
 
+    qmutex_t qmutex;  /*!< activated if compiled with --enable-threadsafe */
+    size_t num;   /*!< number of elements */
     qdlnobj_t *first;  /*!< first object pointer */
     qdlnobj_t *last;   /*!< last object pointer */
 };

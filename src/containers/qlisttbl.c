@@ -39,6 +39,12 @@
  * duplicated keys since Hash-Table only keep unique keys. Of course, qlisttbl
  * supports both behavior storing unique key or allowing key duplication.
  *
+ * qlisttbl also provides table sorting feature, this is always a good thing to
+ * consider turning on whenever possible if a table is not required to preserve
+ * the order of elements in it's internal linked-list structure. When a table
+ * is set to be kept sorted, qlisttbl can speed up it's lookup performance by
+ * eleminating unnecessary table scans. This feature is disabled by default.
+ *
  * @code
  *  [Conceptional Data Structure Diagram]
  *
@@ -57,8 +63,9 @@
  * @endcode
  *
  * @code
- *  // create a list.
+ *  // create a list table.
  *  qlisttbl_t *tbl = qlisttbl();
+ *  tbl->setsort(tbl, true, false);  // set table to be kept sorted
  *
  *  // insert elements (key duplication allowed)
  *  tbl->put(tbl, "e1", "a", strlen("e1")+1, false); // equal to putstr();
@@ -72,6 +79,14 @@
  *  // get element
  *  printf("get('e2') : %s\n", (char*)tbl->get(tbl, "e2", NULL, false));
  *  printf("getstr('e2') : %s\n", tbl->getstr(tbl, "e2", false));
+ *
+ *  // get all matching elements
+ *  qobj_t *objs = tbl->getmulti(tbl, "e2", true, NULL);
+ *  for (i = 0; objs[i].data != NULL; i++) {
+ *      printf("getmulti('e2')[%d] : %s (size=%d)\n",
+ *              i, (char *)objs[i].data, (int)objs[i].size);
+ *  }
+ *  tbl->freemulti(objs);
  *
  *  // find every 'e2' elements
  *  qdlnobj_t obj;
@@ -108,8 +123,9 @@
  */
 #ifndef _DOXYGEN_SKIP
 
+static int setsort(qlisttbl_t *tbl, bool sort, bool descending);
 static bool setputdir(qlisttbl_t *tbl, bool before);
-static bool setgetdir(qlisttbl_t *tbl, bool forward);
+static bool setgetdir(qlisttbl_t *tbl, bool first);
 static bool setnextdir(qlisttbl_t *tbl, bool backward);
 
 static bool put(qlisttbl_t *tbl, const char *name, const void *data,
@@ -139,7 +155,7 @@ static size_t remove_(qlisttbl_t *tbl, const char *name);
 static bool removeobj(qlisttbl_t *tbl, const qdlnobj_t *obj);
 
 static size_t size(qlisttbl_t *tbl);
-static void sort(qlisttbl_t *tbl, bool descending);
+static void sort_(qlisttbl_t *tbl, bool descending);
 static void reverse(qlisttbl_t *tbl);
 static void clear(qlisttbl_t *tbl);
 
@@ -158,7 +174,22 @@ static void free_(qlisttbl_t *tbl);
 static bool _put(qlisttbl_t *tbl, const char *name, const void *data,
                  size_t size, bool unique, bool first);
 static void *_get(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem,
-                  bool forward, int (*cmp)(const char *s1, const char *s2));
+                  bool first, int (*cmp)(const char *s1, const char *s2));
+
+static qdlnobj_t *_createobj(const char *name, const void *data, size_t size);
+static bool _insertobj(qlisttbl_t *tbl, qdlnobj_t *obj);
+static qdlnobj_t *_findobj(qlisttbl_t *tbl, const char *name,
+                           bool first,
+                           int (*cmp)(const char *s1, const char *s2),
+                           qdlnobj_t *retobj);
+static qdlnobj_t *_findobj_unsorted(qlisttbl_t *tbl, const char *name,
+                                    bool first,
+                                    int (*cmp)(const char *s1, const char *s2),
+                                    qdlnobj_t *retobj);
+static qdlnobj_t *_findobj_sorted(qlisttbl_t *tbl, const char *name,
+                                  bool first,
+                                  int (*cmp)(const char *s1, const char *s2),
+                                  qdlnobj_t *retobj);
 
 #endif
 
@@ -186,6 +217,7 @@ qlisttbl_t *qlisttbl(void)
     memset((void *)tbl, 0, sizeof(qlisttbl_t));
 
     // member methods
+    tbl->setsort    = setsort;
     tbl->setputdir  = setputdir;
     tbl->setgetdir  = setgetdir;
     tbl->setnextdir  = setnextdir;
@@ -213,7 +245,7 @@ qlisttbl_t *qlisttbl(void)
 
 
     tbl->size       = size;
-    tbl->sort       = sort;
+    tbl->sort       = sort_;
     tbl->reverse    = reverse;
     tbl->clear      = clear;
 
@@ -229,20 +261,57 @@ qlisttbl_t *qlisttbl(void)
     // initialize recrusive mutex
     Q_MUTEX_INIT(tbl->qmutex, true);
 
-    setputdir(tbl, false); // to bottom
-    setgetdir(tbl, false); // backward
+    setputdir(tbl, false); // append at bottom of list
+    setgetdir(tbl, false); // return last object for duplicated keys.
     setnextdir(tbl, false); // forward
 
     return tbl;
 }
 
 /**
+ * qlisttbl->setsort(): Sets sort flag to keep table sorted with it's keys.
+ * Table will be maintained in sorted manner by it's keys. New elements will
+ * be also inserted at corresponding chain, so the table will be kept in sorted
+ * order.
+ *
+ * @param tbl           qlisttbl container pointer.
+ * @param sort          sort flag. false(default) no sort, true keep it sorted.
+ * @param descending    sorting order. false for ascending, true for descending.
+ *
+ * @return previous setting. 0: disabled, 1: ascending, 2: descending.
+ *
+ * @note
+ *  Always consider to turn this option on whenever possible if it's not
+ *  required to preserve the order of elements in linked-list. Because when
+ *  a table is set to be sorted, qlisttbl will take it's advantages and will
+ *  response faster. This allows you to handle a large number of elements
+ *  in qlisttbl with reasonable lookup speed because it uses B-tree like
+ *  searching algorithm rather than scanning the table from top.
+ */
+static int setsort(qlisttbl_t *tbl, bool sort, bool descending)
+{
+    int prevflag = tbl->sortflag;
+
+    if (sort == false) {
+        tbl->sortflag = 0;
+    } else {
+        if (descending == false) tbl->sortflag = 1;  // ascending
+        else tbl->sortflag = 2;  // descending
+
+        // sort table
+        sort_(tbl, descending);
+    }
+
+    return prevflag;
+}
+
+/**
  * qlisttbl->setputdir(): Sets adding direction(at last of first).
- * The default direction is adding new element at the end of list.
+ * The default direction is adding new element at the end of table.
  *
  * @param tbl       qlisttbl container pointer.
  * @param before    direction flag. false(default) for adding at the end of
- *                  this list, true for adding at the beginning of this list.
+ *                  this table, true for adding at the beginning of this table.
  *
  * @return previous direction.
  */
@@ -260,28 +329,28 @@ static bool setputdir(qlisttbl_t *tbl, bool before)
  * there are duplicated keys then later added one will be picked up first.
  *
  * @param tbl       qlisttbl container pointer.
- * @param forward   direction flag. false(default) for searching from the
- *                  bottom of this list. true for searching from the top of
- *                  this list.
+ * @param first     direction flag. false(default) for searching from the
+ *                  bottom of this table. true for searching from the top of
+ *                  this table.
  *
  * @return previous direction.
  */
-static bool setgetdir(qlisttbl_t *tbl, bool forward)
+static bool setgetdir(qlisttbl_t *tbl, bool first)
 {
     bool prevdir = tbl->getdir;
-    tbl->getdir = forward;
+    tbl->getdir = first;
 
     return prevdir;
 }
 
 /**
- * qlisttbl->setnextdir(): Sets list traversal direction(forward or
+ * qlisttbl->setnextdir(): Sets table traversal direction(forward or
  * backward). The default direction is forward(from the top to the bottom).
  *
  * @param tbl       qlisttbl container pointer.
  * @param backward  direction flag. false(default) for traversal from the top
- *                  of this list, true for searching from the bottom of this
- *                  list.
+ *                  of this table, true for searching from the bottom of this
+ *                  table.
  *
  * @return previous direction.
  */
@@ -318,7 +387,7 @@ static bool setnextdir(qlisttbl_t *tbl, bool backward)
  *  // create a sample object.
  *  struct my_obj obj;
  *
- *  // create a list and add the sample object.
+ *  // create a table and add a sample object.
  *  qlisttbl_t *tbl = qlisttbl();
  *  tbl->put(tbl, "obj1", &obj, sizeof(struct my_obj), false);
  * @endcode
@@ -348,7 +417,7 @@ static bool put(qlisttbl_t *tbl, const char *name, const void *data,
  *  - EINVAL : Invalid argument.
  *
  * @note
- *  The default behavior is adding object at the end of this list unless it's
+ *  The default behavior is adding object at the end of this table unless it's
  *  changed by calling setputdir().
  */
 static bool putstr(qlisttbl_t *tbl, const char *name, const char *str,
@@ -373,7 +442,7 @@ static bool putstr(qlisttbl_t *tbl, const char *name, const char *str,
  *  - EINVAL : Invalid argument.
  *
  * @note
- *  The default behavior is adding object at the end of this list unless it's
+ *  The default behavior is adding object at the end of this table unless it's
  *  changed by calling setputdir().
  */
 static bool putstrf(qlisttbl_t *tbl, bool unique, const char *name,
@@ -408,8 +477,8 @@ static bool putstrf(qlisttbl_t *tbl, bool unique, const char *name,
  *
  * @note
  *  The integer will be converted to a string object and stored as a string
- *  object. The default behavior is adding object at the end of this list unless
- *  it's changed by calling setputdir().
+ *  object. The default behavior is adding object at the end of this table
+ *  unless it's changed by calling setputdir().
  */
 static bool putint(qlisttbl_t *tbl, const char *name, int64_t num, bool unique)
 {
@@ -420,9 +489,9 @@ static bool putint(qlisttbl_t *tbl, const char *name, int64_t num, bool unique)
 
 /**
  * qlisttbl->get(): Finds an object with given name.
- * If there are duplicate keys in the list, this will return the first matched
+ * If there are duplicate keys in the table, this will return the first matched
  * one from the top or bottom depending on setgetdir() setting. By default,
- * it'll return the first matched one from the bottom of list. So in case,
+ * it'll return the first matched one from the bottom of table. So in case,
  * there are duplicated keys, it'll return the newly inserted one unless
  * setputdir() is set in the other way.
  *
@@ -509,9 +578,9 @@ static int64_t getint(qlisttbl_t *tbl, const char *name)
 
 /**
  * qlisttbl->caseget(): Finds an object with given name. (case-insensitive)
- * If there are duplicate keys in the list, this will return the first matched
+ * If there are duplicate keys in the table, this will return the first matched
  * one from the top or bottom depending on setgetdir() setting. By default,
- * it'll return the first matched one from the bottom of list. So in case,
+ * it'll return the first matched one from the bottom of table. So in case,
  * there are duplicated keys, it'll return the newly inserted one unless
  * setputdir() is set in the other way.
  *
@@ -575,9 +644,9 @@ static int64_t casegetint(qlisttbl_t *tbl, const char *name)
 
 /**
  * qlisttbl->getmulti(): Finds all objects with given name and return a array
- * of objects. If there are duplicate keys in the list, this will return all
+ * of objects. If there are duplicate keys in the table, this will return all
  * the matched ones. The order of objects in return depends on setnextdir()
- * setting. By default, the order is same(forward) as listed in the list.
+ * setting. By default, the order is same(forward) as listed in the table.
  *
  * @param tbl       qlisttbl container pointer.
  * @param name      element name.
@@ -590,7 +659,13 @@ static int64_t casegetint(qlisttbl_t *tbl, const char *name)
  *  - EINVAL : Invalid argument.
  *  - ENOMEM : Memory allocation failure.
  *
- * @node
+ * @note
+ *  Consider to turn setsort() on if you use getmulti() frequently.
+ *  If a table is not set to be kepted in sorted manner, this is default,
+ *  then this call will run full scan on the table to find out all matching
+*   elements.
+ *
+ * @note
  *  The returned array of qobj_t should be released by freemulti() call after
  *  use. Even you call getmulti() with newmem set false, freemulti() should
  *  be called all the times, so the object array itself can be released.
@@ -602,7 +677,6 @@ static int64_t casegetint(qlisttbl_t *tbl, const char *name)
  *      printf("DATA=%s, SIZE=%zu\n", i, (char *)objs[i].data, objs[i].size);
  *  }
  *  tbl->freemulti(objs);
- *
  * @endcode
  */
 static qobj_t *getmulti(qlisttbl_t *tbl, const char *name, bool newmem,
@@ -694,7 +768,7 @@ static void freemulti(qobj_t *objs)
  * @param tbl       qlisttbl container pointer.
  * @param obj       found data will be stored in this object
  * @param name      element name., if key name is NULL search every objects in
- *                  the list.
+ *                  the table.
  * @param newmem    whether or not to allocate memory for the data.
  *
  * @return true if found otherwise returns false
@@ -709,7 +783,7 @@ static void freemulti(qobj_t *objs)
  *
  * @code
  *  qlisttbl_t *tbl = qlisttbl();
- *  (...add data into list...)
+ *  (...add data into table...)
  *
  *  // non-thread usages
  *  qdlnobj_t obj;
@@ -740,10 +814,14 @@ static bool getnext(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
     lock(tbl);
 
     qdlnobj_t *cont = NULL;
-    if (obj->size == 0) {
-        if (tbl->nextdir == false) cont = tbl->first;
-        else cont = tbl->last;
-    } else {
+    if (obj->size == 0) {  // first time call
+        if (name == NULL) {  // full scan
+            if (tbl->nextdir == false) cont = tbl->first;
+            else cont = tbl->last;
+        } else {  // name search
+            cont = _findobj(tbl, name, !(tbl->nextdir), strcmp, NULL);
+        }
+    } else {  // next call
         if (tbl->nextdir == false) cont = obj->next;
         else cont = obj->prev;
     }
@@ -782,11 +860,16 @@ static bool getnext(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
             break;
         }
 
+        if (name != NULL && tbl->sortflag != 0) break;
         if (tbl->nextdir == false) cont = cont->next;
         else cont = cont->prev;
     }
-
     unlock(tbl);
+
+    if (ret == false) {
+        errno = ENOENT;
+    }
+
     return ret;
 }
 
@@ -833,8 +916,8 @@ static size_t remove_(qlisttbl_t *tbl, const char *name)
 /**
  * qlisttbl->removeobj(): Remove objects with given object pointer.
  * This call is useful when you want to remove an element while traversing a
- * list using getnext(). So the address pointed by obj maybe different than
- * the actual object in a list, but it's ok becuase it'll recalculate actual
+ * table using getnext(). So the address pointed by obj maybe different than
+ * the actual object in a table, but it's ok becuase it'll recalculate actual
  * object address by referring it's links to previous and next objects.
  *
  * @param tbl   qlisttbl container pointer.
@@ -849,7 +932,7 @@ static size_t remove_(qlisttbl_t *tbl, const char *name)
  *  memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
  *  tbl->lock(tbl);
  *  while(tbl->getnext(tbl, &obj, NULL, true) == true) {
- *    tbl->removeobj(tbl, &obj);  // this will remove all entries in the list
+ *    tbl->removeobj(tbl, &obj);  // this will remove all entries in the table
  *  }
  *  tbl->unlock(tbl);
  * @endcode
@@ -868,7 +951,7 @@ static bool removeobj(qlisttbl_t *tbl, const qdlnobj_t *obj)
     qdlnobj_t *this = NULL;
     if (prev != NULL) this = prev->next;
     else if (next != NULL) this = next->prev;
-    else this = tbl->first;  // list has only one object.
+    else this = tbl->first;  // table has only one object.
 
     // double check
     if (this == NULL) {
@@ -899,18 +982,41 @@ static bool removeobj(qlisttbl_t *tbl, const qdlnobj_t *obj)
 }
 
 /**
- * qlisttbl->size(): Returns the number of elements in this list.
+ * qlisttbl->size(): Returns the number of elements in this table.
  *
  * @param tbl qlisttbl container pointer.
  *
- * @return the number of elements in this list.
+ * @return the number of elements in this table.
  */
 static size_t size(qlisttbl_t *tbl)
 {
     return tbl->num;
 }
 
-static void sort(qlisttbl_t *tbl, bool descending)
+/**
+ * qlisttbl->sort(): Sort keys in this table.
+ *
+ * @param tbl           qlisttbl container pointer.
+ * @param descending    sorting order. false for ascending, true for descending.
+ *
+ * @note
+ *  This is for one time sort, to keep a table sorted, set it on by setsort().
+ *  Sorting algorithm here we use is Bubble-sort algorithm.
+ *
+ * @code
+ *  The appearence order of duplicated keys will be preserved in a sored table.
+ *  See how duplicated key 'b' is ordered in below example
+ *
+ *  [Unsorted]   [sorted ASC]    [sorted DES]
+ *    d = 1          a = 2           d = 1
+ *    a = 2          b = 3           c = 5
+ *    b = 3          b = 4           b = 3
+ *    b = 4          b = 6           b = 4
+ *    c = 5          c = 5           b = 6
+ *    b = 6          d = 1           a = 2
+ * @endcode
+ */
+static void sort_(qlisttbl_t *tbl, bool descending)
 {
     // run bubble sort
     lock(tbl);
@@ -923,8 +1029,7 @@ static void sort(qlisttbl_t *tbl, bool descending)
         for (i = 0, obj1 = tbl->first; i < (n - 1); i++, obj1 = obj1->next) {
             obj2 = obj1->next;  // this can't be null.
             if ((strcmp(obj1->name, obj2->name) * adjustcmp) > 0) {
-                // for performance, we swap contents of object rather than
-                // adjusting chains.
+                // swapping contents is faster than adjusting links.
                 tmpobj = *obj1;
                 obj1->name = obj2->name;
                 obj1->data = obj2->data;
@@ -947,6 +1052,10 @@ static void sort(qlisttbl_t *tbl, bool descending)
  * @param tbl qlisttbl container pointer.
  *
  * @return true if successful otherwise returns false.
+ *
+ * @note
+ *  If setsort() option is set, this will also revert the sorting order
+ *  from ascending to descending or from descending to ascending.
  */
 static void reverse(qlisttbl_t *tbl)
 {
@@ -963,11 +1072,15 @@ static void reverse(qlisttbl_t *tbl)
     tbl->first = tbl->last;
     tbl->last = obj;
 
+    // change sort type
+    if (tbl->sortflag == 1) tbl->sortflag = 2;
+    else if (tbl->sortflag == 2) tbl->sortflag = 1;
+
     unlock(tbl);
 }
 
 /**
- * qlisttbl->clear(): Removes all of the elements from this list.
+ * qlisttbl->clear(): Removes all of the elements from this table.
  *
  * @param tbl qlisttbl container pointer.
  */
@@ -1035,7 +1148,7 @@ static bool save(qlisttbl_t *tbl, const char *filepath, char sepchar,
 
 /**
  * qlisttbl->load(): Load and append entries from given filepath
- * Loading direction is always appending at the bottom of the list to preserve
+ * Loading direction is always appending at the bottom of the table to preserve
  * the order as it was.
  *
  * @param tbl       qlisttbl container pointer.
@@ -1076,7 +1189,7 @@ static ssize_t load(qlisttbl_t *tbl, const char *filepath, char sepchar,
         qstrtrim(name);
         if (decode == true) qurl_decode(data);
 
-        // append at the bottom of list.
+        // append at the bottom of table.
         _put(tbl, name, data, strlen(data) + 1, false, false);
 
         free(name);
@@ -1171,71 +1284,56 @@ static void free_(qlisttbl_t *tbl)
 static bool _put(qlisttbl_t *tbl, const char *name, const void *data,
                  size_t size, bool unique, bool first)
 {
-    // check arguments
-    if (name == NULL || data == NULL || size <= 0) {
-        errno = EINVAL;
-        return false;
-    }
-
-    // duplicate name. name can be NULL
-    char *dup_name = strdup(name);
-    if (dup_name == NULL) {
-        errno = ENOMEM;
-        return false;
-    }
-
-    // duplicate object
-    void *dup_data = malloc(size);
-    if (dup_data == NULL) {
-        free(dup_name);
-        errno = ENOMEM;
-        return false;
-    }
-    memcpy(dup_data, data, size);
-
-    // make new object list
-    qdlnobj_t *obj = (qdlnobj_t *)malloc(sizeof(qdlnobj_t));
+    // make new object table
+    qdlnobj_t *obj = _createobj(name, data, size);
     if (obj == NULL) {
-        free(dup_name);
-        free(dup_data);
-        errno = ENOMEM;
         return false;
     }
-    obj->name = dup_name;
-    obj->data = dup_data;
-    obj->size = size;
-    obj->prev = NULL;
-    obj->next = NULL;
 
+    // lock table
     lock(tbl);
 
     // if unique flag is set, remove same key
-    if (unique == true) remove_(tbl, dup_name);
+    if (unique == true) remove_(tbl, name);
 
-    // make link
+    // insert into table
     if (tbl->num == 0) {
-        tbl->first = tbl->last = obj;
+        obj->prev = NULL;
+        obj->next = NULL;
     } else {
-        if (first == true) {
-            obj->next = tbl->first;
-            obj->next->prev = obj;
-            tbl->first = obj;
-        } else {
-            obj->prev = tbl->last;
-            tbl->last->next = obj;
-            tbl->last = obj;
+        if (tbl->sortflag == 0) {  // unsorted table
+            if (first == true) {
+                obj->prev = NULL;
+                obj->next = tbl->first;
+            } else {
+                obj->prev = tbl->last;
+                obj->next = NULL;
+            }
+        } else {  // sorted table
+            qdlnobj_t posobj;
+            qdlnobj_t *matchobj = _findobj(tbl, name, first, strcmp, &posobj);
+            if (matchobj == NULL) {
+                obj->prev = posobj.prev;
+                obj->next = posobj.next;
+            } else if (first == true) {
+                obj->prev = posobj.prev;
+                obj->next = matchobj;
+            } else {
+                obj->prev = matchobj;
+                obj->next = posobj.next;
+            }
         }
     }
+    _insertobj(tbl, obj);
 
-    tbl->num++;
-
+    // unlock table
     unlock(tbl);
 
     return true;
 }
 
 static void *_get(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem,
-                  bool forward, int (*cmp)(const char *s1, const char *s2))
+                  bool first, int (*cmp)(const char *s1, const char *s2))
 {
     if (name == NULL) {
         errno = EINVAL;
@@ -1244,38 +1342,211 @@ static void *_get(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem,
 
     lock(tbl);
     void *data = NULL;
-    qdlnobj_t *obj;
-
-    if (forward == true) obj = tbl->first;
-    else obj = tbl->last;
-
-    while (obj != NULL) {
-        if (!cmp(obj->name, name)) {
-            if (newmem == true) {
-                data = malloc(obj->size);
-                if (data == NULL) {
-                    errno = ENOMEM;
-                    return false;
-                }
-                memcpy(data, obj->data, obj->size);
-            } else {
-                data = obj->data;
+    qdlnobj_t *obj = _findobj(tbl, name, first, cmp, NULL);
+    if (obj != NULL) {
+        // get data
+        if (newmem == true) {
+            data = malloc(obj->size);
+            if (data == NULL) {
+                errno = ENOMEM;
+                unlock(tbl);
+                return NULL;
             }
-            if (size != NULL) *size = obj->size;
-
-            break;
+            memcpy(data, obj->data, obj->size);
+        } else {
+            data = obj->data;
         }
 
-        if (forward == true) obj = obj->next;
-        else obj = obj->prev;
+        // set size
+        if (size != NULL) *size = obj->size;
     }
-    unlock(tbl);
+   unlock(tbl);
 
     if (data == NULL) {
         errno = ENOENT;
     }
 
     return data;
+}
+
+// lock must be obtained from caller
+static qdlnobj_t *_createobj(const char *name, const void *data, size_t size)
+{
+    if (name == NULL || data == NULL || size <= 0) {
+        errno = EINVAL;
+        return false;
+    }
+
+    // make a new object
+    char *dup_name = strdup(name);
+    void *dup_data = malloc(size);
+    qdlnobj_t *obj = (qdlnobj_t *)malloc(sizeof(qdlnobj_t));
+    if (dup_name == NULL || dup_data == NULL || obj == NULL) {
+        if (dup_name != NULL) free(dup_name);
+        if (dup_data != NULL) free(dup_data);
+        if (obj != NULL) free(obj);
+        errno = ENOMEM;
+        return NULL;
+    }
+    memcpy(dup_data, data, size);
+    memset((void *)obj, '\0', sizeof(qdlnobj_t));
+
+    obj->name = dup_name;
+    obj->data = dup_data;
+    obj->size = size;
+
+    return obj;
+}
+
+// lock must be obtained from caller
+static bool _insertobj(qlisttbl_t *tbl, qdlnobj_t *obj)
+{
+    qdlnobj_t *prev = obj->prev;
+    qdlnobj_t *next = obj->next;
+
+    if (prev == NULL) tbl->first = obj;
+    else prev->next = obj;
+
+    if (next == NULL) tbl->last = obj;
+    else next->prev = obj;
+
+     // increase counter
+    tbl->num++;
+
+    return true;
+}
+
+// lock must be obtained from caller
+static qdlnobj_t *_findobj(qlisttbl_t *tbl, const char *name,
+                           bool first,
+                           int (*cmp)(const char *s1, const char *s2),
+                           qdlnobj_t *retobj)
+{
+    // unsorted table
+    if (tbl->sortflag == 0) {
+        return _findobj_unsorted(tbl, name, first, cmp, retobj);
+    }
+
+    // sorted table
+    return _findobj_sorted(tbl, name, first, cmp, retobj);
+}
+
+// lock must be obtained from caller
+static qdlnobj_t *_findobj_unsorted(qlisttbl_t *tbl, const char *name,
+                                    bool first,
+                                    int (*cmp)(const char *s1, const char *s2),
+                                    qdlnobj_t *retobj)
+{
+    if (retobj != NULL) {
+        memset((void *)retobj, '\0', sizeof(qdlnobj_t));
+    }
+
+    if (name == NULL || tbl->num == 0) {
+        errno = ENOENT;
+        return NULL;
+    }
+
+    qdlnobj_t *obj;
+    if (first == true) obj = tbl->first;
+    else obj = tbl->last;
+    while (obj != NULL) {
+        if (!cmp(name, obj->name)) {
+            if (retobj != NULL) {
+                *retobj = *obj;
+            }
+            return obj;
+        }
+
+        if (first == true) obj = obj->next;
+        else obj = obj->prev;
+    }
+
+    // not found, set prev and next chain.
+    errno = ENOENT;
+    if (retobj != NULL) {
+        if (tbl->putdir == false) {  // bottom
+            retobj->prev = tbl->last;
+            retobj->next = NULL;
+        } else {  // top
+            retobj->prev = NULL;
+            retobj->next = tbl->first;
+        }
+    }
+
+    return NULL;
+}
+
+// lock must be obtained from caller
+static qdlnobj_t *_findobj_sorted(qlisttbl_t *tbl, const char *name,
+                                  bool first,
+                                  int (*cmp)(const char *s1, const char *s2),
+                                  qdlnobj_t *retobj)
+{
+    if (retobj != NULL) {
+        memset((void *)retobj, '\0', sizeof(qdlnobj_t));
+    }
+
+    if (name == NULL || tbl->num == 0) {
+        errno = ENOENT;
+        return NULL;
+    }
+
+    qdlnobj_t *obj = tbl->first;
+    qdlnobj_t *lastfound_obj = NULL;
+    int range_begin = 0;
+    int range_end = tbl->num - 1;
+    int cursor = 0;
+    int keycmp = 0;
+    while (range_begin <= range_end) {
+        // jump to center of the range
+        size_t range_center = range_begin + ((range_end - range_begin) / 2);
+        int stepincr = (range_center > cursor) ? 1 : -1;
+        while (cursor != range_center) {
+            obj = (stepincr > 0) ? obj->next : obj->prev;
+            cursor += stepincr;
+        }
+
+        // compare
+        keycmp = cmp(name, obj->name);
+        if (keycmp == 0) {
+            lastfound_obj = obj;  // save object pointer
+
+            // found a matching key but in order to find another key,
+            // we shouldn't stop at here.
+            if (first == true) range_end = cursor - 1; // first half
+            else range_begin = cursor + 1;  // last half
+        } else {
+            if ((tbl->sortflag == 1 && keycmp > 0) ||  // ascending
+                (tbl->sortflag == 2 && keycmp < 0)) {  // descending
+                range_begin = cursor + 1;  // last half
+            } else {
+                range_end = cursor - 1; // first half
+            }
+        }
+    }
+
+    // found
+    if (lastfound_obj != NULL) {
+        if (retobj != NULL) {
+            *retobj = *lastfound_obj;
+        }
+        return lastfound_obj;
+    }
+
+    // not found, set prev and next chain.
+    errno = ENOENT;
+    if (retobj != NULL) {
+        if ((tbl->sortflag == 1 && keycmp > 0) ||  // ascending
+            (tbl->sortflag == 2 && keycmp < 0)) {  // descending
+            retobj->prev = obj;
+            retobj->next = obj->next;
+        } else {
+            retobj->prev = obj->prev;
+            retobj->next = obj;
+        }
+    }
+
+    return NULL;
 }
 
 #endif /* _DOXYGEN_SKIP */
