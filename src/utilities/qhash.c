@@ -82,7 +82,7 @@ bool qhashmd5(const void *data, size_t nbytes, void *retbuf)
 }
 
 /**
- * Get 128-bit MD5 hash for a file contents.
+ * Get 128-bit MD5 hash of a file contents.
  *
  * @param filepath  file path
  * @param offset    start offset. Set to 0 to digest from beginning of file.
@@ -94,7 +94,7 @@ bool qhashmd5(const void *data, size_t nbytes, void *retbuf)
  *
  * @code
  *   unsigned char md5hash[16];
- *   qhashmd5_file("/tmp/test.dat, 0, 0, md5hash);
+ *   qhashmd5_file("/tmp/test.dat", 0, 0, md5hash);
  * @endcode
  */
 bool qhashmd5_file(const char *filepath, off_t offset, ssize_t nbytes,
@@ -145,7 +145,7 @@ bool qhashmd5_file(const char *filepath, off_t offset, ssize_t nbytes,
 }
 
 /**
- * Get 32-bit FNV-1 hash.
+ * Get 32-bit FNV1 hash.
  *
  * @param data      source data
  * @param nbytes    size of data
@@ -153,7 +153,7 @@ bool qhashmd5_file(const char *filepath, off_t offset, ssize_t nbytes,
  * @return 32-bit unsigned hash value.
  *
  * @code
- *  uint32_t fnv32 = qhashfnv1_32((void*)"hello", 5);
+ *  uint32_t hashval = qhashfnv1_32((void*)"hello", 5);
  * @endcode
  *
  * @code
@@ -202,7 +202,7 @@ uint32_t qhashfnv1_32(const void *data, size_t nbytes)
 }
 
 /**
- * Get 64-bit FNV-1 hash integer.
+ * Get 64-bit FNV1 hash integer.
  *
  * @param data      source data
  * @param nbytes    size of data
@@ -233,6 +233,28 @@ uint64_t qhashfnv1_64(const void *data, size_t nbytes)
     return h;
 }
 
+/**
+ * Get 32-bit Murmur3 hash.
+ *
+ * @param data      source data
+ * @param nbytes    size of data
+ *
+ * @return 32-bit unsigned hash value.
+ *
+ * @code
+ *  uint32_t hashval = qhashmurmur3_32((void*)"hello", 5);
+ * @endcode
+ *
+ * @code
+ *  MurmurHash3 was created by Austin Appleby  in 2008. The cannonical
+ *  implementations are in C++ and placed in the public.
+ *
+ *    https://sites.google.com/site/murmurhash/
+ *
+ *  Seungyoung Kim has ported it's ccannonical implementation in C language
+ *  in 2012 and published it as a part of qLibc component.
+ * @endcode
+ */
 uint32_t qhashmurmur3_32(const void *data, size_t nbytes)
 {
     if (data == NULL || nbytes == 0) return 0;
@@ -285,6 +307,26 @@ uint32_t qhashmurmur3_32(const void *data, size_t nbytes)
     return h;
 }
 
+/**
+ * Get 128-bit Murmur3 hash.
+ *
+ * @param data      source data
+ * @param nbytes    size of data
+ * @param retbuf    user buffer. It must be at leat 16-bytes long.
+ *
+ * @return true if successful, otherwise false.
+ *
+ * @code
+ *   // get 128-bit Murmur3 hash.
+ *   unsigned char hash[16];
+ *   qhashmurmur3_128((void*)"hello", 5, hash);
+ *
+ *   // hex encode
+ *   char *ascii = qhex_encode(hash, 16);
+ *   printf("Hex encoded Murmur3: %s\n", ascii);
+ *   free(ascii);
+ * @endcode
+ */
 bool qhashmurmur3_128(const void *data, size_t nbytes, void *retbuf)
 {
     if (data == NULL || nbytes == 0) return 0;
