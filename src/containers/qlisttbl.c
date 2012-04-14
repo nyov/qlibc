@@ -39,11 +39,10 @@
  * duplicated keys since Hash-Table only keep unique keys. Of course, qlisttbl
  * supports both behavior storing unique key or allowing key duplication.
  *
- * qlisttbl also provides table sorting feature, this is always a good thing to
- * consider turning on whenever possible if a table is not required to preserve
- * the order of elements in it's internal linked-list structure. When a table
- * is set to be kept sorted, qlisttbl can speed up it's lookup performance by
- * eleminating unnecessary table scans. This feature is disabled by default.
+ * qlisttbl also provides table sorting feature. When a table is set to be
+ * kept sorted, qlisttbl can speed up it's lookup performance by eleminating
+ * unnecessary table scans. This option is disabled by default so it should be
+ * explictly turned on.
  *
  * @code
  *  [Conceptional Data Structure Diagram]
@@ -270,14 +269,6 @@ qlisttbl_t *qlisttbl(void)
  * @param descending    sorting order. false for ascending, true for descending.
  *
  * @return previous setting. 0: disabled, 1: ascending, 2: descending.
- *
- * @note
- *  Always consider to turn this option on whenever possible if it's not
- *  required to preserve the order of elements in linked-list. Because when
- *  a table is set to be sorted, qlisttbl will take it's advantages and will
- *  response faster. This allows you to handle a large number of elements
- *  in qlisttbl with reasonable lookup speed because it uses B-tree like
- *  searching algorithm rather than scanning the table from top.
  */
 static int setsort(qlisttbl_t *tbl, bool sort, bool descending)
 {
@@ -651,10 +642,7 @@ static int64_t casegetint(qlisttbl_t *tbl, const char *name)
  *  - ENOMEM : Memory allocation failure.
  *
  * @note
- *  Consider to turn setsort() on if you use getmulti() frequently.
- *  If a table is not set to be kepted in sorted manner, this is default,
- *  then this call will run full scan on the table to find out all matching
-*   elements.
+ *  getmulti() returns faster if table is set to be sorted by setsort() option.
  *
  * @note
  *  The returned array of qobj_t should be released by freemulti() call after
