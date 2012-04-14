@@ -35,9 +35,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "md5/md5.h"
@@ -45,182 +47,350 @@
 #include "qinternal.h"
 
 /**
- * Get MD5 hash.
+ * Calculate 128-bit(16-bytes) MD5 hash.
  *
  * @param data      source object
  * @param nbytes    size of data
+ * @param retbuf    user buffer. It must be at leat 16-bytes long.
  *
- * @return 128-bit(16-byte) malloced digest binary data
+ * @return true if successful, otherwise false.
  *
  * @code
- *   unsigned char *md5 = qhash_md5((void*)"hello", 5);
- *   free(md5);
+ *   // get MD5
+ *   unsigned char md5hash[16];
+ *   qhashmd5((void*)"hello", 5, md5hash);
+ *
+ *   // hex encode
+ *   char *md5ascii = qhex_encode(md5hash, 16);
+ *   printf("Hex encoded MD5: %s\n", md5ascii);
+ *   free(md5ascii);
  * @endcode
  */
-unsigned char *qhash_md5(const void *data, size_t nbytes)
+bool qhashmd5(const void *data, size_t nbytes, void *retbuf)
 {
-    if (data == NULL) return NULL;
-
-    unsigned char *digest = (unsigned char *)malloc(sizeof(char) * 16);
-    if (digest == NULL) return NULL;
+    if (data == NULL || retbuf == NULL) {
+        errno = EINVAL;
+        return false;
+    }
 
     MD5_CTX context;
     MD5Init(&context);
     MD5Update(&context, (unsigned char *)data, (unsigned int)nbytes);
-    MD5Final(digest, &context);
+    MD5Final(retbuf, &context);
 
-    return digest;
+    return true;
 }
 
 /**
- * Get MD5 hash string of a object data represented as a sequence of 32
- * hexadecimal digits.
- *
- * @param data      source object
- * @param nbytes    size of data
- *
- * @return 32 bytes(128 bits) long malloced digest binary data malloced 32+1
- *         bytes digested ASCII string which is terminated by NULL character.
- *
- * @code
- *   char *md5str = qhash_md5_str((void*)"hello", 5);
- *   printf("%s\n", md5str);
- *   free(md5str);
- * @endcode
- */
-char *qhash_md5_str(const void *data, size_t nbytes)
-{
-    if (data == NULL) return NULL;
-
-    unsigned char *digest = qhash_md5(data, nbytes);
-    if (digest == NULL) return NULL;
-
-    // hexadecimal encoding
-    char *md5hex = qhex_encode(digest, 16);
-    free(digest);
-
-    return md5hex;
-}
-
-/**
- * Get MD5 hash string of a file contents represented as a sequence of 32
- * hexadecimal digits.
+ * Get 128-bit MD5 hash for a file contents.
  *
  * @param filepath  file path
- * @param nbytes    size of data. Set to NULL to digest end of file
+ * @param offset    start offset. Set to 0 to digest from beginning of file.
+ * @param nbytes    number of bytes to digest. Set to 0 to digest until end
+ *                  of file.
+ * @param retbuf    user buffer. It must be at leat 16-bytes long.
  *
- * @return malloced 33(16*2+1) bytes digested ASCII string which is terminated
- *         by NULL character
- *
- * @note
- *  If the nbytes is set, qhash_md5_file() will try to digest at lease nbytes
- *  then store actual digested size into nbytes. So if you set nbytes to over
- *  size than file size, finally nbytes will have actual file size.
+ * @return true if successful, otherwise false.
  *
  * @code
- *   // case of digesting entire file
- *   char *md5str = qhash_md5_file("/tmp/test.dat, NULL);
- *   printf("%s\n", md5str);
- *   free(md5str);
- *
- *   // case of nbytes is set to 1 bytes length
- *   size_t nbytes = 1;
- *   char *md5str = qhash_md5_file("/tmp/test.dat, &nbytes);
- *   printf("%s %d\n", md5str, nbytes);
- *   free(md5str);
- *
- *   // case of nbytes is set to over size
- *   size_t nbytes = 100000;
- *   char *md5str = qhash_md5_file("/tmp/test.dat, &nbytes);
- *   printf("%s %d\n", md5str, nbytes);
- *   free(md5str);
+ *   unsigned char md5hash[16];
+ *   qhashmd5_file("/tmp/test.dat, 0, 0, md5hash);
  * @endcode
  */
-char *qhash_md5_file(const char *filepath, size_t *nbytes)
+bool qhashmd5_file(const char *filepath, off_t offset, ssize_t nbytes,
+                   void *retbuf)
 {
+    if (filepath == NULL || offset < 0 || nbytes < 0 || retbuf == NULL) {
+        errno = EINVAL;
+        return false;
+    }
+
     int fd = open(filepath, O_RDONLY, 0);
-    if (fd < 0) return NULL;
+    if (fd < 0) return false;
 
     struct stat st;
-    if (fstat(fd, &st) < 0) return NULL;
-
+    if (fstat(fd, &st) < 0) return false;
     size_t size = st.st_size;
-    if (nbytes != NULL) {
-        if (*nbytes > size) *nbytes = size;
-        else size = *nbytes;
+
+    // check filesize
+    if (size < offset + nbytes) {
+        errno = EINVAL;
+        close(fd);
+        return false;
+    }
+
+    // seek
+    if (offset > 0) {
+        if (lseek(fd, offset, SEEK_SET) != offset) {
+            close(fd);
+            return false;
+        }
     }
 
     MD5_CTX context;
     MD5Init(&context);
-    ssize_t retr = 0;
-    unsigned char buf[32*1024], szDigest[16];
-    while (size > 0) {
-        if (size > sizeof(buf)) retr = read(fd, buf, sizeof(buf));
-        else retr = read(fd, buf, size);
-        if (retr < 0) break;
-        MD5Update(&context, buf, retr);
-        size -= retr;
+    ssize_t toread, nread;
+    unsigned char buf[32*1024];
+    for (toread = nbytes; toread > 0; toread -= nread) {
+        if (toread > sizeof(buf)) nread = read(fd, buf, sizeof(buf));
+        else nread = read(fd, buf, toread);
+        if (nread < 0) break;
+        MD5Update(&context, buf, nread);
     }
     close(fd);
-    MD5Final(szDigest, &context);
+    if (toread != 0) return false;
+    MD5Final(retbuf, &context);
 
-    if (nbytes != NULL) *nbytes -= size;
-
-    // hexadecimal encoding
-    char *md5hex = qhex_encode(szDigest, 16);
-    return md5hex;
+    return true;
 }
 
 /**
- * Get 32-bit FNV hash integer.
+ * Get 32-bit FNV-1 hash.
  *
  * @param data      source data
  * @param nbytes    size of data
  *
- * @return 32-bit hash integer
+ * @return 32-bit unsigned hash value.
  *
  * @code
- *   uint32_t fnv32 = qhash_fnv32((void*)"hello", 5);
+ *  uint32_t fnv32 = qhashfnv1_32((void*)"hello", 5);
+ * @endcode
+ *
+ * @code
+ *  Fowler/Noll/Vo hash
+ *
+ *  The basis of this hash algorithm was taken from an idea sent as reviewer
+ *  comments to the IEEE POSIX P1003.2 committee by:
+ *
+ *      Phong Vo (http://www.research.att.com/info/kpv/)
+ *      Glenn Fowler (http://www.research.att.com/~gsf/)
+ *
+ *  In a subsequent ballot round:
+ *
+ *      Landon Curt Noll (http://www.isthe.com/chongo/)
+ *
+ *  improved on their algorithm.  Some people tried this hash and found that
+ *  it worked rather well. In an EMail message to Landon, they named it the
+ *  ``Fowler/Noll/Vo'' or FNV hash.
+ *
+ *  FNV hashes are designed to be fast while maintaining a low collision rate.
+ *  The FNV speed allows one to quickly hash lots of data while maintaining
+ *  a reasonable collision rate.  See:
+ *
+ *      http://www.isthe.com/chongo/tech/comp/fnv/index.html
+ *
+ *  for more details as well as other forms of the FNV hash.
  * @endcode
  */
-uint32_t qhash_fnv32(const void *data, size_t nbytes)
+uint32_t qhashfnv1_32(const void *data, size_t nbytes)
 {
-    if (data == NULL) return 0;
+    if (data == NULL || nbytes == 0) return 0;
 
     unsigned char *dp;
-    uint32_t hval = 0x811C9DC5;
+    uint32_t h = 0x811C9DC5;
 
     for (dp = (unsigned char *)data; *dp && nbytes > 0; dp++, nbytes--) {
-        hval *= 0x01000193;
-        hval ^= *dp;
+#ifdef __GNUC__
+        h += (h<<1) + (h<<4) + (h<<7) + (h<<8) + (h<<24);
+#else
+        h *= 0x01000193;
+#endif
+        h ^= *dp;
     }
 
-    return hval;
+    return h;
 }
 
 /**
- * Get 64-bit FNV hash integer.
+ * Get 64-bit FNV-1 hash integer.
  *
  * @param data      source data
  * @param nbytes    size of data
  *
- * @return 64-bit hash integer
+ * @return 64-bit unsigned hash value.
  *
  * @code
- *   uint64_t fnv64 = qhash_fnv64((void*)"hello", 5);
+ *   uint64_t fnv64 = qhashfnv1_64((void*)"hello", 5);
  * @endcode
  */
-uint64_t qhash_fnv64(const void *data, size_t nbytes)
+uint64_t qhashfnv1_64(const void *data, size_t nbytes)
 {
-    if (data == NULL) return 0;
+    if (data == NULL || nbytes == 0) return 0;
 
     unsigned char *dp;
-    uint64_t hval = 0xCBF29CE484222325ULL;
+    uint64_t h = 0xCBF29CE484222325ULL;
 
     for (dp = (unsigned char *)data; *dp && nbytes > 0; dp++, nbytes--) {
-        hval *= 0x100000001B3ULL;
-        hval ^= *dp;
+#ifdef __GNUC__
+        h += (h << 1) + (h << 4) + (h << 5) +
+             (h << 7) + (h << 8) + (h << 40);
+#else
+        h *= 0x100000001B3ULL;
+#endif
+        h ^= *dp;
     }
 
-    return hval;
+    return h;
+}
+
+uint32_t qhashmurmur3_32(const void *data, size_t nbytes)
+{
+    if (data == NULL || nbytes == 0) return 0;
+
+    const uint32_t c1 = 0xcc9e2d51;
+    const uint32_t c2 = 0x1b873593;
+
+    const int nblocks = nbytes / 4;
+    const uint32_t *blocks = (const uint32_t *)(data);
+    const uint8_t *tail = (const uint8_t *)(data + (nblocks * 4));
+
+    uint32_t h = 0;
+
+    int i;
+    uint32_t k;
+    for (i = 0; i < nblocks; i++) {
+        k = blocks[i];
+
+        k *= c1;
+        k = (k << 15) | (k >> (32 - 15));
+        k *= c2;
+
+        h ^= k;
+        h = (h << 13) | (h >> (32 - 13));
+        h = (h * 5) + 0xe6546b64;
+    }
+
+    k = 0;
+    switch (nbytes & 3) {
+        case 3:
+            k ^= tail[2] << 16;
+        case 2:
+            k ^= tail[1] << 8;
+        case 1:
+            k ^= tail[0];
+            k *= c1;
+            k = (k << 13) | (k >> (32 - 15));
+            k *= c2;
+            h ^= k;
+    };
+
+    h ^= nbytes;
+
+    h ^= h >> 16;
+    h *= 0x85ebca6b;
+    h ^= h >> 13;
+    h *= 0xc2b2ae35;
+    h ^= h >> 16;
+
+    return h;
+}
+
+bool qhashmurmur3_128(const void *data, size_t nbytes, void *retbuf)
+{
+    if (data == NULL || nbytes == 0) return 0;
+
+    const uint64_t c1 = 0x87c37b91114253d5ULL;
+    const uint64_t c2 = 0x4cf5ad432745937fULL;
+
+    const int nblocks = nbytes / 16;
+    const uint64_t *blocks = (const uint64_t *)(data);
+    const uint8_t *tail = (const uint8_t *)(data + (nblocks * 16));
+
+    uint64_t h1 = 0;
+    uint64_t h2 = 0;
+
+    int i;
+    uint64_t k1, k2;
+    for (i = 0; i < nblocks; i++) {
+        k1 = blocks[i*2+0];
+        k2 = blocks[i*2+1];
+
+        k1 *= c1;
+        k1  = (k1 << 31) | (k1 >> (64 - 31));
+        k1 *= c2;
+        h1 ^= k1;
+
+        h1 = (h1 << 27) | (h1 >> (64 - 27));
+        h1 += h2;
+        h1 = h1*5+0x52dce729;
+
+        k2 *= c2;
+        k2  = (k2 << 33) | (k2 >> (64 - 33));
+        k2 *= c1;
+        h2 ^= k2;
+
+        h2 = (h2 << 31) | (h2 >> (64 - 31));
+        h2 += h1;
+        h2 = h2*5+0x38495ab5;
+    }
+
+    k1 = k2 = 0;
+    switch (nbytes & 15) {
+        case 15:
+            k2 ^= (uint64_t)(tail[14]) << 48;
+        case 14:
+            k2 ^= (uint64_t)(tail[13]) << 40;
+        case 13:
+            k2 ^= (uint64_t)(tail[12]) << 32;
+        case 12:
+            k2 ^= (uint64_t)(tail[11]) << 24;
+        case 11:
+            k2 ^= (uint64_t)(tail[10]) << 16;
+        case 10:
+            k2 ^= (uint64_t)(tail[ 9]) << 8;
+        case  9:
+            k2 ^= (uint64_t)(tail[ 8]) << 0;
+            k2 *= c2;
+            k2  = (k2 << 33) | (k2 >> (64 - 33));
+            k2 *= c1;
+            h2 ^= k2;
+
+        case  8:
+            k1 ^= (uint64_t)(tail[ 7]) << 56;
+        case  7:
+            k1 ^= (uint64_t)(tail[ 6]) << 48;
+        case  6:
+            k1 ^= (uint64_t)(tail[ 5]) << 40;
+        case  5:
+            k1 ^= (uint64_t)(tail[ 4]) << 32;
+        case  4:
+            k1 ^= (uint64_t)(tail[ 3]) << 24;
+        case  3:
+            k1 ^= (uint64_t)(tail[ 2]) << 16;
+        case  2:
+            k1 ^= (uint64_t)(tail[ 1]) << 8;
+        case  1:
+            k1 ^= (uint64_t)(tail[ 0]) << 0;
+            k1 *= c1;
+            k1  = (k1 << 31) | (k1 >> (64 - 31));
+            k1 *= c2;
+            h1 ^= k1;
+    };
+
+    //----------
+    // finalization
+
+    h1 ^= nbytes;
+    h2 ^= nbytes;
+
+    h1 += h2;
+    h2 += h1;
+
+    h1 ^= h1 >> 33;
+    h1 *= 0xff51afd7ed558ccdULL;
+    h1 ^= h1 >> 33;
+    h1 *= 0xc4ceb9fe1a85ec53ULL;
+    h1 ^= h1 >> 33;
+
+    h2 ^= h2 >> 33;
+    h2 *= 0xff51afd7ed558ccdULL;
+    h2 ^= h2 >> 33;
+    h2 *= 0xc4ceb9fe1a85ec53ULL;
+    h2 ^= h2 >> 33;
+
+    h1 += h2;
+    h2 += h1;
+
+    ((uint64_t *)retbuf)[0] = h1;
+    ((uint64_t *)retbuf)[1] = h2;
 }

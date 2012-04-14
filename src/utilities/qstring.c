@@ -625,14 +625,19 @@ char *qstr_unique(const char *seed)
     usec = tv.tv_usec;
 #endif
 
-    char szSeed[128];
-    snprintf(szSeed, sizeof(szSeed), "%u%d%lu%ld%s",
+    char uniquestr[128];
+    snprintf(uniquestr, sizeof(uniquestr), "%u%d%lu%ld%s",
              getpid(),
              rand(),
              (unsigned long int)time(NULL),
              usec,
-             (seed!=NULL?seed:""));
-    return qhash_md5_str(szSeed, strlen(szSeed));
+             (seed != NULL) ? seed : "");
+
+    unsigned char md5hash[16];
+    qhashmd5(uniquestr, strlen(uniquestr), md5hash);
+    char *md5ascii = qhex_encode(md5hash, 16);
+
+    return md5ascii;
 }
 
 /**

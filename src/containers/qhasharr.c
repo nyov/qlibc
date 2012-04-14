@@ -280,7 +280,7 @@ static bool put(qhasharr_t *tbl, const char *key, const void *value,
     }
 
     // get hash integer
-    unsigned int hash = qhash_fnv32(key, strlen(key)) % tbl->maxslots;
+    unsigned int hash = qhashfnv32(key, strlen(key)) % tbl->maxslots;
 
     // check, is slot empty
     if (tbl->slots[hash].count == 0) { // empty slot
@@ -449,7 +449,7 @@ static void *get(qhasharr_t *tbl, const char *key, size_t *size)
     }
 
     // get hash integer
-    unsigned int hash = qhash_fnv32(key, strlen(key)) % tbl->maxslots;
+    unsigned int hash = qhashfnv32(key, strlen(key)) % tbl->maxslots;
 
     int idx = _get_idx(tbl, key, hash);
     if (idx < 0) {
@@ -592,7 +592,7 @@ static bool remove_(qhasharr_t *tbl, const char *key)
     }
 
     // get hash integer
-    unsigned int hash = qhash_fnv32(key, strlen(key)) % tbl->maxslots;
+    unsigned int hash = qhashfnv32(key, strlen(key)) % tbl->maxslots;
 
     int idx = _get_idx(tbl, key, hash);
     if (idx < 0) {
@@ -798,15 +798,14 @@ static int _get_idx(qhasharr_t *tbl, const char *key, unsigned int hash)
                         }
                     } else {
                         // key is truncated, compare MD5 also.
-                        unsigned char *keymd5 = qhash_md5(key, keylen);
+                        unsigned char keymd5[16];
+                        qhashmd5(key, keylen, keymd5);
                         if (!memcmp(key, tbl->slots[idx].data.pair.key,
                                     _Q_HASHARR_KEYSIZE) &&
                             !memcmp(keymd5, tbl->slots[idx].data.pair.keymd5,
                                     16)) {
-                            free(keymd5);
                             return idx;
                         }
-                        free(keymd5);
                     }
                 }
             }
@@ -877,7 +876,8 @@ static bool _put_data(qhasharr_t *tbl, int idx, unsigned int hash,
     }
 
     size_t keylen = strlen(key);
-    unsigned char *keymd5 = qhash_md5(key, keylen);
+    unsigned char keymd5[16];
+    qhashmd5(key, keylen, keymd5);
 
     // store key
     tbl->slots[idx].count = count;
@@ -886,8 +886,6 @@ static bool _put_data(qhasharr_t *tbl, int idx, unsigned int hash,
     memcpy((char *)tbl->slots[idx].data.pair.keymd5, (char *)keymd5, 16);
     tbl->slots[idx].data.pair.keylen = keylen;
     tbl->slots[idx].link = -1;
-
-    free(keymd5);
 
     // store value
     int newidx;

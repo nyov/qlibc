@@ -104,6 +104,7 @@ struct qdlobj_t {
  * doubly-linked-named-object data structure.
  */
 struct qdlnobj_t {
+    uint32_t hash;      /*!< 32bit-hash value of object name */
     char *name;         /*!< object name */
     void *data;         /*!< data */
     size_t size;        /*!< data size */
@@ -116,7 +117,7 @@ struct qdlnobj_t {
  * hashed-named-object data structure.
  */
 struct qhnobj_t {
-    uint32_t hash;      /*!< FNV32 hash value of object name */
+    uint32_t hash;      /*!< 32bit-hash value of object name */
     char *name;         /*!< object name */
     void *data;         /*!< data */
     size_t size;        /*!< data size */
@@ -538,11 +539,13 @@ extern char *qfile_correct_path(char *path);
 extern char *qfile_abspath(char *buf, size_t bufsize, const char *path);
 
 /* qhash.c */
-extern unsigned char *qhash_md5(const void *data, size_t nbytes);
-extern char *qhash_md5_str(const void *data, size_t nbytes);
-extern char *qhash_md5_file(const char *filepath, size_t *nbytes);
-extern uint32_t  qhash_fnv32(const void *data, size_t nbytes);
-extern uint64_t  qhash_fnv64(const void *data, size_t nbytes);
+extern bool qhashmd5(const void *data, size_t nbytes, void *retbuf);
+extern bool qhashmd5_file(const char *filepath, off_t offset, ssize_t nbytes,
+                          void *retbuf);
+extern uint32_t qhashfnv1_32(const void *data, size_t nbytes);
+extern uint64_t qhashfnv1_64(const void *data, size_t nbytes);
+extern uint32_t qhashmurmur3_32(const void *data, size_t nbytes);
+extern bool qhashmurmur3_128(const void *data, size_t nbytes, void *retbuf);
 
 /* qio.c */
 extern int qio_wait_readable(int fd, int timeoutms);

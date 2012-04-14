@@ -1031,9 +1031,11 @@ static void sort_(qlisttbl_t *tbl, bool descending)
             if ((strcmp(obj1->name, obj2->name) * adjustcmp) > 0) {
                 // swapping contents is faster than adjusting links.
                 tmpobj = *obj1;
+                obj1->hash = obj2->hash;
                 obj1->name = obj2->name;
                 obj1->data = obj2->data;
                 obj1->size = obj2->size;
+                obj2->hash = tmpobj.hash;
                 obj2->name = tmpobj.name;
                 obj2->data = tmpobj.data;
                 obj2->size = tmpobj.size;
@@ -1223,7 +1225,7 @@ static bool debug(qlisttbl_t *tbl, FILE *out)
     for (obj = tbl->first; obj; obj = obj->next) {
         fprintf(out, "%s=" , obj->name);
         _q_humanOut(out, obj->data, obj->size, MAX_HUMANOUT);
-        fprintf(out, " (%zu)\n" , obj->size);
+        fprintf(out, " (%zu,%4x)\n" , obj->size, obj->hash);
     }
     unlock(tbl);
 
@@ -1391,6 +1393,7 @@ static qdlnobj_t *_createobj(const char *name, const void *data, size_t size)
     memcpy(dup_data, data, size);
     memset((void *)obj, '\0', sizeof(qdlnobj_t));
 
+    // obj->hash = qhashfnv1_32(dup_name);
     obj->name = dup_name;
     obj->data = dup_data;
     obj->size = size;
@@ -1401,6 +1404,9 @@ static qdlnobj_t *_createobj(const char *name, const void *data, size_t size)
 // lock must be obtained from caller
 static bool _insertobj(qlisttbl_t *tbl, qdlnobj_t *obj)
 {
+    // update hash
+    obj->hash = qhashfnv1_32(obj->name, strlen(obj->name));
+
     qdlnobj_t *prev = obj->prev;
     qdlnobj_t *next = obj->next;
 
