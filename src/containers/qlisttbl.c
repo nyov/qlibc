@@ -182,15 +182,6 @@ static qdlnobj_t *_findobj(qlisttbl_t *tbl, const char *name,
                            bool first,
                            int (*cmp)(const char *s1, const char *s2),
                            qdlnobj_t *retobj);
-static qdlnobj_t *_findobj_unsorted(qlisttbl_t *tbl, const char *name,
-                                    bool first,
-                                    int (*cmp)(const char *s1, const char *s2),
-                                    qdlnobj_t *retobj);
-static qdlnobj_t *_findobj_sorted(qlisttbl_t *tbl, const char *name,
-                                  bool first,
-                                  int (*cmp)(const char *s1, const char *s2),
-                                  qdlnobj_t *retobj);
-
 #endif
 
 /**
@@ -832,9 +823,12 @@ static bool getnext(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
         return false;
     }
 
+    uint32_t hash = (name != NULL) ? qhashmurmur3_32(name, strlen(name)) : 0;
+
     bool ret = false;
     while (cont != NULL) {
-        if (name == NULL || !strcmp(cont->name, name)) {
+    if (name == NULL
+           || ((hash == cont->hash) && !strcmp(cont->name, name))) {
             if (newmem == true) {
                 obj->name = strdup(cont->name);
                 obj->data = malloc(cont->size);
@@ -880,8 +874,6 @@ static bool getnext(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
  * @param name  element name.
  *
  * @return a number of removed objects.
- * @retval errno will be set in error condition.
- *  - ENOENT : No such key found.
  */
 static size_t remove_(qlisttbl_t *tbl, const char *name)
 {
@@ -889,27 +881,15 @@ static size_t remove_(qlisttbl_t *tbl, const char *name)
 
     size_t numremoved = 0;
 
+    qdlnobj_t obj;
+    memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
     lock(tbl);
-    qdlnobj_t *obj;
-    for (obj = tbl->first; obj != NULL;) {
-        if (!strcmp(obj->name, name)) { // found
-            // copy next chain
-            qdlnobj_t *next = obj->next;
-
-            // remove object
-            bool removed = removeobj(tbl, obj);
-            numremoved += (removed == false) ? 0 : 1;
-
-            // set next object
-            obj = next;
-        } else {
-            // set next object
-            obj = obj->next;
-        }
+    while(getnext(tbl, &obj, name, false) == true) {
+        removeobj(tbl, &obj);
+        numremoved++;
     }
     unlock(tbl);
 
-    if (numremoved == 0) errno = ENOENT;
     return numremoved;
 }
 
@@ -1393,7 +1373,7 @@ static qdlnobj_t *_createobj(const char *name, const void *data, size_t size)
     memcpy(dup_data, data, size);
     memset((void *)obj, '\0', sizeof(qdlnobj_t));
 
-    // obj->hash = qhashfnv1_32(dup_name);
+    // obj->hash = qhashmurmur3_32(dup_name);
     obj->name = dup_name;
     obj->data = dup_data;
     obj->size = size;
@@ -1405,7 +1385,7 @@ static qdlnobj_t *_createobj(const char *name, const void *data, size_t size)
 static bool _insertobj(qlisttbl_t *tbl, qdlnobj_t *obj)
 {
     // update hash
-    obj->hash = qhashfnv1_32(obj->name, strlen(obj->name));
+    obj->hash = qhashmurmur3_32(obj->name, strlen(obj->name));
 
     qdlnobj_t *prev = obj->prev;
     qdlnobj_t *next = obj->next;
@@ -1428,21 +1408,6 @@ static qdlnobj_t *_findobj(qlisttbl_t *tbl, const char *name,
                            int (*cmp)(const char *s1, const char *s2),
                            qdlnobj_t *retobj)
 {
-    // unsorted table
-    if (tbl->sortflag == 0) {
-        return _findobj_unsorted(tbl, name, first, cmp, retobj);
-    }
-
-    // sorted table
-    return _findobj_sorted(tbl, name, first, cmp, retobj);
-}
-
-// lock must be obtained from caller
-static qdlnobj_t *_findobj_unsorted(qlisttbl_t *tbl, const char *name,
-                                    bool first,
-                                    int (*cmp)(const char *s1, const char *s2),
-                                    qdlnobj_t *retobj)
-{
     if (retobj != NULL) {
         memset((void *)retobj, '\0', sizeof(qdlnobj_t));
     }
@@ -1452,12 +1417,14 @@ static qdlnobj_t *_findobj_unsorted(qlisttbl_t *tbl, const char *name,
         return NULL;
     }
 
+    uint32_t hash = qhashmurmur3_32(name, strlen(name));
     qdlnobj_t *obj;
     if (first == true) obj = tbl->first;
     else obj = tbl->last;
     while (obj != NULL) {
-        if (!cmp(name, obj->name)) {
-            if (retobj != NULL) {
+        // name string will be compared only if the hash matches.
+        if (hash == obj->hash && !cmp(name, obj->name)) {
+           if (retobj != NULL) {
                 *retobj = *obj;
             }
             return obj;
@@ -1468,7 +1435,6 @@ static qdlnobj_t *_findobj_unsorted(qlisttbl_t *tbl, const char *name,
     }
 
     // not found, set prev and next chain.
-    errno = ENOENT;
     if (retobj != NULL) {
         if (tbl->putdir == false) {  // bottom
             retobj->prev = tbl->last;
@@ -1478,79 +1444,7 @@ static qdlnobj_t *_findobj_unsorted(qlisttbl_t *tbl, const char *name,
             retobj->next = tbl->first;
         }
     }
-
-    return NULL;
-}
-
-// lock must be obtained from caller
-static qdlnobj_t *_findobj_sorted(qlisttbl_t *tbl, const char *name,
-                                  bool first,
-                                  int (*cmp)(const char *s1, const char *s2),
-                                  qdlnobj_t *retobj)
-{
-    if (retobj != NULL) {
-        memset((void *)retobj, '\0', sizeof(qdlnobj_t));
-    }
-
-    if (name == NULL || tbl->num == 0) {
-        errno = ENOENT;
-        return NULL;
-    }
-
-    qdlnobj_t *obj = tbl->first;
-    qdlnobj_t *lastfound_obj = NULL;
-    int range_begin = 0;
-    int range_end = tbl->num - 1;
-    int cursor = 0;
-    int keycmp = 0;
-    while (range_begin <= range_end) {
-        // jump to center of the range
-        size_t range_center = range_begin + ((range_end - range_begin) / 2);
-        int stepincr = (range_center > cursor) ? 1 : -1;
-        while (cursor != range_center) {
-            obj = (stepincr > 0) ? obj->next : obj->prev;
-            cursor += stepincr;
-        }
-
-        // compare
-        keycmp = cmp(name, obj->name);
-        if (keycmp == 0) {
-            lastfound_obj = obj;  // save object pointer
-
-            // found a matching key but in order to find another key,
-            // we shouldn't stop at here.
-            if (first == true) range_end = cursor - 1; // first half
-            else range_begin = cursor + 1;  // last half
-        } else {
-            if ((tbl->sortflag == 1 && keycmp > 0) ||  // ascending
-                (tbl->sortflag == 2 && keycmp < 0)) {  // descending
-                range_begin = cursor + 1;  // last half
-            } else {
-                range_end = cursor - 1; // first half
-            }
-        }
-    }
-
-    // found
-    if (lastfound_obj != NULL) {
-        if (retobj != NULL) {
-            *retobj = *lastfound_obj;
-        }
-        return lastfound_obj;
-    }
-
-    // not found, set prev and next chain.
     errno = ENOENT;
-    if (retobj != NULL) {
-        if ((tbl->sortflag == 1 && keycmp > 0) ||  // ascending
-            (tbl->sortflag == 2 && keycmp < 0)) {  // descending
-            retobj->prev = obj;
-            retobj->next = obj->next;
-        } else {
-            retobj->prev = obj->prev;
-            retobj->next = obj;
-        }
-    }
 
     return NULL;
 }

@@ -329,7 +329,7 @@ uint32_t qhashmurmur3_32(const void *data, size_t nbytes)
  */
 bool qhashmurmur3_128(const void *data, size_t nbytes, void *retbuf)
 {
-    if (data == NULL || nbytes == 0) return 0;
+    if (data == NULL || nbytes == 0) return false;
 
     const uint64_t c1 = 0x87c37b91114253d5ULL;
     const uint64_t c2 = 0x4cf5ad432745937fULL;
@@ -435,4 +435,6 @@ bool qhashmurmur3_128(const void *data, size_t nbytes, void *retbuf)
 
     ((uint64_t *)retbuf)[0] = h1;
     ((uint64_t *)retbuf)[1] = h2;
+
+    return true;
 }

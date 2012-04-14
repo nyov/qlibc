@@ -222,7 +222,7 @@ static bool put(qhashtbl_t *tbl, const char *name, const void *data,
     }
 
     // get hash integer
-    uint32_t hash = qhashfnv1_32(name, strlen(name));
+    uint32_t hash = qhashmurmur3_32(name, strlen(name));
     int idx = hash % tbl->range;
 
     lock(tbl);
@@ -391,7 +391,7 @@ static void *get(qhashtbl_t *tbl, const char *name, size_t *size, bool newmem)
         return NULL;
     }
 
-    uint32_t hash = qhashfnv1_32(name, strlen(name));
+    uint32_t hash = qhashmurmur3_32(name, strlen(name));
     int idx = hash % tbl->range;
 
     lock(tbl);
@@ -601,7 +601,7 @@ static bool remove_(qhashtbl_t *tbl, const char *name)
 
     lock(tbl);
 
-    uint32_t hash = qhashfnv1_32(name, strlen(name));
+    uint32_t hash = qhashmurmur3_32(name, strlen(name));
     int idx = hash % tbl->range;
 
     // find key

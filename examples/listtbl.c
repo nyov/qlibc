@@ -46,11 +46,11 @@ int main(void)
     //
 
     // insert elements (key duplication allowed)
-    tbl->put(tbl, "e2", "object1", strlen("object1")+1, false);
-    tbl->putstr(tbl, "e1", "object2", false);
-    tbl->putstr(tbl, "e2", "object3", false);
-    tbl->putstr(tbl, "e3", "object4", false);
-    tbl->putint(tbl, "e2", 5, false);
+    tbl->put(tbl, "e1", "object1", strlen("object1")+1, false);
+    tbl->putstr(tbl, "e2", "object2", false);
+    tbl->putstr(tbl, "e3", "object3", false);
+    tbl->putstr(tbl, "e4", "object4", false);
+    tbl->putint(tbl, "e5", 5, false);
 
     // print out
     printf("--[Test 1 : adding elements]--\n");

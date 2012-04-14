@@ -280,7 +280,7 @@ static bool put(qhasharr_t *tbl, const char *key, const void *value,
     }
 
     // get hash integer
-    unsigned int hash = qhashfnv32(key, strlen(key)) % tbl->maxslots;
+    unsigned int hash = qhashmurmur3_32(key, strlen(key)) % tbl->maxslots;
 
     // check, is slot empty
     if (tbl->slots[hash].count == 0) { // empty slot
@@ -449,7 +449,7 @@ static void *get(qhasharr_t *tbl, const char *key, size_t *size)
     }
 
     // get hash integer
-    unsigned int hash = qhashfnv32(key, strlen(key)) % tbl->maxslots;
+    unsigned int hash = qhashmurmur3_32(key, strlen(key)) % tbl->maxslots;
 
     int idx = _get_idx(tbl, key, hash);
     if (idx < 0) {
@@ -592,7 +592,7 @@ static bool remove_(qhasharr_t *tbl, const char *key)
     }
 
     // get hash integer
-    unsigned int hash = qhashfnv32(key, strlen(key)) % tbl->maxslots;
+    unsigned int hash = qhashmurmur3_32(key, strlen(key)) % tbl->maxslots;
 
     int idx = _get_idx(tbl, key, hash);
     if (idx < 0) {
