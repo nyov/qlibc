@@ -69,7 +69,7 @@ int64_t qcount_read(const char *filepath)
     if (fd < 0) return 0;
 
     char buf[20+1];
-    ssize_t readed = qio_read(fd, buf, (sizeof(buf) - 1), 0);
+    ssize_t readed = read(fd, buf, (sizeof(buf) - 1));
     close(fd);
 
     int64_t num = 0;
@@ -98,7 +98,8 @@ bool qcount_save(const char *filepath, int64_t number)
     int fd = open(filepath, O_CREAT|O_WRONLY|O_TRUNC, DEF_FILE_MODE);
     if (fd < 0) return false;
 
-    ssize_t updated = qio_printf(fd, 0, "%"PRId64, number);
+    char *str = qstrdupf("%"PRId64, number);
+    ssize_t updated = write(fd, str, strlen(str));
     close(fd);
 
     if (updated > 0) return true;

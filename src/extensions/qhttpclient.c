@@ -96,7 +96,7 @@
  *  if(httpclient == NULL) return;
  *
  *  // set options
- *  httpclient->set_keepalive(httpclient, true);
+ *  httpclient->setkeepalive(httpclient, true);
  *
  *  // make a connection
  *  if(httpclient->open(httpclient) == false) return;
@@ -139,10 +139,10 @@
 #ifndef _DOXYGEN_SKIP
 
 static bool open_(qhttpclient_t *client);
-static bool set_ssl(qhttpclient_t *client);
-static void set_timeout(qhttpclient_t *client, int timeoutms);
-static void set_keepalive(qhttpclient_t *client, bool keepalive);
-static void set_useragent(qhttpclient_t *client, const char *agentname);
+static bool setssl(qhttpclient_t *client);
+static void settimeout(qhttpclient_t *client, int timeoutms);
+static void setkeepalive(qhttpclient_t *client, bool keepalive);
+static void setuseragent(qhttpclient_t *client, const char *agentname);
 
 static bool head(qhttpclient_t *client, const char *uri, int *rescode,
                  qlisttbl_t *reqheaders, qlisttbl_t *resheaders);
@@ -239,8 +239,8 @@ struct  SslConn {
  *
  * @note
  *  Keep-alive feature is turned off by default. Turn it on by calling
- *  set_keepalive(). If destname is URI string starting with
- *  "https://", set_ssl() will be called internally.
+ *  setkeepalive(). If destname is URI string starting with
+ *  "https://", setssl() will be called internally.
  */
 qhttpclient_t *qhttpclient(const char *destname, int port)
 {
@@ -273,14 +273,14 @@ qhttpclient_t *qhttpclient(const char *destname, int port)
     client->socket = -1;
 
     memcpy((void *)&client->addr, (void *)&addr, sizeof(client->addr));
-    client->hostname    = strdup(hostname);
-    client->port        = port;
+    client->hostname = strdup(hostname);
+    client->port     = port;
 
     // member methods
-    client->set_ssl         = set_ssl;
-    client->set_timeout     = set_timeout;
-    client->set_keepalive   = set_keepalive;
-    client->set_useragent   = set_useragent;
+    client->setssl          = setssl;
+    client->settimeout      = settimeout;
+    client->setkeepalive    = setkeepalive;
+    client->setuseragent    = setuseragent;
 
     client->open            = open_;
 
@@ -302,24 +302,24 @@ qhttpclient_t *qhttpclient(const char *destname, int port)
     client->free            = _free;
 
     // init client
-    set_timeout(client, 0);
-    set_keepalive(client, false);
-    set_useragent(client, _Q_PRGNAME "/" _Q_VERSION);
-    if (ishttps == true) set_ssl(client);
+    settimeout(client, 0);
+    setkeepalive(client, false);
+    setuseragent(client, _Q_PRGNAME "/" _Q_VERSION);
+    if (ishttps == true) setssl(client);
 
     return client;
 }
 
 /**
- * qhttpclient->set_ssl(): Sets connection to HTTPS connection
+ * qhttpclient->setssl(): Sets connection to HTTPS connection
  *
  * @param client    qhttpclient object pointer
  *
  * @code
- *   httpclient->set_ssl(httpclient);
+ *   httpclient->setssl(httpclient);
  * @endcode
  */
-static bool set_ssl(qhttpclient_t *client)
+static bool setssl(qhttpclient_t *client)
 {
 #ifdef  ENABLE_OPENSSL
     static bool initialized = false;
@@ -350,49 +350,49 @@ static bool set_ssl(qhttpclient_t *client)
 }
 
 /**
- * qhttpclient->set_timeout(): Sets connection wait timeout.
+ * qhttpclient->settimeout(): Sets connection wait timeout.
  *
  * @param client    qhttpclient object pointer
  * @param timeoutms timeout mili-seconds. 0 for system defaults
  *
  * @code
- *   httpclient->set_timeout(httpclient, 0);    // default
- *   httpclient->set_timeout(httpclient, 5000); // 5 seconds
+ *   httpclient->settimeout(httpclient, 0);    // default
+ *   httpclient->settimeout(httpclient, 5000); // 5 seconds
  * @endcode
  */
-static void set_timeout(qhttpclient_t *client, int timeoutms)
+static void settimeout(qhttpclient_t *client, int timeoutms)
 {
     if (timeoutms <= 0) timeoutms = -1;
     client->timeoutms = timeoutms;
 }
 
 /**
- * qhttpclient->set_keepalive(): Sets KEEP-ALIVE feature on/off.
+ * qhttpclient->setkeepalive(): Sets KEEP-ALIVE feature on/off.
  *
  * @param client    qhttpclient object pointer
  * @param keepalive true to set keep-alive on, false to set keep-alive off
  *
  * @code
- *   httpclient->set_keepalive(httpclient, true);  // keep-alive on
- *   httpclient->set_keepalive(httpclient, false); // keep-alive off
+ *   httpclient->setkeepalive(httpclient, true);  // keep-alive on
+ *   httpclient->setkeepalive(httpclient, false); // keep-alive off
  * @endcode
  */
-static void set_keepalive(qhttpclient_t *client, bool keepalive)
+static void setkeepalive(qhttpclient_t *client, bool keepalive)
 {
     client->keepalive = keepalive;
 }
 
 /**
- * qhttpclient->set_useragent(): Sets user-agent string.
+ * qhttpclient->setuseragent(): Sets user-agent string.
  *
  * @param client    qhttpclient object pointer
  * @param useragent user-agent string
  *
  * @code
- *   httpclient->set_useragent(httpclient, "MyAgent/1.0");
+ *   httpclient->setuseragent(httpclient, "MyAgent/1.0");
  * @endcode
  */
-static void set_useragent(qhttpclient_t *client, const char *useragent)
+static void setuseragent(qhttpclient_t *client, const char *useragent)
 {
     if (client->useragent != NULL) free(client->useragent);
     client->useragent = strdup(useragent);

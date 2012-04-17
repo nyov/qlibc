@@ -107,10 +107,10 @@ extern qhttpclient_t *qhttpclient(const char *hostname, int port);
 /* qhttpclient_t details */
 struct qhttpclient_t {
     /* capsulated member functions */
-    bool (*set_ssl) (qhttpclient_t *client);
-    void (*set_timeout) (qhttpclient_t *client, int timeoutms);
-    void (*set_keepalive) (qhttpclient_t *client, bool keepalive);
-    void (*set_useragent) (qhttpclient_t *client, const char *useragent);
+    bool (*setssl) (qhttpclient_t *client);
+    void (*settimeout) (qhttpclient_t *client, int timeoutms);
+    void (*setkeepalive) (qhttpclient_t *client, bool keepalive);
+    void (*setuseragent) (qhttpclient_t *client, const char *useragent);
 
     bool (*open) (qhttpclient_t *client);
 
@@ -119,12 +119,12 @@ struct qhttpclient_t {
     bool (*get) (qhttpclient_t *client, const char *uri, int fd,
                  off_t *savesize, int *rescode,
                  qlisttbl_t *reqheaders, qlisttbl_t *resheaders,
-                 bool (*callback)(void *userdata, off_t recvbytes),
+                 bool (*callback) (void *userdata, off_t recvbytes),
                  void *userdata);
     bool (*put) (qhttpclient_t *client, const char *uri, int fd,
                  off_t length, int *retcode, qlisttbl_t *userheaders,
                  qlisttbl_t *resheaders,
-                 bool (*callback)(void *userdata, off_t sentbytes),
+                 bool (*callback) (void *userdata, off_t sentbytes),
                  void *userdata);
     void *(*cmd) (qhttpclient_t *client,
                   const char *method, const char *uri,

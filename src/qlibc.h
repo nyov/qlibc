@@ -37,8 +37,8 @@
 #ifndef _QLIBC_H
 #define _QLIBC_H
 
-#define _Q_PRGNAME "qlibc"   /*!< qlibc human readable name */
-#define _Q_VERSION "2.0.1"  /*!< qlibc version number string */
+#define _Q_PRGNAME "qlibc"  /*!< qlibc human readable name */
+#define _Q_VERSION "2.0.2"  /*!< qlibc version number string */
 
 #ifdef __cplusplus
 extern "C" {
@@ -141,39 +141,39 @@ extern qlist_t *qlist(void);  /*!< qlist constructor */
  */
 struct qlist_t {
     /* capsulated member functions */
-    size_t (*setsize)(qlist_t *list, size_t max);
+    size_t (*setsize) (qlist_t *list, size_t max);
 
-    bool (*addfirst)(qlist_t *list, const void *data, size_t size);
-    bool (*addlast)(qlist_t *list, const void *data, size_t size);
-    bool (*addat)(qlist_t *list, int index, const void *data, size_t size);
+    bool (*addfirst) (qlist_t *list, const void *data, size_t size);
+    bool (*addlast) (qlist_t *list, const void *data, size_t size);
+    bool (*addat) (qlist_t *list, int index, const void *data, size_t size);
 
-    void *(*getfirst)(qlist_t *list, size_t *size, bool newmem);
-    void *(*getlast)(qlist_t *list, size_t *size, bool newmem);
-    void *(*getat)(qlist_t *list, int index, size_t *size, bool newmem);
-    bool (*getnext)(qlist_t *list, qdlobj_t *obj, bool newmem);
+    void *(*getfirst) (qlist_t *list, size_t *size, bool newmem);
+    void *(*getlast) (qlist_t *list, size_t *size, bool newmem);
+    void *(*getat) (qlist_t *list, int index, size_t *size, bool newmem);
+    bool (*getnext) (qlist_t *list, qdlobj_t *obj, bool newmem);
 
-    void *(*popfirst)(qlist_t *list, size_t *size);
-    void *(*poplast)(qlist_t *list, size_t *size);
-    void *(*popat)(qlist_t *list, int index, size_t *size);
+    void *(*popfirst) (qlist_t *list, size_t *size);
+    void *(*poplast) (qlist_t *list, size_t *size);
+    void *(*popat) (qlist_t *list, int index, size_t *size);
 
-    bool (*removefirst)(qlist_t *list);
-    bool (*removelast)(qlist_t *list);
-    bool (*removeat)(qlist_t *list, int index);
+    bool (*removefirst) (qlist_t *list);
+    bool (*removelast) (qlist_t *list);
+    bool (*removeat) (qlist_t *list, int index);
 
-    void (*reverse)(qlist_t *list);
-    void (*clear)(qlist_t *list);
+    void (*reverse) (qlist_t *list);
+    void (*clear) (qlist_t *list);
 
-    size_t (*size)(qlist_t *list);
-    size_t (*datasize)(qlist_t *list);
+    size_t (*size) (qlist_t *list);
+    size_t (*datasize) (qlist_t *list);
 
-    void *(*toarray)(qlist_t *list, size_t *size);
-    char *(*tostring)(qlist_t *list);
-    bool (*debug)(qlist_t *list, FILE *out);
+    void *(*toarray) (qlist_t *list, size_t *size);
+    char *(*tostring) (qlist_t *list);
+    bool (*debug) (qlist_t *list, FILE *out);
 
-    void (*lock)(qlist_t *list);
-    void (*unlock)(qlist_t *list);
+    void (*lock) (qlist_t *list);
+    void (*unlock) (qlist_t *list);
 
-    void (*free)(qlist_t *list);
+    void (*free) (qlist_t *list);
 
     /* private variables - do not access directly */
     qmutex_t qmutex;  /*!< activated if compiled with --enable-threadsafe */
@@ -201,54 +201,54 @@ extern qlisttbl_t *qlisttbl(void);  /*!< qlisttbl constructor */
  */
 struct qlisttbl_t {
     /* capsulated member functions */
-    int (*setsort)(qlisttbl_t *tbl, bool sort, bool descending);
-    bool (*setputdir)(qlisttbl_t *tbl, bool before);
-    bool (*setgetdir)(qlisttbl_t *tbl, bool forward);
-    bool (*setnextdir)(qlisttbl_t *tbl, bool backward);
+    int (*setsort) (qlisttbl_t *tbl, bool sort, bool descending);
+    bool (*setputdir) (qlisttbl_t *tbl, bool before);
+    bool (*setgetdir) (qlisttbl_t *tbl, bool forward);
+    bool (*setnextdir) (qlisttbl_t *tbl, bool backward);
 
-    bool (*put)(qlisttbl_t *tbl, const char *name, const void *data,
-                size_t size, bool replace);
-    bool (*putstr)(qlisttbl_t *tbl, const char *name, const char *str,
+    bool (*put) (qlisttbl_t *tbl, const char *name, const void *data,
+                 size_t size, bool replace);
+    bool (*putstr) (qlisttbl_t *tbl, const char *name, const char *str,
                     bool replace);
-    bool (*putstrf)(qlisttbl_t *tbl, bool replace, const char *name,
+    bool (*putstrf) (qlisttbl_t *tbl, bool replace, const char *name,
                      const char *format, ...);
-    bool (*putint)(qlisttbl_t *tbl, const char *name, int64_t num,
-                   bool replace);
+    bool (*putint) (qlisttbl_t *tbl, const char *name, int64_t num,
+                    bool replace);
 
-    void *(*get)(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem);
-    char *(*getstr)(qlisttbl_t *tbl, const char *name, bool newmem);
-    int64_t (*getint)(qlisttbl_t *tbl, const char *name);
+    void *(*get) (qlisttbl_t *tbl, const char *name, size_t *size, bool newmem);
+    char *(*getstr) (qlisttbl_t *tbl, const char *name, bool newmem);
+    int64_t (*getint) (qlisttbl_t *tbl, const char *name);
 
-    void *(*caseget)(qlisttbl_t *tbl, const char *name, size_t *size,
+    void *(*caseget) (qlisttbl_t *tbl, const char *name, size_t *size,
+                      bool newmem);
+    char *(*casegetstr) (qlisttbl_t *tbl, const char *name, bool newmem);
+    int64_t (*casegetint) (qlisttbl_t *tbl, const char *name);
+
+    qobj_t *(*getmulti) (qlisttbl_t *tbl, const char *name, bool newmem,
+                         size_t *numobjs);
+    void (*freemulti) (qobj_t *objs);
+
+    bool (*getnext) (qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
                      bool newmem);
-    char *(*casegetstr)(qlisttbl_t *tbl, const char *name, bool newmem);
-    int64_t (*casegetint)(qlisttbl_t *tbl, const char *name);
 
-    qobj_t *(*getmulti)(qlisttbl_t *tbl, const char *name, bool newmem,
-             size_t *numobjs);
-    void (*freemulti)(qobj_t *objs);
+    size_t (*remove) (qlisttbl_t *tbl, const char *name);
+    bool (*removeobj) (qlisttbl_t *tbl, const qdlnobj_t *obj);
 
-    bool (*getnext)(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
-                     bool newmem);
+    size_t (*size) (qlisttbl_t *tbl);
+    void (*sort) (qlisttbl_t *tbl, bool descending);
+    void (*reverse) (qlisttbl_t *tbl);
+    void (*clear) (qlisttbl_t *tbl);
 
-    size_t (*remove)(qlisttbl_t *tbl, const char *name);
-    bool (*removeobj)(qlisttbl_t *tbl, const qdlnobj_t *obj);
+    bool (*save) (qlisttbl_t *tbl, const char *filepath, char sepchar,
+                  bool encode);
+    ssize_t (*load) (qlisttbl_t *tbl, const char *filepath, char sepchar,
+                     bool decode);
+    bool (*debug) (qlisttbl_t *tbl, FILE *out);
 
-    size_t (*size)(qlisttbl_t *tbl);
-    void (*sort)(qlisttbl_t *tbl, bool descending);
-    void (*reverse)(qlisttbl_t *tbl);
-    void (*clear)(qlisttbl_t *tbl);
+    void (*lock) (qlisttbl_t *tbl);
+    void (*unlock) (qlisttbl_t *tbl);
 
-    bool (*save)(qlisttbl_t *tbl, const char *filepath, char sepchar,
-                 bool encode);
-    ssize_t (*load)(qlisttbl_t *tbl, const char *filepath, char sepchar,
-                    bool decode);
-    bool (*debug)(qlisttbl_t *tbl, FILE *out);
-
-    void (*lock)(qlisttbl_t *tbl);
-    void (*unlock)(qlisttbl_t *tbl);
-
-    void (*free)(qlisttbl_t *tbl);
+    void (*free) (qlisttbl_t *tbl);
 
     /* private variables - do not access directly */
     int  sortflag;  /*!< sort flag. 0:disabled, 1:ascending, 2:descending */
@@ -278,29 +278,29 @@ extern qhashtbl_t *qhashtbl(size_t range);  /*!< qhashtbl constructor */
  */
 struct qhashtbl_t {
     /* capsulated member functions */
-    bool (*put)(qhashtbl_t *tbl, const char *name, const void *data,
-                size_t size);
-    bool (*putstr)(qhashtbl_t *tbl, const char *name, const char *str);
-    bool (*putstrf)(qhashtbl_t *tbl, const char *name, const char *format,
+    bool (*put) (qhashtbl_t *tbl, const char *name, const void *data,
+                 size_t size);
+    bool (*putstr) (qhashtbl_t *tbl, const char *name, const char *str);
+    bool (*putstrf) (qhashtbl_t *tbl, const char *name, const char *format,
                      ...);
-    bool (*putint)(qhashtbl_t *tbl, const char *name, int64_t num);
+    bool (*putint) (qhashtbl_t *tbl, const char *name, int64_t num);
 
-    void *(*get)(qhashtbl_t *tbl, const char *name, size_t *size, bool newmem);
-    char *(*getstr)(qhashtbl_t *tbl, const char *name, bool newmem);
-    int64_t (*getint)(qhashtbl_t *tbl, const char *name);
+    void *(*get) (qhashtbl_t *tbl, const char *name, size_t *size, bool newmem);
+    char *(*getstr) (qhashtbl_t *tbl, const char *name, bool newmem);
+    int64_t (*getint) (qhashtbl_t *tbl, const char *name);
 
-    bool (*getnext)(qhashtbl_t *tbl, qhnobj_t *obj, bool newmem);
+    bool (*getnext) (qhashtbl_t *tbl, qhnobj_t *obj, bool newmem);
 
-    bool (*remove)(qhashtbl_t *tbl, const char *name);
+    bool (*remove) (qhashtbl_t *tbl, const char *name);
 
-    size_t (*size)(qhashtbl_t *tbl);
-    void (*clear)(qhashtbl_t *tbl);
-    bool (*debug)(qhashtbl_t *tbl, FILE *out);
+    size_t (*size) (qhashtbl_t *tbl);
+    void (*clear) (qhashtbl_t *tbl);
+    bool (*debug) (qhashtbl_t *tbl, FILE *out);
 
-    void (*lock)(qhashtbl_t *tbl);
-    void (*unlock)(qhashtbl_t *tbl);
+    void (*lock) (qhashtbl_t *tbl);
+    void (*unlock) (qhashtbl_t *tbl);
 
-    void (*free)(qhashtbl_t *tbl);
+    void (*free) (qhashtbl_t *tbl);
 
     /* private variables - do not access directly */
     qmutex_t qmutex;    /*!< activated if compiled with --enable-threadsafe */
@@ -359,22 +359,22 @@ struct _Q_HASHARR_SLOT {
  */
 struct qhasharr_t {
     /* capsulated member functions */
-    bool (*put)(qhasharr_t *tbl, const char *key, const void *value,
-                size_t size);
-    bool (*putstr)(qhasharr_t *tbl, const char *key, const char *str);
-    bool (*putstrf)(qhasharr_t *tbl, const char *key, const char *format, ...);
-    bool (*putint)(qhasharr_t *tbl, const char *key, int64_t num);
+    bool (*put) (qhasharr_t *tbl, const char *key, const void *value,
+                 size_t size);
+    bool (*putstr) (qhasharr_t *tbl, const char *key, const char *str);
+    bool (*putstrf) (qhasharr_t *tbl, const char *key, const char *format, ...);
+    bool (*putint) (qhasharr_t *tbl, const char *key, int64_t num);
 
-    void *(*get)(qhasharr_t *tbl, const char *key, size_t *size);
-    char *(*getstr)(qhasharr_t *tbl, const char *key);
-    int64_t (*getint)(qhasharr_t *tbl, const char *key);
-    bool (*getnext)(qhasharr_t *tbl, qnobj_t *obj, int *idx);
+    void *(*get) (qhasharr_t *tbl, const char *key, size_t *size);
+    char *(*getstr) (qhasharr_t *tbl, const char *key);
+    int64_t (*getint) (qhasharr_t *tbl, const char *key);
+    bool (*getnext) (qhasharr_t *tbl, qnobj_t *obj, int *idx);
 
-    bool (*remove)(qhasharr_t *tbl, const char *key);
+    bool (*remove) (qhasharr_t *tbl, const char *key);
 
-    int  (*size)(qhasharr_t *tbl, int *maxslots, int *usedslots);
-    void (*clear)(qhasharr_t *tbl);
-    bool (*debug)(qhasharr_t *tbl, FILE *out);
+    int  (*size) (qhasharr_t *tbl, int *maxslots, int *usedslots);
+    void (*clear) (qhasharr_t *tbl);
+    bool (*debug) (qhasharr_t *tbl, FILE *out);
 
     /* private variables - do not access directly */
     qmutex_t  qmutex;  /*!< activated if compiled with --enable-threadsafe */
@@ -589,7 +589,7 @@ extern char *qstrtok(char *str, const char *delimiters, char *retstop,
 extern qlist_t *qstr_tokenizer(const char *str, const char *delimiters);
 extern char *qstr_comma_number(int number);
 extern char *qstr_unique(const char *seed);
-extern bool qstrtest(int (*testfunc)(int), const char *str);
+extern bool qstrtest(int (*testfunc) (int), const char *str);
 extern bool qstr_is_email(const char *email);
 extern bool qstr_is_ip4addr(const char *str);
 extern char *qstr_conv_encoding(const char *fromstr, const char *fromcode,
@@ -609,7 +609,7 @@ extern char *qtime_gmt_strf(char *buf, int size, time_t utctime,
                             const char *format);
 extern char *qtime_gmt_str(time_t utctime);
 extern const char *qtime_gmt_staticstr(time_t utctime);
-extern time_t  qtime_parse_gmtstr(const char *gmtstr);
+extern time_t qtime_parse_gmtstr(const char *gmtstr);
 
 /******************************************************************************
  * IPC SECTION

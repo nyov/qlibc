@@ -189,7 +189,7 @@
  */
 
 extern char _q_x2c(char hex_up, char hex_low);
-extern char    *_q_makeword(char *str, char stop);
+extern char *_q_makeword(char *str, char stop);
 extern void _q_humanOut(FILE *fp, void *data, size_t size, size_t max);
 
 #endif  /* _QINTERNAL_H */
