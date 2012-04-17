@@ -38,7 +38,9 @@ CPPFLAGS	= -I../src/ @CPPFLAGS@
 RM		= @RM@
 DEPLIBS		= @DEPLIBS@
 
-TARGETS		= list listtbl hashtbl hasharr vector vector_obj queue stack config
+TARGETS1	= list listtbl hashtbl hasharr vector vector_obj queue stack config
+TARGETS2	= list listtbl hashtbl hasharr vector vector_obj queue stack
+TARGETS		= ${@EXAMPLES_TARGETS@}
 LIBQLIBC	= ../src/libqlibc.a ${DEPLIBS}
 LIBQLIBCEXT	= ../src/libqlibcext.a
 

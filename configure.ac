@@ -82,6 +82,7 @@ AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile src/Makefile examples/Makefile])
 AC_SUBST(BUILD_TARGETS, ["qlibc qlibcext"])
 AC_SUBST(INSTALL_TARGETS, ["install-qlibc install-qlibcext"])
+AC_SUBST(EXAMPLES_TARGETS, ["TARGETS1"])
 AC_SUBST(DEPLIBS, [""])
 
 ## Set path
@@ -160,6 +161,7 @@ Q_ARG_DISABLE([ext], [Disable building qlibext extension library.], [])
 if test "$enableval" = no; then
 	AC_SUBST(BUILD_TARGETS, ["qlibc"])
 	AC_SUBST(INSTALL_TARGETS, ["install-qlibc"])
+	AC_SUBST(EXAMPLES_TARGETS, ["TARGETS2"])
 fi
 #Q_ARG_DISABLE([ext-all], [Disable all extension APIs in src/extensions directory.], [-DDISABLE_QCONFIG -DDISABLE_QLOG -DDISABLE_QHTTPCLIENT -DDISABLE_QDATABASE])
 Q_ARG_DISABLE([ext-qconfig], [Disable qconfig extension in qlibext library.], [-DDISABLE_QCONFIG])
