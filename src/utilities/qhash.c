@@ -251,7 +251,7 @@ uint64_t qhashfnv1_64(const void *data, size_t nbytes)
  *
  *    https://sites.google.com/site/murmurhash/
  *
- *  Seungyoung Kim has ported it's ccannonical implementation in C language
+ *  Seungyoung Kim has ported it's cannonical implementation in C language
  *  in 2012 and published it as a part of qLibc component.
  * @endcode
  */
