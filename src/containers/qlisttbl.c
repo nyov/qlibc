@@ -1090,6 +1090,11 @@ static void clear(qlisttbl_t *tbl)
 static bool save(qlisttbl_t *tbl, const char *filepath, char sepchar,
                  bool encode)
 {
+    if (filepath == NULL) {
+        errno = EINVAL;
+        return false;
+    }
+
     int fd;
     if ((fd = open(filepath, O_CREAT|O_WRONLY|O_TRUNC, DEF_FILE_MODE)) < 0) {
         DEBUG("qlisttbl->save(): Can't open file %s", filepath);
