@@ -219,11 +219,6 @@ struct qlisttbl_t {
     char *(*getstr) (qlisttbl_t *tbl, const char *name, bool newmem);
     int64_t (*getint) (qlisttbl_t *tbl, const char *name);
 
-    void *(*caseget) (qlisttbl_t *tbl, const char *name, size_t *size,
-                      bool newmem);
-    char *(*casegetstr) (qlisttbl_t *tbl, const char *name, bool newmem);
-    int64_t (*casegetint) (qlisttbl_t *tbl, const char *name);
-
     qobj_t *(*getmulti) (qlisttbl_t *tbl, const char *name, bool newmem,
                          size_t *numobjs);
     void (*freemulti) (qobj_t *objs);

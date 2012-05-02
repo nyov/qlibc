@@ -1182,14 +1182,14 @@ static bool sendrequest(qhttpclient_t *client, const char *method,
     }
 
     // append default headers
-    if (reqheaders->caseget(reqheaders, "Host", NULL, false) == NULL) {
+    if (reqheaders->get(reqheaders, "Host", NULL, false) == NULL) {
         reqheaders->putstrf(reqheaders, true, "Host", "%s:%d",
                             client->hostname, client->port);
     }
-    if (reqheaders->caseget(reqheaders, "User-Agent", NULL, false) == NULL) {
+    if (reqheaders->get(reqheaders, "User-Agent", NULL, false) == NULL) {
         reqheaders->putstr(reqheaders, "User-Agent", client->useragent, true);
     }
-    if (reqheaders->caseget(reqheaders, "Connection", NULL, false) == NULL) {
+    if (reqheaders->get(reqheaders, "Connection", NULL, false) == NULL) {
         reqheaders->putstr(reqheaders, "Connection",
                            (client->keepalive==true) ? "Keep-Alive" : "close",
                            true);

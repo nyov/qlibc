@@ -139,11 +139,6 @@ static void *get(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem);
 static char *getstr(qlisttbl_t *tbl, const char *name, bool newmem);
 static int64_t getint(qlisttbl_t *tbl, const char *name);
 
-static void *caseget(qlisttbl_t *tbl, const char *name, size_t *size,
-                     bool newmem);
-static char *casegetstr(qlisttbl_t *tbl, const char *name, bool newmem);
-static int64_t casegetint(qlisttbl_t *tbl, const char *name);
-
 static qobj_t *getmulti(qlisttbl_t *tbl, const char *name, bool newmem,
                         size_t *numobjs);
 static void freemulti(qobj_t *objs);
@@ -173,13 +168,12 @@ static void free_(qlisttbl_t *tbl);
 static bool _put(qlisttbl_t *tbl, const char *name, const void *data,
                  size_t size, bool unique, bool first);
 static void *_get(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem,
-                  bool first, int (*cmp)(const char *s1, const char *s2));
+                  bool first);
 
 static qdlnobj_t *_createobj(const char *name, const void *data, size_t size);
 static bool _insertobj(qlisttbl_t *tbl, qdlnobj_t *obj);
 static qdlnobj_t *_findobj(qlisttbl_t *tbl, const char *name,
                            bool first,
-                           int (*cmp)(const char *s1, const char *s2),
                            qdlnobj_t *retobj);
 #endif
 
@@ -220,10 +214,6 @@ qlisttbl_t *qlisttbl(void)
     tbl->get        = get;
     tbl->getstr     = getstr;
     tbl->getint     = getint;
-
-    tbl->caseget    = caseget;
-    tbl->casegetstr = casegetstr;
-    tbl->casegetint = casegetint;
 
     tbl->getmulti   = getmulti;
     tbl->freemulti  = freemulti;
@@ -512,7 +502,7 @@ static bool putint(qlisttbl_t *tbl, const char *name, int64_t num, bool unique)
  */
 static void *get(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem)
 {
-    return _get(tbl, name, size, newmem, tbl->getdir, strcmp);
+    return _get(tbl, name, size, newmem, tbl->getdir);
 }
 
 /**
@@ -551,72 +541,6 @@ static int64_t getint(qlisttbl_t *tbl, const char *name)
 {
     int64_t num = 0;
     char *str = getstr(tbl, name, true);
-    if (str != NULL) {
-        num = atoll(str);
-        free(str);
-    }
-    return num;
-}
-
-/**
- * qlisttbl->caseget(): Finds an object with given name. (case-insensitive)
- * If there are duplicate keys in the table, this will return the first matched
- * one from the top or bottom depending on setgetdir() setting. By default,
- * it'll return the first matched one from the bottom of table. So in case,
- * there are duplicated keys, it'll return the newly inserted one unless
- * setputdir() is set in the other way.
- *
- * @param tbl qlisttbl container pointer.
- * @param name element name.
- * @param size if size is not NULL, data size will be stored.
- * @param newmem whether or not to allocate memory for the data.
- *
- * @return a pointer of data if key is found, otherwise returns NULL.
- * @retval errno will be set in error condition.
- *  - ENOENT : No such key found.
- *  - EINVAL : Invalid argument.
- *  - ENOMEM : Memory allocation failure.
- */
-static void *caseget(qlisttbl_t *tbl, const char *name, size_t *size,
-                     bool newmem)
-{
-    return _get(tbl, name, size, newmem, tbl->getdir, strcasecmp);
-}
-
-/**
- * qlisttbl->casegetstr(): same as getstr() but case-insensitive.
- *
- * @param tbl qlisttbl container pointer.
- * @param name element name.
- * @param newmem whether or not to allocate memory for the data.
- *
- * @return a pointer of data if key is found, otherwise returns NULL.
- * @retval errno will be set in error condition.
- *  - ENOENT : No such key found.
- *  - EINVAL : Invalid argument.
- *  - ENOMEM : Memory allocation failure.
- */
-static char *casegetstr(qlisttbl_t *tbl, const char *name, bool newmem)
-{
-    return (char *)caseget(tbl, name, NULL, newmem);
-}
-
-/**
- * qlisttbl->casegetint(): same as getint() but case-insensitive.
- *
- * @param tbl qlisttbl container pointer.
- * @param name element name.
- *
- * @return an integer value of the integer object, otherwise returns 0.
- * @retval errno will be set in error condition.
- *  - ENOENT : No such key found.
- *  - EINVAL : Invalid argument.
- *  - ENOMEM : Memory allocation failure.
- */
-static int64_t casegetint(qlisttbl_t *tbl, const char *name)
-{
-    int64_t num = 0;
-    char *str = caseget(tbl, name, NULL, true);
     if (str != NULL) {
         num = atoll(str);
         free(str);
@@ -798,7 +722,7 @@ static bool getnext(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
             if (tbl->nextdir == false) cont = tbl->first;
             else cont = tbl->last;
         } else {  // name search
-            cont = _findobj(tbl, name, !(tbl->nextdir), strcmp, NULL);
+            cont = _findobj(tbl, name, !(tbl->nextdir), NULL);
         }
     } else {  // next call
         if (tbl->nextdir == false) cont = obj->next;
@@ -815,8 +739,7 @@ static bool getnext(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
 
     bool ret = false;
     while (cont != NULL) {
-    if (name == NULL
-           || ((hash == cont->hash) && !strcmp(cont->name, name))) {
+        if (name == NULL || ((hash == cont->hash) && !strcmp(cont->name, name))) {
             if (newmem == true) {
                 obj->name = strdup(cont->name);
                 obj->data = malloc(cont->size);
@@ -828,12 +751,12 @@ static bool getnext(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
                     errno = ENOMEM;
                     break;
                 }
-
                 memcpy(obj->data, cont->data, cont->size);
             } else {
                 obj->name = cont->name;
                 obj->data = cont->data;
             }
+            obj->hash = cont->hash;
             obj->size = cont->size;
             obj->prev = cont->prev;
             obj->next = cont->next;
@@ -1286,7 +1209,7 @@ static bool _put(qlisttbl_t *tbl, const char *name, const void *data,
             }
         } else {  // sorted table
             qdlnobj_t posobj;
-            qdlnobj_t *matchobj = _findobj(tbl, name, first, strcmp, &posobj);
+            qdlnobj_t *matchobj = _findobj(tbl, name, first, &posobj);
             if (matchobj == NULL) {
                 obj->prev = posobj.prev;
                 obj->next = posobj.next;
@@ -1308,7 +1231,7 @@ static bool _put(qlisttbl_t *tbl, const char *name, const void *data,
 }
 
 static void *_get(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem,
-                  bool first, int (*cmp)(const char *s1, const char *s2))
+                  bool first)
 {
     if (name == NULL) {
         errno = EINVAL;
@@ -1317,7 +1240,7 @@ static void *_get(qlisttbl_t *tbl, const char *name, size_t *size, bool newmem,
 
     lock(tbl);
     void *data = NULL;
-    qdlnobj_t *obj = _findobj(tbl, name, first, cmp, NULL);
+    qdlnobj_t *obj = _findobj(tbl, name, first, NULL);
     if (obj != NULL) {
         // get data
         if (newmem == true) {
@@ -1398,7 +1321,6 @@ static bool _insertobj(qlisttbl_t *tbl, qdlnobj_t *obj)
 // lock must be obtained from caller
 static qdlnobj_t *_findobj(qlisttbl_t *tbl, const char *name,
                            bool first,
-                           int (*cmp)(const char *s1, const char *s2),
                            qdlnobj_t *retobj)
 {
     if (retobj != NULL) {
@@ -1416,7 +1338,7 @@ static qdlnobj_t *_findobj(qlisttbl_t *tbl, const char *name,
     else obj = tbl->last;
     while (obj != NULL) {
         // name string will be compared only if the hash matches.
-        if (hash == obj->hash && !cmp(name, obj->name)) {
+        if (hash == obj->hash && !strcmp(name, obj->name)) {
            if (retobj != NULL) {
                 *retobj = *obj;
             }
