@@ -553,7 +553,7 @@ char *qstrtok(char *str, const char *delimiters, char *retstop, int *offset)
  *   tokens->free(tokens);
  * @endcode
  */
-qlist_t *qstr_tokenizer(const char *str, const char *delimiters)
+qlist_t *qstrtokenizer(const char *str, const char *delimiters)
 {
     qlist_t *list = qlist();
     if (list == NULL) return NULL;
@@ -570,6 +570,46 @@ qlist_t *qstr_tokenizer(const char *str, const char *delimiters)
     free(dupstr);
 
     return list;
+}
+
+/**
+ * Generate unique id
+ *
+ * @param seed      additional seed string. this can be NULL
+ *
+ * @return a pointer of malloced string
+ *
+ * @note
+ *  The length of returned string is 32+1 bytes long including terminating NULL
+ *  character. It's a good idea to call srand() once before calling this because
+ *  it uses rand().
+ */
+char *qstrunique(const char *seed)
+{
+    long int usec;
+#ifdef _WIN32
+    FILETIME ft;
+    GetSystemTimeAsFileTime(&ft);
+    usec = ft.dwLowDateTime % 1000000;
+#else
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    usec = tv.tv_usec;
+#endif
+
+    char uniquestr[128];
+    snprintf(uniquestr, sizeof(uniquestr), "%u%d%lu%ld%s",
+             getpid(),
+             rand(),
+             (unsigned long int)time(NULL),
+             usec,
+             (seed != NULL) ? seed : "");
+
+    unsigned char md5hash[16];
+    qhashmd5(uniquestr, strlen(uniquestr), md5hash);
+    char *md5ascii = qhex_encode(md5hash, 16);
+
+    return md5ascii;
 }
 
 /**
@@ -598,46 +638,6 @@ char *qstr_comma_number(int number)
     *strp = '\0';
 
     return str;
-}
-
-/**
- * Generate unique id
- *
- * @param seed      additional seed string. this can be NULL
- *
- * @return a pointer of malloced string
- *
- * @note
- *  The length of returned string is 32+1 bytes long including terminating NULL
- *  character. It's a good idea to call srand() once before calling this because
- *  it uses rand().
- */
-char *qstr_unique(const char *seed)
-{
-    long int usec;
-#ifdef _WIN32
-    FILETIME ft;
-    GetSystemTimeAsFileTime(&ft);
-    usec = ft.dwLowDateTime % 1000000;
-#else
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    usec = tv.tv_usec;
-#endif
-
-    char uniquestr[128];
-    snprintf(uniquestr, sizeof(uniquestr), "%u%d%lu%ld%s",
-             getpid(),
-             rand(),
-             (unsigned long int)time(NULL),
-             usec,
-             (seed != NULL) ? seed : "");
-
-    unsigned char md5hash[16];
-    qhashmd5(uniquestr, strlen(uniquestr), md5hash);
-    char *md5ascii = qhex_encode(md5hash, 16);
-
-    return md5ascii;
 }
 
 /**

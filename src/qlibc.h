@@ -581,9 +581,9 @@ extern char *qstrupper(char *str);
 extern char *qstrlower(char *str);
 extern char *qstrtok(char *str, const char *delimiters, char *retstop,
                      int *offset);
-extern qlist_t *qstr_tokenizer(const char *str, const char *delimiters);
+extern qlist_t *qstrtokenizer(const char *str, const char *delimiters);
+extern char *qstrunique(const char *seed);
 extern char *qstr_comma_number(int number);
-extern char *qstr_unique(const char *seed);
 extern bool qstrtest(int (*testfunc) (int), const char *str);
 extern bool qstr_is_email(const char *email);
 extern bool qstr_is_ip4addr(const char *str);
