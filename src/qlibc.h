@@ -55,17 +55,17 @@ extern "C" {
  * COMMON DATA STRUCTURES
  ******************************************************************************/
 
-typedef struct qmutex_t qmutex_t;    /*!< qlibc pthread mutex type*/
-typedef struct qobj_t qobj_t;        /*!< object type*/
-typedef struct qnobj_t qnobj_t;      /*!< named-object type*/
-typedef struct qdlobj_t qdlobj_t;    /*!< doubly-linked-object type*/
-typedef struct qdlnobj_t qdlnobj_t;  /*!< doubly-linked-named-object type*/
-typedef struct qhnobj_t qhnobj_t;    /*!< hashed-named-object type*/
+typedef struct qmutex_s qmutex_t;    /*!< qlibc pthread mutex type*/
+typedef struct qobj_s qobj_t;        /*!< object type*/
+typedef struct qnobj_s qnobj_t;      /*!< named-object type*/
+typedef struct qdlobj_s qdlobj_t;    /*!< doubly-linked-object type*/
+typedef struct qdlnobj_s qdlnobj_t;  /*!< doubly-linked-named-object type*/
+typedef struct qhnobj_s qhnobj_t;    /*!< hashed-named-object type*/
 
 /**
  * qlibc pthread mutex data structure.
  */
-struct qmutex_t {
+struct qmutex_s {
     pthread_mutex_t mutex;  /*!< pthread mutex */
     pthread_t owner;        /*!< mutex owner thread id */
     int count;              /*!< recursive lock counter */
@@ -74,7 +74,7 @@ struct qmutex_t {
 /**
  * object data structure.
  */
-struct qobj_t {
+struct qobj_s {
     void *data;         /*!< data */
     size_t size;        /*!< data size */
     uint8_t type;       /*!< data type */
@@ -83,7 +83,7 @@ struct qobj_t {
 /**
  * named-object data structure.
  */
-struct qnobj_t {
+struct qnobj_s {
     char *name;         /*!< object name */
     void *data;         /*!< data */
     size_t size;        /*!< data size */
@@ -92,7 +92,7 @@ struct qnobj_t {
 /**
  * doubly-linked-object data structure.
  */
-struct qdlobj_t {
+struct qdlobj_s {
     void *data;         /*!< data */
     size_t size;        /*!< data size */
 
@@ -103,7 +103,7 @@ struct qdlobj_t {
 /**
  * doubly-linked-named-object data structure.
  */
-struct qdlnobj_t {
+struct qdlnobj_s {
     uint32_t hash;      /*!< 32bit-hash value of object name */
     char *name;         /*!< object name */
     void *data;         /*!< data */
@@ -116,7 +116,7 @@ struct qdlnobj_t {
 /**
  * hashed-named-object data structure.
  */
-struct qhnobj_t {
+struct qhnobj_s {
     uint32_t hash;      /*!< 32bit-hash value of object name */
     char *name;         /*!< object name */
     void *data;         /*!< data */
@@ -131,7 +131,7 @@ struct qhnobj_t {
  ******************************************************************************/
 
 /* types */
-typedef struct qlist_t qlist_t;
+typedef struct qlist_s qlist_t;
 
 /* public functions */
 extern qlist_t *qlist(void);  /*!< qlist constructor */
@@ -139,7 +139,7 @@ extern qlist_t *qlist(void);  /*!< qlist constructor */
 /**
  * qlist container
  */
-struct qlist_t {
+struct qlist_s {
     /* capsulated member functions */
     size_t (*setsize) (qlist_t *list, size_t max);
 
@@ -191,7 +191,7 @@ struct qlist_t {
  ******************************************************************************/
 
 /* types */
-typedef struct qlisttbl_t qlisttbl_t;
+typedef struct qlisttbl_s qlisttbl_t;
 
 /* public functions */
 extern qlisttbl_t *qlisttbl(void);  /*!< qlisttbl constructor */
@@ -199,7 +199,7 @@ extern qlisttbl_t *qlisttbl(void);  /*!< qlisttbl constructor */
 /**
  * qlisttbl container
  */
-struct qlisttbl_t {
+struct qlisttbl_s {
     /* capsulated member functions */
     int (*setsort) (qlisttbl_t *tbl, bool sort, bool descending);
     bool (*setputdir) (qlisttbl_t *tbl, bool before);
@@ -263,7 +263,7 @@ struct qlisttbl_t {
  ******************************************************************************/
 
 /* types */
-typedef struct qhashtbl_t qhashtbl_t;
+typedef struct qhashtbl_s qhashtbl_t;
 
 /* public functions */
 extern qhashtbl_t *qhashtbl(size_t range);  /*!< qhashtbl constructor */
@@ -271,7 +271,7 @@ extern qhashtbl_t *qhashtbl(size_t range);  /*!< qhashtbl constructor */
 /**
  * qhashtbl container
  */
-struct qhashtbl_t {
+struct qhashtbl_s {
     /* capsulated member functions */
     bool (*put) (qhashtbl_t *tbl, const char *name, const void *data,
                  size_t size);
@@ -314,7 +314,8 @@ struct qhashtbl_t {
 #define _Q_HASHARR_VALUESIZE (32)  /*!< knob for maximum data size in a slot. */
 
 /* types */
-typedef struct qhasharr_t qhasharr_t;
+typedef struct qhasharr_s qhasharr_t;
+typedef struct qhasharr_slot_s qhasharr_slot_t;
 
 /* public functions */
 extern qhasharr_t *qhasharr(void *memory, size_t memsize);
@@ -323,7 +324,7 @@ extern size_t qhasharr_calculate_memsize(int max);
 /**
  * qhasharr internal data slot structure
  */
-struct _Q_HASHARR_SLOT {
+struct qhasharr_slot_s {
     short  count;   /*!< hash collision counter. 0 indicates empty slot,
                      -1 is used for collision resolution, -2 is used for
                      indicating linked block */
@@ -352,7 +353,7 @@ struct _Q_HASHARR_SLOT {
 /**
  * qhasharr container
  */
-struct qhasharr_t {
+struct qhasharr_s {
     /* capsulated member functions */
     bool (*put) (qhasharr_t *tbl, const char *key, const void *value,
                  size_t size);
@@ -372,11 +373,11 @@ struct qhasharr_t {
     bool (*debug) (qhasharr_t *tbl, FILE *out);
 
     /* private variables - do not access directly */
-    qmutex_t  qmutex;  /*!< activated if compiled with --enable-threadsafe */
-    int maxslots;  /*!< number of maximum slots */
-    int usedslots;  /*!< number of used slots */
-    int num;  /*!< number of stored keys */
-    struct _Q_HASHARR_SLOT  *slots;  /*!< data area pointer */
+    qmutex_t  qmutex;   /*!< activated if compiled with --enable-threadsafe */
+    int maxslots;       /*!< number of maximum slots */
+    int usedslots;      /*!< number of used slots */
+    int num;            /*!< number of stored keys */
+    qhasharr_slot_t *slots;  /*!< data area pointer */
 };
 
 /******************************************************************************
@@ -385,7 +386,7 @@ struct qhasharr_t {
  ******************************************************************************/
 
 /* types */
-typedef struct qvector_t qvector_t;
+typedef struct qvector_s qvector_t;
 
 /* public functions */
 extern qvector_t *qvector(void);
@@ -393,7 +394,7 @@ extern qvector_t *qvector(void);
 /**
  * qvector container.
  */
-struct qvector_t {
+struct qvector_s {
     /* capsulated member functions */
     bool (*add) (qvector_t *vector, const void *data, size_t size);
     bool (*addstr) (qvector_t *vector, const char *str);
@@ -419,7 +420,7 @@ struct qvector_t {
  ******************************************************************************/
 
 /* types */
-typedef struct qqueue_t qqueue_t;
+typedef struct qqueue_s qqueue_t;
 
 /* public functions */
 extern qqueue_t *qqueue();
@@ -427,7 +428,7 @@ extern qqueue_t *qqueue();
 /**
  * qvector container.
  */
-struct qqueue_t {
+struct qqueue_s {
     /* capsulated member functions */
     size_t (*setsize) (qqueue_t *stack, size_t max);
 
@@ -460,7 +461,7 @@ struct qqueue_t {
  ******************************************************************************/
 
 /* types */
-typedef struct qstack_t qstack_t;
+typedef struct qstack_s qstack_t;
 
 /* public functions */
 extern qstack_t *qstack();
@@ -468,7 +469,7 @@ extern qstack_t *qstack();
 /**
  * Structure for array-based circular-queue data structure.
  */
-struct qstack_t {
+struct qstack_s {
     /* capsulated member functions */
     size_t (*setsize) (qstack_t *stack, size_t max);
 

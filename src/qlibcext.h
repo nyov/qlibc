@@ -62,14 +62,14 @@ extern qlisttbl_t *qconfig_parse_str(qlisttbl_t *tbl, const char *str,
  ******************************************************************************/
 
 /* types */
-typedef struct qlog_t qlog_t;
+typedef struct qlog_s qlog_t;
 
 /* public functions */
 extern qlog_t *qLog(const char *filepathfmt, mode_t mode, int rotateinterval,
                     bool flush);
 
 /* qlog_t details */
-struct qlog_t {
+struct qlog_s {
     /* capsulated member functions */
     bool (*write) (qlog_t *log, const char *str);
     bool (*writef) (qlog_t *log, const char *format, ...);
@@ -99,13 +99,13 @@ struct qlog_t {
  ******************************************************************************/
 
 /* types */
-typedef struct qhttpclient_t  qhttpclient_t;
+typedef struct qhttpclient_s  qhttpclient_t;
 
 /* public functions */
 extern qhttpclient_t *qhttpclient(const char *hostname, int port);
 
 /* qhttpclient_t details */
-struct qhttpclient_t {
+struct qhttpclient_s {
     /* capsulated member functions */
     bool (*setssl) (qhttpclient_t *client);
     void (*settimeout) (qhttpclient_t *client, int timeoutms);
@@ -170,8 +170,8 @@ struct qhttpclient_t {
 /**
  * qdb_t & qdbresult_t types and definitions.
  */
-typedef struct qdb_t  qdb_t;
-typedef struct qdbresult_t  qdbresult_t;
+typedef struct qdb_s qdb_t;
+typedef struct qdbresult_s qdbresult_t;
 
 /* Database Support*/
 #ifdef _mysql_h
@@ -188,7 +188,7 @@ extern qdb_t *qdb(const char *dbtype,
 /**
  * qdb_t details.
  */
-struct qdb_t {
+struct qdb_s {
     /* capsulated member functions */
     bool (*open) (qdb_t *db);
     bool (*close) (qdb_t *db);
@@ -235,7 +235,7 @@ struct qdb_t {
 /**
  * qdbresult_t details.
  */
-struct qdbresult_t {
+struct qdbresult_s {
     /* capsulated member functions */
     const char *(*getstr) (qdbresult_t *result, const char *field);
     const char *(*get_str_at) (qdbresult_t *result, int idx);

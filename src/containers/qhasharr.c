@@ -183,7 +183,7 @@ static bool _remove_data(qhasharr_t *tbl, int idx);
 size_t qhasharr_calculate_memsize(int max)
 {
     size_t memsize = sizeof(qhasharr_t)
-                     + (sizeof(struct _Q_HASHARR_SLOT) * (max));
+                     + (sizeof(qhasharr_slot_t) * (max));
     return memsize;
 }
 
@@ -213,8 +213,7 @@ size_t qhasharr_calculate_memsize(int max)
 qhasharr_t *qhasharr(void *memory, size_t memsize)
 {
     // calculate max
-    int maxslots = (memsize - sizeof(qhasharr_t))
-                   / sizeof(struct _Q_HASHARR_SLOT);
+    int maxslots = (memsize - sizeof(qhasharr_t)) / sizeof(qhasharr_slot_t);
     if (maxslots < 1 || memsize <= sizeof(qhasharr_t)) {
         errno = EINVAL;
         return NULL;
@@ -228,7 +227,7 @@ qhasharr_t *qhasharr(void *memory, size_t memsize)
     tbl->usedslots = 0;
     tbl->num = 0;
 
-    tbl->slots = (struct _Q_HASHARR_SLOT *)(memory + sizeof(qhasharr_t));
+    tbl->slots = (qhasharr_slot_t *)(memory + sizeof(qhasharr_t));
 
     // assign methods
     tbl->put        = put;
@@ -685,7 +684,7 @@ static void clear(qhasharr_t *tbl)
     // clear memory
     memset((void *)tbl->slots,
            '\0',
-           (tbl->maxslots * sizeof(struct _Q_HASHARR_SLOT)));
+           (tbl->maxslots * sizeof(qhasharr_slot_t)));
 }
 
 /**
@@ -902,7 +901,7 @@ static bool _put_data(qhasharr_t *tbl, int idx, unsigned int hash,
 
             // clear & set
             memset((void *)(&tbl->slots[tmpidx]), '\0',
-                   sizeof(struct _Q_HASHARR_SLOT));
+                   sizeof(qhasharr_slot_t));
 
             tbl->slots[tmpidx].count = -2;      // extended data block
             tbl->slots[tmpidx].hash = newidx;   // prev link
@@ -956,7 +955,7 @@ static bool _copy_slot(qhasharr_t *tbl, int idx1, int idx2)
     }
 
     memcpy((void *)(&tbl->slots[idx1]), (void *)(&tbl->slots[idx2]),
-           sizeof(struct _Q_HASHARR_SLOT));
+           sizeof(qhasharr_slot_t));
 
     // increase used slot counter
     tbl->usedslots++;
