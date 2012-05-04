@@ -201,6 +201,7 @@ extern qlisttbl_t *qlisttbl(void);  /*!< qlisttbl constructor */
  */
 struct qlisttbl_s {
     /* capsulated member functions */
+    bool (*setcase) (qlisttbl_t *tbl, bool insensitive);
     int (*setsort) (qlisttbl_t *tbl, bool sort, bool descending);
     bool (*setputdir) (qlisttbl_t *tbl, bool before);
     bool (*setgetdir) (qlisttbl_t *tbl, bool forward);
@@ -245,16 +246,21 @@ struct qlisttbl_s {
 
     void (*free) (qlisttbl_t *tbl);
 
+    /* private methods */
+    bool (*namematch) (qdlnobj_t *obj, const char *name, uint32_t hash);
+    int (*namecmp) (const char *s1, const char *s2);
+
     /* private variables - do not access directly */
-    int  sortflag;  /*!< sort flag. 0:disabled, 1:ascending, 2:descending */
+    bool lookupcase; /*!< key lookup case-sensivity. false: case-sensitive */
+    int  sortflag; /*!< sort flag. 0:disabled, 1:ascending, 2:descending */
     bool putdir;  /*!< object appending direction for put(). false: to bottom */
     bool getdir;  /*!< object lookup direction for get(). false:from bottom */
     bool nextdir; /*!< object traversal direction for next(). false:from top */
 
-    qmutex_t qmutex;  /*!< activated if compiled with --enable-threadsafe */
-    size_t num;   /*!< number of elements */
-    qdlnobj_t *first;  /*!< first object pointer */
-    qdlnobj_t *last;   /*!< last object pointer */
+    qmutex_t qmutex;    /*!< activated if compiled with --enable-threadsafe */
+    size_t num;         /*!< number of elements */
+    qdlnobj_t *first;   /*!< first object pointer */
+    qdlnobj_t *last;    /*!< last object pointer */
 };
 
 /******************************************************************************

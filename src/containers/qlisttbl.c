@@ -122,6 +122,7 @@
  */
 #ifndef _DOXYGEN_SKIP
 
+static bool setcase(qlisttbl_t *tbl, bool insensitive);
 static int setsort(qlisttbl_t *tbl, bool sort, bool descending);
 static bool setputdir(qlisttbl_t *tbl, bool before);
 static bool setgetdir(qlisttbl_t *tbl, bool first);
@@ -175,6 +176,9 @@ static bool _insertobj(qlisttbl_t *tbl, qdlnobj_t *obj);
 static qdlnobj_t *_findobj(qlisttbl_t *tbl, const char *name,
                            bool first,
                            qdlnobj_t *retobj);
+
+static bool _namematch(qdlnobj_t *obj, const char *name, uint32_t hash);
+static bool _namecasematch(qdlnobj_t *obj, const char *name, uint32_t hash);
 #endif
 
 /**
@@ -201,6 +205,7 @@ qlisttbl_t *qlisttbl(void)
     memset((void *)tbl, 0, sizeof(qlisttbl_t));
 
     // member methods
+    tbl->setcase    = setcase;
     tbl->setsort    = setsort;
     tbl->setputdir  = setputdir;
     tbl->setgetdir  = setgetdir;
@@ -238,14 +243,62 @@ qlisttbl_t *qlisttbl(void)
 
     tbl->free       = free_;
 
+    // private methods
+    tbl->namematch  = _namematch;
+    tbl->namecmp    = strcmp;
+
     // initialize recrusive mutex
     Q_MUTEX_INIT(tbl->qmutex, true);
 
-    setputdir(tbl, false); // append at bottom of list
-    setgetdir(tbl, false); // return last object for duplicated keys.
-    setnextdir(tbl, false); // forward
+    // these are defaults - don't need to call them
+    //setcase(tbl, false);     // case sensitive
+    //setsort(tbl, false);     // no sort
+    //setputdir(tbl, false);   // append at bottom of list
+    //setgetdir(tbl, false);   // return last object for duplicated keys.
+    //setnextdir(tbl, false);  // forward
 
     return tbl;
+}
+
+/**
+ * qlisttbl->setcase(): Sets case sensitivity for key lookup.
+ * When this option is turned on, hash comparison will be disabled and
+ * each key will be compared. So lookup up speed will be relatively slower.
+ * If setsort() is on, table will be resorted to sort keys in case insensitive
+ * order.
+ *
+ * @param tbl           qlisttbl container pointer.
+ * @param insensitive   false for case-sensitive, true for case-insensitive.
+ *
+ * @return previous setting
+ */
+static bool setcase(qlisttbl_t *tbl, bool insensitive)
+{
+    if (tbl->lookupcase == insensitive) {
+        return tbl->lookupcase;
+    }
+
+    lock(tbl);
+    bool prevcase = tbl->lookupcase;
+    tbl->lookupcase = insensitive;
+
+    // set new compfunc.
+    if (insensitive == false) {
+        tbl->namematch = _namematch;
+        tbl->namecmp = strcmp;
+    } else {
+        tbl->namematch = _namecasematch;
+        tbl->namecmp = strcasecmp;
+    }
+
+    // resort if sort option is on.
+    if (tbl->sortflag != 0) {
+        if (tbl->sortflag == 1) sort_(tbl, false);
+        else if (tbl->sortflag == 2) sort_(tbl, true);
+    }
+    unlock(tbl);
+
+    return prevcase;
 }
 
 /**
@@ -262,6 +315,7 @@ qlisttbl_t *qlisttbl(void)
  */
 static int setsort(qlisttbl_t *tbl, bool sort, bool descending)
 {
+    lock(tbl);
     int prevflag = tbl->sortflag;
 
     if (sort == false) {
@@ -271,8 +325,11 @@ static int setsort(qlisttbl_t *tbl, bool sort, bool descending)
         else tbl->sortflag = 2;  // descending
 
         // sort table
-        sort_(tbl, descending);
+        if (prevflag != tbl->sortflag) {
+            sort_(tbl, descending);
+        }
     }
+    unlock(tbl);
 
     return prevflag;
 }
@@ -739,7 +796,7 @@ static bool getnext(qlisttbl_t *tbl, qdlnobj_t *obj, const char *name,
 
     bool ret = false;
     while (cont != NULL) {
-        if (name == NULL || ((hash == cont->hash) && !strcmp(cont->name, name))) {
+        if (name == NULL || tbl->namematch(cont, name, hash) == true) {
             if (newmem == true) {
                 obj->name = strdup(cont->name);
                 obj->data = malloc(cont->size);
@@ -919,7 +976,7 @@ static void sort_(qlisttbl_t *tbl, bool descending)
         n2 = 0;
         for (i = 0, obj1 = tbl->first; i < (n - 1); i++, obj1 = obj1->next) {
             obj2 = obj1->next;  // this can't be null.
-            if ((strcmp(obj1->name, obj2->name) * adjustcmp) > 0) {
+            if ((tbl->namecmp(obj1->name, obj2->name) * adjustcmp) > 0) {
                 // swapping contents is faster than adjusting links.
                 tmpobj = *obj1;
                 obj1->hash = obj2->hash;
@@ -1338,7 +1395,7 @@ static qdlnobj_t *_findobj(qlisttbl_t *tbl, const char *name,
     else obj = tbl->last;
     while (obj != NULL) {
         // name string will be compared only if the hash matches.
-        if (hash == obj->hash && !strcmp(name, obj->name)) {
+        if (tbl->namematch(obj, name, hash) == true) {
            if (retobj != NULL) {
                 *retobj = *obj;
             }
@@ -1362,6 +1419,23 @@ static qdlnobj_t *_findobj(qlisttbl_t *tbl, const char *name,
     errno = ENOENT;
 
     return NULL;
+}
+
+// key comp
+static bool _namematch(qdlnobj_t *obj, const char *name, uint32_t hash)
+{
+    if ((obj->hash == hash) && !strcmp(obj->name, name)) {
+        return true;
+    }
+    return false;
+}
+
+static bool _namecasematch(qdlnobj_t *obj, const char *name, uint32_t hash)
+{
+    if (!strcasecmp(obj->name, name)) {
+        return true;
+    }
+    return false;
 }
 
 #endif /* _DOXYGEN_SKIP */
