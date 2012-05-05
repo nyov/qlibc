@@ -65,7 +65,7 @@ extern qlisttbl_t *qconfig_parse_str(qlisttbl_t *tbl, const char *str,
 typedef struct qlog_s qlog_t;
 
 /* public functions */
-extern qlog_t *qLog(const char *filepathfmt, mode_t mode, int rotateinterval,
+extern qlog_t *qlog(const char *filepathfmt, mode_t mode, int rotateinterval,
                     bool flush);
 
 /* qlog_t details */
