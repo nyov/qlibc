@@ -29,7 +29,7 @@
  ******************************************************************************/
 
 /**
- * @file qShm.c Shared-memory APIs.
+ * @file qshm.c Shared-memory APIs.
  *
  * @note
  * @code

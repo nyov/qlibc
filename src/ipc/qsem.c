@@ -29,7 +29,7 @@
  ******************************************************************************/
 
 /**
- * @file qSem.c Semaphore APIs.
+ * @file qsem.c Semaphore APIs.
  *
  * @note
  * @code
