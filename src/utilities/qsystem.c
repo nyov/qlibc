@@ -52,7 +52,7 @@
  *
  * @return a pointer of environment variable
  */
-const char *qsys_getenv(const char *envname, const char *nullstr)
+const char *qgetenv(const char *envname, const char *nullstr)
 {
     const char *envstr = getenv(envname);
     if (envstr != NULL) return envstr;
@@ -88,7 +88,7 @@ char *qsyscmd(const char *cmd)
  * @return malloced string pointer which contains IP address string if
  *         successful, otherwise returns NULL
  */
-bool qsys_getip(char *buf, size_t bufsize)
+bool qsysgetip(char *buf, size_t bufsize)
 {
     char szHostname[63+1];
     if (gethostname(szHostname, sizeof(szHostname)) != 0) return false;

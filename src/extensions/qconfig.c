@@ -371,7 +371,7 @@ static char *_parsestr(qlisttbl_t *tbl, const char *str)
                     break;
                 }
                 case _VAR_ENV : {
-                    newstr = strdup(qsys_getenv(varstr + 1, ""));
+                    newstr = strdup(qgetenv(varstr + 1, ""));
                     break;
                 }
                 default : {

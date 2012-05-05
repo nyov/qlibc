@@ -598,9 +598,9 @@ extern char *qstr_conv_encoding(const char *fromstr, const char *fromcode,
                                 const char *tocode, float mag);
 
 /* qsystem.c */
-extern const char *qsys_getenv(const char *envname, const char *nullstr);
+extern const char *qgetenv(const char *envname, const char *nullstr);
 extern char *qsyscmd(const char *cmd);
-extern bool qsys_getip(char *buf, size_t bufsize);
+extern bool qsysgetip(char *buf, size_t bufsize);
 
 /* qtime.c */
 extern char *qtime_localtime_strf(char *buf, int size, time_t utctime,
