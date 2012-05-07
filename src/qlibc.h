@@ -432,7 +432,7 @@ typedef struct qqueue_s qqueue_t;
 extern qqueue_t *qqueue();
 
 /**
- * qvector container.
+ * qqueue container
  */
 struct qqueue_s {
     /* capsulated member functions */
@@ -473,7 +473,7 @@ typedef struct qstack_s qstack_t;
 extern qstack_t *qstack();
 
 /**
- * Structure for array-based circular-queue data structure.
+ * qstack container
  */
 struct qstack_s {
     /* capsulated member functions */

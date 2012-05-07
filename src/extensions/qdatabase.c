@@ -31,12 +31,12 @@
 /**
  * @file qdatabase.c Database interfacing object.
  *
- * Database header files should be included prior to qlibc.h in your source
+ * Database header files should be included prior to qlibcext.h in your source
  * codes like below.
  *
  * @code
  *   #include "mysql.h"
- *   #include "qlibc.h"
+ *   #include "qlibcext.h"
  * @endcode
  *
  * @code
