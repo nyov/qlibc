@@ -29,7 +29,7 @@
  ******************************************************************************/
 
 /**
- * @file qconfig.c Configuration parser APIs.
+ * @file qconfig.c INI-style configuration file parser.
  */
 
 #ifndef DISABLE_QCONFIG

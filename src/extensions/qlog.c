@@ -69,7 +69,7 @@ static bool write_(qlog_t *log, const char *str);
 static bool writef(qlog_t *log, const char *format, ...);
 static bool duplicate(qlog_t *log, FILE *outfp, bool flush);
 static bool flush_(qlog_t *log);
-static bool free_(qlog_t *log);
+static void free_(qlog_t *log);
 
 // internal usages
 static bool _real_open(qlog_t *log);
@@ -247,12 +247,10 @@ static bool flush_(qlog_t *log)
  * qlog->free(): Close ratating-log file & de-allocate resources
  *
  * @param log       a pointer of qlog_t
- *
- * @return true if successful, otherewise returns false
  */
-static bool free_(qlog_t *log)
+static void free_(qlog_t *log)
 {
-    if (log == NULL) return false;
+    if (log == NULL) return;
 
     flush_(log);
     Q_MUTEX_ENTER(log->qmutex);
@@ -263,7 +261,7 @@ static bool free_(qlog_t *log)
     Q_MUTEX_LEAVE(log->qmutex);
     Q_MUTEX_DESTROY(log->qmutex);
     free(log);
-    return true;
+    return;
 }
 
 #ifndef _DOXYGEN_SKIP

@@ -95,6 +95,7 @@ QLIBC_OBJS	= \
 
 QLIBCEXT_OBJS	= \
 		extensions/qconfig.o		\
+		extensions/qaconf.o		\
 		extensions/qlog.o		\
 		extensions/qhttpclient.o	\
 		extensions/qdatabase.o

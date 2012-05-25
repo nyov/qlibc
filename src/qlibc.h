@@ -38,7 +38,7 @@
 #define _QLIBC_H
 
 #define _Q_PRGNAME "qlibc"  /*!< qlibc human readable name */
-#define _Q_VERSION "2.0.4"  /*!< qlibc version number string */
+#define _Q_VERSION "2.0.5"  /*!< qlibc version number string */
 
 #ifdef __cplusplus
 extern "C" {

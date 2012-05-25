@@ -42,6 +42,7 @@
 /*
  * Macro Functions
  */
+#define ASSERT(x) assert(x)
 #define CONST_STRLEN(x)     (sizeof(x) - 1)
 
 #define DYNAMIC_VSPRINTF(s, f) do {                                     \

@@ -46,7 +46,7 @@ extern "C" {
 #include "qlibc.h"
 
 /******************************************************************************
- * Configuration Parser.
+ * INI-style Configuration File Parser.
  * qconfig.c
  ******************************************************************************/
 
@@ -55,6 +55,65 @@ extern qlisttbl_t *qconfig_parse_file(qlisttbl_t *tbl, const char *filepath,
                                       char sepchar, bool uniquekey);
 extern qlisttbl_t *qconfig_parse_str(qlisttbl_t *tbl, const char *str,
                                      char sepchar, bool uniquekey);
+
+/******************************************************************************
+ * Apache-style Configuration File Parser.
+ * qaconf.c
+ ******************************************************************************/
+/* user's callback function prototype */
+#define QACONF_CB(func) const char *func(qaconf_cbarg_t *arg)
+
+/* types */
+typedef struct qaconf_s qaconf_t;
+typedef struct qaconf_opt_s qaconf_opt_t;
+typedef struct qaconf_cbarg_s qaconf_cbarg_t;
+typedef char *(qaconf_cb_t) (const qaconf_cbarg_t *arg);
+
+enum {
+    QACONF_CASE_INSENSITIVE = (1)
+};
+
+/* public functions */
+extern qaconf_t *qaconf(const char *filepath, uint8_t flags);
+
+/* user callback prototype */
+#define QACONF_CB(func) const char *func(qaconf_cbarg_t *arg)
+
+/**
+ * qaconf structure
+ */
+struct qaconf_s {
+    /* capsulated member functions */
+    int (*set_defaulthandler) (qaconf_t *qaconf, const qaconf_cb_t *callback);
+    int (*addoptions) (qaconf_t *qaconf, const qaconf_opt_t *options);
+    bool (*parse) (qaconf_t *qaconf);
+    bool (*free) (qaconf_t *qaconf);
+
+    /* private variables - do not access directly */
+    const char *filepath;
+    uint8_t flags;
+    char *errmsg;
+
+    int numoptions;
+    qaconf_opt_t *options;
+};
+
+struct qaconf_opt_s {
+    const char *name;	    /*!< name of option. */
+    const qaconf_cb_t *cb;  /*!< callback function */
+    const uint64_t scopeid; /*!< scope id if this is scope option like "<scope". */
+    const uint64_t where;   /*!< ORed scopeid(s) where this option is allowed */
+};
+
+struct qaconf_cbarg_s {
+    uint64_t scopeid;        /*!< this scopeid */
+    uint64_t scopeids;       /*!< ORed parent's scopeid(s) */
+    uint8_t numparents;      /*!< number of parents */
+    qaconf_cbarg_t *parent;  /*!< upper parent link */
+
+    int argc;                /*!< number arguments. always equal or greater than 1. */
+    char *argv[];            /*!< argument pointers. argv[0] is option name. */
+};
 
 /******************************************************************************
  * Rotating file logger.
@@ -77,7 +136,7 @@ struct qlog_s {
     bool (*writef) (qlog_t *log, const char *format, ...);
     bool (*duplicate) (qlog_t *log, FILE *outfp, bool flush);
     bool (*flush) (qlog_t *log);
-    bool (*free) (qlog_t *log);
+    void (*free) (qlog_t *log);
 
     /* private variables - do not access directly */
     qmutex_t  qmutex;  /*!< activated if compiled with --enable-threadsafe */
@@ -209,7 +268,7 @@ struct qdb_s {
     bool (*get_conn_status) (qdb_t *db);
     bool (*ping) (qdb_t *db);
     const char *(*get_error) (qdb_t *db, unsigned int *errorno);
-    bool (*free) (qdb_t *db);
+    void (*free) (qdb_t *db);
 
     /* private variables - do not access directly */
     qmutex_t  qmutex;  /*!< activated if compiled with --enable-threadsafe */
@@ -248,7 +307,7 @@ struct qdbresult_s {
     int (*get_rows) (qdbresult_t *result);
     int (*get_row) (qdbresult_t *result);
 
-    bool (*free) (qdbresult_t *result);
+    void (*free) (qdbresult_t *result);
 
 #ifdef _Q_ENABLE_MYSQL
     /* private variables for mysql database - do not access directly */

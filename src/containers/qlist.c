@@ -165,10 +165,10 @@ qlist_t *qlist(void)
         return NULL;
     }
 
-    /* initialize container */
+    // initialize container
     memset((void *)list, 0, sizeof(qlist_t));
 
-    /* member methods */
+    // member methods
     list->setsize       = setsize;
 
     list->addfirst      = addfirst;

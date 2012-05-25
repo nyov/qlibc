@@ -29,7 +29,7 @@
  ******************************************************************************/
 
 /**
- * @file qdatabase.c Database interfacing object.
+ * @file qdatabase.c Database wrapper.
  *
  * Database header files should be included prior to qlibcext.h in your source
  * codes like below.
@@ -124,7 +124,7 @@ static bool set_fetchtype(qdb_t *db, bool use);
 static bool get_conn_status(qdb_t *db);
 static bool ping(qdb_t *db);
 static const char  *get_error(qdb_t *db, unsigned int *errorno);
-static bool free_(qdb_t *db);
+static void free_(qdb_t *db);
 
 // qdbresult_t object
 static const char *_resultGetStr(qdbresult_t *result, const char *field);
@@ -137,7 +137,7 @@ static int result_get_cols(qdbresult_t *result);
 static int result_get_rows(qdbresult_t *result);
 static int result_get_row(qdbresult_t *result);
 
-static bool result_free(qdbresult_t *result);
+static void result_free(qdbresult_t *result);
 
 #endif
 
@@ -674,12 +674,10 @@ static const char *get_error(qdb_t *db, unsigned int *errorno)
  * qdb->free(): De-allocate qdb_t structure
  *
  * @param db        a pointer of qdb_t object
- *
- * @return true if successful, otherwise returns false.
  */
-static bool free_(qdb_t *db)
+static void free_(qdb_t *db)
 {
-    if (db == NULL) return false;
+    if (db == NULL) return;
 
     Q_MUTEX_ENTER(db->qmutex);
 
@@ -695,7 +693,7 @@ static bool free_(qdb_t *db)
     Q_MUTEX_LEAVE(db->qmutex);
     Q_MUTEX_DESTROY(db->qmutex);
 
-    return true;
+    return;
 }
 
 /**
@@ -862,13 +860,11 @@ static int result_get_row(qdbresult_t *result)
  * qdbresult->free(): De-allocate the result
  *
  * @param result    a pointer of qdbresult_t
- *
- * @return true if successful, otherwise returns false
  */
-static bool result_free(qdbresult_t *result)
+static void result_free(qdbresult_t *result)
 {
 #ifdef _Q_ENABLE_MYSQL
-    if (result == NULL) return false;
+    if (result == NULL) return;
     if (result->rs != NULL) {
         if (result->fetchtype == true) {
             while (mysql_fetch_row(result->rs) != NULL);
@@ -877,9 +873,9 @@ static bool result_free(qdbresult_t *result)
         result->rs = NULL;
     }
     free(result);
-    return true;
+    return;
 #else
-    return false;
+    return;
 #endif
 }
 

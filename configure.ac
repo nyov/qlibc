@@ -165,6 +165,7 @@ if test "$enableval" = no; then
 fi
 #Q_ARG_DISABLE([ext-all], [Disable all extension APIs in src/extensions directory.], [-DDISABLE_QCONFIG -DDISABLE_QLOG -DDISABLE_QHTTPCLIENT -DDISABLE_QDATABASE])
 Q_ARG_DISABLE([ext-qconfig], [Disable qconfig extension in qlibext library.], [-DDISABLE_QCONFIG])
+Q_ARG_DISABLE([ext-qaconf], [Disable qaconf extension in qlibext library.], [-DDISABLE_QACONF])
 Q_ARG_DISABLE([ext-qlog], [Disable qlog extension in qlibext library.], [-DDISABLE_QLOG])
 Q_ARG_DISABLE([ext-qhttpclient], [Disable qhttpclient extension in qlibext library.], [-DDISABLE_QHTTPCLIENT])
 Q_ARG_DISABLE([ext-qdatabase], [Disable qdatabase extension in qlibext library.], [-DDISABLE_QDATABASE])
