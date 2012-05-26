@@ -60,61 +60,137 @@ extern qlisttbl_t *qconfig_parse_str(qlisttbl_t *tbl, const char *str,
  * Apache-style Configuration File Parser.
  * qaconf.c
  ******************************************************************************/
-/* user's callback function prototype */
-#define QACONF_CB(func) char *func(qaconf_cbarg_t *arg)
-
 /* types */
 typedef struct qaconf_s qaconf_t;
-typedef struct qaconf_opt_s qaconf_opt_t;
-typedef struct qaconf_cbarg_s qaconf_cbarg_t;
-typedef char *(qaconf_cb_t) (qaconf_cbarg_t *);
-
-enum {
-    QACONF_CASE_INSENSITIVE = (1),
-};
-
-enum {
-    QACONF_SCOPE_ALL  = (0),       /* pre-defined */
-    QACONF_SCOPE_ROOT = (1)        /* pre-defined */
-};
+typedef struct qaconf_option_s qaconf_option_t;
+typedef struct qaconf_cbdata_s qaconf_cbdata_t;
+typedef char *(qaconf_cb_t) (qaconf_cbdata_t *data, void *userdata);
 
 /* public functions */
-extern qaconf_t *qaconf(const char *filepath, uint8_t flags);
+extern qaconf_t *qaconf(void);
+
+/* user's callback function prototype */
+#define QAC_CB(func) char *func(qaconf_cbdata_t *data, void *userdata)
+
+/* parser option */
+enum {
+    QAC_CASEINSENSITIVE     = (1),
+    QAC_IGNOREUNKNOWN       = (2),  /* Ignore unknown option */
+};
+
+/* option type check
+ *
+ *   Type   # of Arguments
+ *   -------------------------------
+ *   8421 8421 | 8421 8421 8421 8421    (higher 8 bit + lower 16 bit)
+ *   -------------------------------
+ *   00000 0000  0000 0000 0000 0001  => QAC_TAKE1
+ *   00000 0001  0000 0000 0000 0001  => QAC_TAKE1_NUM
+ *   00000 0010  0000 0000 0000 0010  => QAC_TAKE2_STR_NUM
+ *   00000 0101  0000 0000 0000 0011  => QAC_TAKE3 | QAC_A1_NUM | QAC_A3_NUM
+ *   00000 1010  0000 0000 0000 0100  => QAC_TAKE4 | QAC_A2_NUM | QAC_A4_NUM
+ *   00000 0000  1111 1111 1111 1111  => QAC_TAKE_ALL
+ *   00000 0011  1111 1111 1111 1111  => QAC_TAKE_ALL | QAC_A1_NUM | QAC_A2_NUM
+ */
+enum qaconf_take {
+    QAC_TAKE0           = 0,
+    QAC_TAKE1           = 1,
+    QAC_TAKE2           = 2,
+    QAC_TAKE3           = 3,
+    QAC_TAKE4           = 4,
+    QAC_TAKE5           = 5,
+    QAC_TAKE6           = 6,
+    QAC_TAKE7           = 7,
+    QAC_TAKE8           = 8,
+    QAC_TAKEALL         = 0xFFFF, /* Take any number of elements. (0~N) */
+
+    QAC_A1_STR          = 0,
+    QAC_A2_STR          = 0,
+    QAC_A3_STR          = 0,
+    QAC_A4_STR          = 0,
+    QAC_A5_STR          = 0,
+    QAC_A6_STR          = 0,
+    QAC_A7_STR          = 0,
+    QAC_A8_STR          = 0,
+
+    QAC_A1_NUM          = (1 << (1+15)),
+    QAC_A2_NUM          = (1 << (2+15)),
+    QAC_A3_NUM          = (1 << (3+15)),
+    QAC_A4_NUM          = (1 << (4+15)),
+    QAC_A5_NUM          = (1 << (5+15)),
+    QAC_A6_NUM          = (1 << (6+15)),
+    QAC_A7_NUM          = (1 << (7+15)),
+    QAC_A8_NUM          = (1 << (8+15)),
+
+    QAC_TAKE1_STR       = (QAC_TAKE1 | QAC_A1_STR),
+    QAC_TAKE1_NUM       = (QAC_TAKE1 | QAC_A1_NUM),
+    QAC_TAKE2_STR_STR   = (QAC_TAKE2 | QAC_A1_STR | QAC_A2_STR),
+    QAC_TAKE2_NUM_STR   = (QAC_TAKE2 | QAC_A1_NUM | QAC_A2_STR),
+    QAC_TAKE2_STR_NUM   = (QAC_TAKE2 | QAC_A1_STR | QAC_A2_NUM),
+    QAC_TAKE2_NUM_NUM   = (QAC_TAKE2 | QAC_A1_NUM | QAC_A2_NUM),
+};
+
+/* pre-defined scope */
+enum {
+    QAC_SCOPE_ALL  = (0),        /* pre-defined */
+    QAC_SCOPE_ROOT = (1)         /* pre-defined */
+};
+
+/* option type */
+enum qaconf_otype {
+    QAC_OTYPE_OPTION     = 0,    /* general option */
+    QAC_OTYPE_SCOPEOPEN  = 1,    /* scope option open <XXX> */
+    QAC_OTYPE_SCOPECLOSE = 2     /* scope option close </XXX> */
+};
 
 /**
- * qaconf structure
+ * qaconf_t object.
  */
 struct qaconf_s {
     /* capsulated member functions */
-    int (*set_defaulthandler) (qaconf_t *qaconf, const qaconf_cb_t *callback);
-    int (*addoptions) (qaconf_t *qaconf, const qaconf_opt_t *options);
-    bool (*parse) (qaconf_t *qaconf);
-    bool (*free) (qaconf_t *qaconf);
+    int (*addoptions) (qaconf_t *qaconf, const qaconf_option_t *options);
+    void (*setdefhandler) (qaconf_t *qaconf, const qaconf_cb_t *callback);
+    void (*setuserdata) (qaconf_t *qaconf, const void *userdata);
+    int (*parse) (qaconf_t *qaconf, const char *filepath, uint8_t flags);
+    const char *(*errmsg) (qaconf_t *qaconf);
+    void (*free) (qaconf_t *qaconf);
 
     /* private variables - do not access directly */
-    const char *filepath;
-    uint8_t flags;
-    char *errmsg;
+    int numoptions;             /*!< a number of user defined options */
+    qaconf_option_t *options;   /*!< option data */
 
-    int numoptions;
-    qaconf_opt_t *options;
+    qaconf_cb_t *defcb;         /*!< default callback for unregistered option */
+    void *userdata;             /*!< userdata */
+
+    char *errstr;               /*!< last error string */
 };
 
-struct qaconf_opt_s {
-    const char *name;	    /*!< name of option. */
-    qaconf_cb_t *cb;  /*!< callback function */
-    const uint64_t scopeid; /*!< scope id if this is scope option like "<scope". */
-    const uint64_t where;   /*!< ORed scopeid(s) where this option is allowed */
+/**
+ * structure for user option definition.
+ */
+struct qaconf_option_s {
+    char *name;             /*!< name of option. */
+    enum qaconf_take take;  /*!< number of arguments and type checking */
+    qaconf_cb_t *cb;        /*!< callback function */
+    uint64_t scopeid;       /*!< scope id if this is a scope */
+    uint64_t where;         /*!< ORed scopeid(s) where this option is allowed */
 };
+#define QAC_OPTION_END  {NULL, 0, NULL, 0, 0}
 
-struct qaconf_cbarg_s {
-    uint64_t scopeid;        /*!< this scopeid */
-    uint64_t scopeids;       /*!< ORed parent's scopeid(s) */
-    uint8_t numparents;      /*!< number of parents */
-    qaconf_cbarg_t *parent;  /*!< upper parent link */
+/**
+ * callback data structure.
+ */
+struct qaconf_cbdata_s {
+    enum qaconf_otype otype;    /*!< option type */
+    uint64_t scopeid;           /*!< this scopeid */
+    uint64_t scopeids;          /*!< ORed parent's scopeid(s) */
+    uint8_t numparents;         /*!< number of parents */
+    qaconf_cbdata_t *parent;    /*!< upper parent link */
 
-    int argc;                /*!< number arguments. always equal or greater than 1. */
-    char *argv[];            /*!< argument pointers. argv[0] is option name. */
+    int argc;       /*!< number arguments. always equal or greater than 1. */
+    char **argv;    /*!< argument pointers. argv[0] is option name. */
+
+    void *data;     /*!< where actual data is stored */
 };
 
 /******************************************************************************

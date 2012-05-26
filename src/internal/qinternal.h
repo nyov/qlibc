@@ -42,8 +42,10 @@
 /*
  * Macro Functions
  */
-#define ASSERT(x) assert(x)
-#define CONST_STRLEN(x)     (sizeof(x) - 1)
+#define ASSERT(c)           assert(c)
+#define CONST_STRLEN(s)     (sizeof(s) - 1)
+#define IS_EMPTY_STR(s)     ((*s == '\0') ? true : false)
+#define ENDING_CHAR(s)      (*(s + strlen(s) - 1))
 
 #define DYNAMIC_VSPRINTF(s, f) do {                                     \
         size_t _strsize;                                                \

@@ -28,6 +28,7 @@
  * $Id$
  ******************************************************************************/
 
+#include <string.h>
 #include "qlibc.h"
 #include "qlibcext.h"
 
@@ -42,46 +43,82 @@ int main(void)
 // Configuration file to parse.
 #define CONF_PATH   "apacheconf.conf"
 
+// User configuration structure.
+struct MyConf {
+    char *ringid;
+    int listen;
+};
+
+struct MyConf g_myconf;
+
 // Define scope.
-//   QACONF_SCOPE_ALL and QACONF_SCOPE_ROOT are predefined.
-//   Custum scop should be defined from 2(1 << 1).
+//   QAC_SCOPE_ALL and QAC_SCOPE_ROOT are predefined.
+//   Custum scope should be defined from 2(1 << 1).
 //   Note) These values are ORed(bit operation), so the number should be
 //         2(1<<1), 4(1<<2), 6(1<<3), 8(1<<4), ...
 enum {
-    OPT_WHERE_ALL        = QACONF_SCOPE_ALL,   /* pre-defined */
-    OPT_WHERE_ROOT       = QACONF_SCOPE_ROOT,  /* pre-defined */
+    OPT_WHERE_ALL        = QAC_SCOPE_ALL,   /* pre-defined */
+    OPT_WHERE_ROOT       = QAC_SCOPE_ROOT,  /* pre-defined */
     OPT_WHERE_NODES      = (1 << 1),    /* user-defined scope */
     OPT_WHERE_PARTITIONS = (1 << 2),    /* user-defined scope */
 };
 
 // Define callback proto-types.
-static QACONF_CB(confcb_listen);
+static QAC_CB(confcb_ringid);
+static QAC_CB(confcb_listen);
 
 // Define options.
-static qaconf_opt_t options[] = {
-    {"Listen", confcb_listen, 0, OPT_WHERE_ALL},
-    {"CacheLookupHint", confcb_listen, 0, OPT_WHERE_ALL},
-    {"LookupCacheSize", confcb_listen, 0, OPT_WHERE_ALL},
-    {"Listen", confcb_listen, 0, OPT_WHERE_ALL},
-    {NULL, NULL, 0, 0}
+static qaconf_option_t options[] = {
+    {"RingID", QAC_TAKE1_STR, confcb_ringid, 0, OPT_WHERE_ALL},
+    {"Listen", QAC_TAKE1_NUM, confcb_listen, 0, OPT_WHERE_ALL},
+    QAC_OPTION_END
+};
+
+static qaconf_option_t options2[] = {
+    {"Node", QAC_TAKE1_NUM, confcb_listen, 0, OPT_WHERE_ALL},
+    {"IP", QAC_TAKE1_NUM, confcb_listen, 0, OPT_WHERE_ALL},
+    QAC_OPTION_END
 };
 
 int main(void)
 {
     // Initialize and create a qaconf object.
-    qaconf_t *conf = qaconf(CONF_PATH, 0);
+    qaconf_t *conf = qaconf();
     if (conf == NULL) {
         printf("Failed to open '" CONF_PATH "'.\n");
         return -1;
     }
 
-    // Register options;
-    conf->addoptions
+    // Register options.
+    conf->addoptions(conf, options);
+    conf->addoptions(conf, options2);
+    conf->setuserdata(conf, &g_myconf);
+
+    int count = conf->parse(conf, CONF_PATH, QAC_CASEINSENSITIVE);
+    if (count < 0) {
+        printf("Error: %s\n", conf->errmsg(conf));
+    } else {
+        printf("Successfully loaded.\n");
+    }
+
+    // Release resources.
+    conf->free(conf);
 
     return 0;
 }
 
-static QACONF_CB(confcb_listen)
+static QAC_CB(confcb_ringid)
+{
+    if (data->argc != 2) {
+        return strdup("Invalid argument!!!");
+    }
+
+    printf("Hello\n");
+
+    return NULL;
+}
+
+static QAC_CB(confcb_listen)
 {
     return NULL;
 }

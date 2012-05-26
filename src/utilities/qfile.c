@@ -191,14 +191,19 @@ void *qfile_load(const char *filepath, size_t *nbytes)
 }
 
 /**
- * Load file stream which has unknown size into memory.
+ * Read data from a file stream.
  *
  * @param fp        FILE pointer
- * @param nbytes    has two purpost, one is to set how many bytes are readed.
- *                  the other is actual the number loaded bytes will be stored.
- *                  nbytes must be point 0 or NULL to read end of stream.
+ * @param nbytes    has two purpose, one is to set bytes to read.
+ *                  the other is to return actual number of bytes loaded.
+ *                  0 or NULL can be set to read file until the end.
  *
  * @return allocated memory pointer if successful, otherwise returns NULL.
+ *
+ * @code
+ *   int binlen = 0;
+ *   char *bin = (char *)qfile_read(fp, &binlen);
+ * @endcode
  *
  * @note
  *  This method append NULL character at the end of stream. but nbytes only
