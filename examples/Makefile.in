@@ -38,7 +38,8 @@ CPPFLAGS	= -I../src/ @CPPFLAGS@
 RM		= @RM@
 DEPLIBS		= @DEPLIBS@
 
-TARGETS1	= list listtbl hashtbl hasharr vector vector_obj queue stack config
+TARGETS1	= list listtbl hashtbl hasharr vector vector_obj queue stack \
+			  config apacheconf
 TARGETS2	= list listtbl hashtbl hasharr vector vector_obj queue stack
 TARGETS		= ${@EXAMPLES_TARGETS@}
 LIBQLIBC	= ../src/libqlibc.a ${DEPLIBS}
@@ -73,6 +74,9 @@ stack: stack.o
 
 config: config.o
 	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ config.o ${LIBQLIBCEXT} ${LIBQLIBC}
+
+apacheconf: apacheconf.o
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ apacheconf.o ${LIBQLIBCEXT} ${LIBQLIBC}
 
 ## Clear Module
 clean:

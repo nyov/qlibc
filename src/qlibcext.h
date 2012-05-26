@@ -61,23 +61,25 @@ extern qlisttbl_t *qconfig_parse_str(qlisttbl_t *tbl, const char *str,
  * qaconf.c
  ******************************************************************************/
 /* user's callback function prototype */
-#define QACONF_CB(func) const char *func(qaconf_cbarg_t *arg)
+#define QACONF_CB(func) char *func(qaconf_cbarg_t *arg)
 
 /* types */
 typedef struct qaconf_s qaconf_t;
 typedef struct qaconf_opt_s qaconf_opt_t;
 typedef struct qaconf_cbarg_s qaconf_cbarg_t;
-typedef char *(qaconf_cb_t) (const qaconf_cbarg_t *arg);
+typedef char *(qaconf_cb_t) (qaconf_cbarg_t *);
 
 enum {
-    QACONF_CASE_INSENSITIVE = (1)
+    QACONF_CASE_INSENSITIVE = (1),
+};
+
+enum {
+    QACONF_SCOPE_ALL  = (0),       /* pre-defined */
+    QACONF_SCOPE_ROOT = (1)        /* pre-defined */
 };
 
 /* public functions */
 extern qaconf_t *qaconf(const char *filepath, uint8_t flags);
-
-/* user callback prototype */
-#define QACONF_CB(func) const char *func(qaconf_cbarg_t *arg)
 
 /**
  * qaconf structure
@@ -100,7 +102,7 @@ struct qaconf_s {
 
 struct qaconf_opt_s {
     const char *name;	    /*!< name of option. */
-    const qaconf_cb_t *cb;  /*!< callback function */
+    qaconf_cb_t *cb;  /*!< callback function */
     const uint64_t scopeid; /*!< scope id if this is scope option like "<scope". */
     const uint64_t where;   /*!< ORed scopeid(s) where this option is allowed */
 };
