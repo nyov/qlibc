@@ -133,7 +133,7 @@ char *qstrtrim_tail(char *str)
  * @param head      heading character
  * @param tail      tailing character
  *
- * @return a pointer of source string if rsuccessful, otherewise returns NULL
+ * @return a pointer of source string if successful, otherewise returns NULL
  *
  * @note This modify source string directly.
  *
@@ -151,6 +151,8 @@ char *qstrunchar(char *str, char head, char tail)
     if (len >= 2 && str[0] == head && str[len-1] == tail) {
         memmove(str, str + 1, len - 2);
         str[len - 2] = '\0';
+    } else {
+        return NULL;
     }
 
     return str;
@@ -577,7 +579,7 @@ char *qstrtok(char *str, const char *delimiters, char *retstop, int *offset)
  * @code
  *   qlist_t *tokens = qstr_tokenizer("a:b:c", ":");
  *   char *str;
- *   while((str = tokens->popFirst(tokens, NULL)) != NULL) {
+ *   while((str = tokens->popfirst(tokens, NULL)) != NULL) {
  *     printf("%s\n", str);
  *   }
  *   tokens->free(tokens);
