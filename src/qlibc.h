@@ -572,6 +572,7 @@ extern bool qsocket_get_addr(struct sockaddr_in *addr, const char *hostname,
 
 /* qstring.c */
 extern char *qstrtrim(char *str);
+extern char *qstrtrim_head(char *str);
 extern char *qstrtrim_tail(char *str);
 extern char *qstrunchar(char *str, char head, char tail);
 extern char *qstrreplace(const char *mode, char *srcstr, const char *tokstr,

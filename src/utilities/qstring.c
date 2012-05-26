@@ -54,20 +54,51 @@
  */
 char *qstrtrim(char *str)
 {
-    int i, j;
-
     if (str == NULL) return NULL;
-    for (j = 0; str[j] == ' '
-         || str[j] == '\t'
-         || str[j] == '\r'
-         || str[j] == '\n'; j++);
-    for (i = 0; str[j] != '\0'; i++, j++) str[i] = str[j];
-    for (i--; (i >= 0)
-         && (str[i] == ' '
-             || str[i] == '\t'
-             || str[i] == '\r'
-             || str[i] == '\n'); i--);
-    str[i+1] = '\0';
+
+    char *ss, *se;
+    for (ss = str;
+         *ss == ' ' || *ss == '\t' || *ss == '\r' || *ss == '\n';
+         ss++);
+    for (se = ss;
+         *se != '\0';
+         se++);
+    for (se--;
+         se >= ss && (*se == ' ' || *se == '\t' || *se == '\r' || *se == '\n');
+         se--);
+    se++;
+    *se = '\0';
+
+    if (ss > str ) {
+        size_t len = (se - ss) + 1;
+        memmove(str, ss, len);
+    }
+
+    return str;
+}
+
+/**
+ * Remove heading white spaces of the string.
+ *
+ * @param str       source string
+ *
+ * @return a pointer of source string if rsuccessful, otherewise returns NULL
+ *
+ * @note This modify source string directly.
+ */
+char *qstrtrim_head(char *str)
+{
+    if (str == NULL) return NULL;
+
+    char *ss;
+    for (ss = str;
+         *ss == ' ' || *ss == '\t' || *ss == '\r' || *ss == '\n';
+         ss++);
+
+    if (ss > str ) {
+        size_t len = strlen(ss) + 1;
+        memmove(str, ss, len);
+    }
 
     return str;
 }
@@ -83,15 +114,14 @@ char *qstrtrim(char *str)
  */
 char *qstrtrim_tail(char *str)
 {
-    int i;
+    if (str == NULL) return NULL;
 
-    if (str == NULL)return NULL;
-    for (i = strlen(str) - 1; (i >= 0)
-         && (str[i] == ' '
-             || str[i] == '\t'
-             || str[i] == '\r'
-             || str[i] == '\n'); i--);
-    str[i+1] = '\0';
+    char *se;
+    for (se = str + strlen(str) - 1;
+         se >= str && (*se == ' ' || *se == '\t' || *se == '\r' || *se == '\n');
+         se--);
+    se++;
+    *se = '\0';
 
     return str;
 }
