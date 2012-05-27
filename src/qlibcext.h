@@ -78,19 +78,19 @@ enum {
     QAC_IGNOREUNKNOWN       = (2),  /* Ignore unknown option */
 };
 
-/* option type check
+/**
+ * option type check up to 6 arguments
  *
- *   Type   # of Arguments
- *   -------------------------------
- *   8421 8421 | 8421 8421 8421 8421    (higher 8 bit + lower 16 bit)
- *   -------------------------------
- *   00000 0000  0000 0000 0000 0001  => QAC_TAKE1
- *   00000 0001  0000 0000 0000 0001  => QAC_TAKE1_NUM
- *   00000 0010  0000 0000 0000 0010  => QAC_TAKE2_STR_NUM
- *   00000 0101  0000 0000 0000 0011  => QAC_TAKE3 | QAC_A1_NUM | QAC_A3_NUM
- *   00000 1010  0000 0000 0000 0100  => QAC_TAKE4 | QAC_A2_NUM | QAC_A4_NUM
- *   00000 0000  1111 1111 1111 1111  => QAC_TAKE_ALL
- *   00000 0011  1111 1111 1111 1111  => QAC_TAKE_ALL | QAC_A1_NUM | QAC_A2_NUM
+ *   Double   Integer  Args
+ *   ----------------------
+ *   842184 | 218421 | 8421    (16 bit : 6bit + 6 bit + 4 bit)
+ *   ----------------------
+ *   000000   000000   0001  => QAC_TAKE1
+ *   000000   000001   0001  => QAC_TAKE1_INT
+ *   000000   000010   0010  => QAC_TAKE2_STR_INT
+ *   000100   000010   0011  => QAC_TAKE3 | QAC_A2_INT | QAC_A3_FLOAT
+ *   000000   000000   1111  => QAC_TAKE_ALL
+ *   100000   010100   1111  => QAC_TAKE_ALL|QAC_A3_INT|QAC_A5_INT|QAC_A6_FLOAT
  */
 enum qaconf_take {
     QAC_TAKE0           = 0,
@@ -100,9 +100,7 @@ enum qaconf_take {
     QAC_TAKE4           = 4,
     QAC_TAKE5           = 5,
     QAC_TAKE6           = 6,
-    QAC_TAKE7           = 7,
-    QAC_TAKE8           = 8,
-    QAC_TAKEALL         = 0xFFFF, /* Take any number of elements. (0~N) */
+    QAC_TAKEALL         = 0xF, /* Take any number of elements. (0 ~ INT_MAX) */
 
     QAC_A1_STR          = 0,
     QAC_A2_STR          = 0,
@@ -110,37 +108,37 @@ enum qaconf_take {
     QAC_A4_STR          = 0,
     QAC_A5_STR          = 0,
     QAC_A6_STR          = 0,
-    QAC_A7_STR          = 0,
-    QAC_A8_STR          = 0,
 
-    QAC_A1_NUM          = (1 << (1+15)),
-    QAC_A2_NUM          = (1 << (2+15)),
-    QAC_A3_NUM          = (1 << (3+15)),
-    QAC_A4_NUM          = (1 << (4+15)),
-    QAC_A5_NUM          = (1 << (5+15)),
-    QAC_A6_NUM          = (1 << (6+15)),
-    QAC_A7_NUM          = (1 << (7+15)),
-    QAC_A8_NUM          = (1 << (8+15)),
+    QAC_A1_INT          = (1 << 4),
+    QAC_A2_INT          = (QAC_A1_INT << 1),
+    QAC_A3_INT          = (QAC_A1_INT << 2),
+    QAC_A4_INT          = (QAC_A1_INT << 3),
+    QAC_A5_INT          = (QAC_A1_INT << 4),
+    QAC_A6_INT          = (QAC_A1_INT << 5),
+
+    QAC_A1_FLOAT        = (1 << 10),
+    QAC_A2_FLOAT        = (QAC_A1_FLOAT << 1),
+    QAC_A3_FLOAT        = (QAC_A1_FLOAT << 2),
+    QAC_A4_FLOAT        = (QAC_A1_FLOAT << 3),
+    QAC_A5_FLOAT        = (QAC_A1_FLOAT << 4),
+    QAC_A6_FLOAT        = (QAC_A1_FLOAT << 5),
 
     QAC_TAKE1_STR       = (QAC_TAKE1 | QAC_A1_STR),
-    QAC_TAKE1_NUM       = (QAC_TAKE1 | QAC_A1_NUM),
-    QAC_TAKE2_STR_STR   = (QAC_TAKE2 | QAC_A1_STR | QAC_A2_STR),
-    QAC_TAKE2_NUM_STR   = (QAC_TAKE2 | QAC_A1_NUM | QAC_A2_STR),
-    QAC_TAKE2_STR_NUM   = (QAC_TAKE2 | QAC_A1_STR | QAC_A2_NUM),
-    QAC_TAKE2_NUM_NUM   = (QAC_TAKE2 | QAC_A1_NUM | QAC_A2_NUM),
+    QAC_TAKE1_INT       = (QAC_TAKE1 | QAC_A1_INT),
+    QAC_TAKE1_FLOAT     = (QAC_TAKE1 | QAC_A1_FLOAT),
 };
 
-/* pre-defined scope */
-enum {
-    QAC_SCOPE_ALL  = (0),        /* pre-defined */
-    QAC_SCOPE_ROOT = (1)         /* pre-defined */
+/* pre-defined sections */
+enum qaconf_section {
+    QAC_SECTION_ALL  = (0),        /* pre-defined */
+    QAC_SECTION_ROOT = (1)         /* pre-defined */
 };
 
 /* option type */
 enum qaconf_otype {
     QAC_OTYPE_OPTION     = 0,    /* general option */
-    QAC_OTYPE_SCOPEOPEN  = 1,    /* scope option open <XXX> */
-    QAC_OTYPE_SCOPECLOSE = 2     /* scope option close </XXX> */
+    QAC_OTYPE_SECTIONOPEN  = 1,  /* section open <XXX> */
+    QAC_OTYPE_SECTIONCLOSE = 2   /* section close </XXX> */
 };
 
 /**
@@ -153,6 +151,7 @@ struct qaconf_s {
     void (*setuserdata) (qaconf_t *qaconf, const void *userdata);
     int (*parse) (qaconf_t *qaconf, const char *filepath, uint8_t flags);
     const char *(*errmsg) (qaconf_t *qaconf);
+    void (*reseterror) (qaconf_t *qaconf);
     void (*free) (qaconf_t *qaconf);
 
     /* private variables - do not access directly */
@@ -162,6 +161,9 @@ struct qaconf_s {
     qaconf_cb_t *defcb;         /*!< default callback for unregistered option */
     void *userdata;             /*!< userdata */
 
+    char *filepath;             /*!< current processing file's path */
+    int lineno;                 /*!< current processing line number */
+
     char *errstr;               /*!< last error string */
 };
 
@@ -170,10 +172,10 @@ struct qaconf_s {
  */
 struct qaconf_option_s {
     char *name;             /*!< name of option. */
-    enum qaconf_take take;  /*!< number of arguments and type checking */
+    uint32_t take;          /*!< number of arguments and type checking */
     qaconf_cb_t *cb;        /*!< callback function */
-    uint64_t scopeid;       /*!< scope id if this is a scope */
-    uint64_t where;         /*!< ORed scopeid(s) where this option is allowed */
+    uint64_t sectionid;     /*!< sectionid if this is a section */
+    uint64_t sections;      /*!< ORed sectionid(s) where this option is allowed */
 };
 #define QAC_OPTION_END  {NULL, 0, NULL, 0, 0}
 
@@ -181,11 +183,11 @@ struct qaconf_option_s {
  * callback data structure.
  */
 struct qaconf_cbdata_s {
-    enum qaconf_otype otype;    /*!< option type */
-    uint64_t scopeid;           /*!< this scopeid */
-    uint64_t scopeids;          /*!< ORed parent's scopeid(s) */
-    uint8_t numparents;         /*!< number of parents */
-    qaconf_cbdata_t *parent;    /*!< upper parent link */
+    enum qaconf_otype otype;  /*!< option type */
+    uint64_t section;         /*!< current section where this option is placed */
+    uint64_t sections;        /*!< ORed all parent's sectionid(s) including current sections */
+    uint8_t level;            /*!< number of parents, root level is 0 */
+    qaconf_cbdata_t *parent;  /*!< upper parent link */
 
     int argc;       /*!< number arguments. always equal or greater than 1. */
     char **argv;    /*!< argument pointers. argv[0] is option name. */

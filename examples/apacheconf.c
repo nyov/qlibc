@@ -57,26 +57,31 @@ struct MyConf g_myconf;
 //   Note) These values are ORed(bit operation), so the number should be
 //         2(1<<1), 4(1<<2), 6(1<<3), 8(1<<4), ...
 enum {
-    OPT_WHERE_ALL        = QAC_SCOPE_ALL,   /* pre-defined */
-    OPT_WHERE_ROOT       = QAC_SCOPE_ROOT,  /* pre-defined */
-    OPT_WHERE_NODES      = (1 << 1),    /* user-defined scope */
-    OPT_WHERE_PARTITIONS = (1 << 2),    /* user-defined scope */
+    OPT_SECTION_ALL        = QAC_SECTION_ALL,   /* pre-defined */
+    OPT_SECTION_ROOT       = QAC_SECTION_ROOT,  /* pre-defined */
+    OPT_SECTION_NODES      = (1 << 1),    /* user-defined section */
+    OPT_SECTION_PARTITIONS = (1 << 2),    /* user-defined section */
+    OPT_SECTION_PARTITION  = (1 << 3),    /* user-defined section */
 };
 
 // Define callback proto-types.
 static QAC_CB(confcb_ringid);
 static QAC_CB(confcb_listen);
+static QAC_CB(confcb_default);
 
 // Define options.
 static qaconf_option_t options[] = {
-    {"RingID", QAC_TAKE1_STR, confcb_ringid, 0, OPT_WHERE_ALL},
-    {"Listen", QAC_TAKE1_NUM, confcb_listen, 0, OPT_WHERE_ALL},
-    QAC_OPTION_END
-};
+    {"RingID", QAC_TAKE1, confcb_ringid, 0, OPT_SECTION_ALL},
+    {"Listen", QAC_TAKE1_FLOAT, confcb_listen, 0, OPT_SECTION_ROOT},
+    {"Pi", QAC_TAKE1_FLOAT, confcb_default, 0, OPT_SECTION_ROOT},
+    {"Node", QAC_TAKEALL, confcb_default, OPT_SECTION_NODES, OPT_SECTION_ALL},
+      {"IP", QAC_TAKE1_STR, confcb_default, 0, OPT_SECTION_NODES},
+      {"RV", QAC_TAKEALL, confcb_default, 0, OPT_SECTION_NODES},
+    {"Partitions", QAC_TAKEALL, confcb_default, OPT_SECTION_PARTITIONS, OPT_SECTION_ALL},
+      {"Partition", QAC_TAKE1_STR, confcb_default, OPT_SECTION_PARTITION, OPT_SECTION_PARTITIONS},
+      {"Join", QAC_TAKEALL, confcb_default, 0, OPT_SECTION_PARTITIONS | OPT_SECTION_PARTITION},
+      {"Distribution", QAC_TAKE1_STR, confcb_default, 0, OPT_SECTION_PARTITIONS | OPT_SECTION_PARTITION},
 
-static qaconf_option_t options2[] = {
-    {"Node", QAC_TAKE1_NUM, confcb_listen, 0, OPT_WHERE_ALL},
-    {"IP", QAC_TAKE1_NUM, confcb_listen, 0, OPT_WHERE_ALL},
     QAC_OPTION_END
 };
 
@@ -91,7 +96,6 @@ int main(void)
 
     // Register options.
     conf->addoptions(conf, options);
-    conf->addoptions(conf, options2);
     conf->setuserdata(conf, &g_myconf);
 
     int count = conf->parse(conf, CONF_PATH, QAC_CASEINSENSITIVE);
@@ -120,6 +124,12 @@ static QAC_CB(confcb_ringid)
 
 static QAC_CB(confcb_listen)
 {
+    return NULL;
+}
+
+static QAC_CB(confcb_default)
+{
+
     return NULL;
 }
 
