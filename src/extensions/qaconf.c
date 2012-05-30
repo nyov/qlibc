@@ -264,8 +264,6 @@ static int _parse_inline(qaconf_t *qaconf, FILE *fp, uint8_t flags,
         char *wp1, *wp2;
         bool doneparsing = false;
         for (wp1 = (char *)cbdata->data; doneparsing == false; wp1 = wp2) {
-            bool dq = false, sq = false;
-
             // Allocate/Realloc argv array
             if (argvsize == cbdata->argc) {
                 argvsize += (argvsize == 0) ? ARGV_INIT_SIZE : ARGV_INCR_STEP;
@@ -273,15 +271,17 @@ static int _parse_inline(qaconf_t *qaconf, FILE *fp, uint8_t flags,
                 ASSERT(cbdata->argv != NULL);
             }
 
+	    // Skip whitespaces
+            for (; (*wp1 == ' ' || *wp1 == '\t'); wp1++);
+
             // Quote handling
-            if (*wp1 == '"') {
-                dq = true;
+            int qtmark = 0;  // 1 for singlequotation, 2 for doublequotation
+            if (*wp1 == '\'') {
+                qtmark = 1;
                 wp1++;
-            } else if (*wp1 == '\'') {
-                sq = true;
+            } else if (*wp1 == '"') {
+                qtmark = 2;
                 wp1++;
-            } else if (*wp1 == ' ' || *wp1 == '\t') {
-                for (wp1++; (*wp1 == ' ' || *wp1 == '\t'); wp1++);
             }
 
             // Parse a word
@@ -289,24 +289,38 @@ static int _parse_inline(qaconf_t *qaconf, FILE *fp, uint8_t flags,
                 if (*wp2 == '\0') {
                     doneparsing = true;
                     break;
-                } else if (*wp1 == '"') {
-                    // todo
-                    break;
-                } else if (*wp1 == '\'') {
-                    // todo
-                    break;
+                } else if (*wp2 == '\'') {
+                    if (qtmark == 1) {
+                        qtmark = 0;
+                        break;
+                    }
+                } else if (*wp2 == '"') {
+                    if (qtmark == 2) {
+                        qtmark = 0;
+                        break;
+                    }
+                } else if (*wp2 == '\\') {
+                    if (qtmark > 0) {
+                        size_t wordlen = wp2 - wp1;
+                        if (wordlen > 0) memmove(wp1 + 1, wp1, wordlen);
+                        wp1++;
+                        wp2++;
+                    }
                 } else if (*wp2 == ' ' || *wp2 == '\t') {
-                    // todo
-                    break;
+                    if (qtmark == 0) break;
                 }
             }
             *wp2 = '\0';
             wp2++;
 
+            // Check quotations has paired.
+            if (qtmark > 0) {
+                EXITLOOP("Quotation hasn't properly closed.");
+            }
+
             // Store a argument
             cbdata->argv[cbdata->argc] = wp1;
             cbdata->argc++;
-
             DEBUG("  argv[%d]=%s", cbdata->argc - 1, wp1);
         }
 
