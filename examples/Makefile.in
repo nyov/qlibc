@@ -31,10 +31,14 @@
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 
+## qlibc definitions
+QLIBC_INCDIR		= ../include
+QLIBC_LIBDIR		= ../lib
+
 ## Compiler options
 CC		= @CC@
 CFLAGS		= @CFLAGS@
-CPPFLAGS	= -I../src/ @CPPFLAGS@
+CPPFLAGS	= @CPPFLAGS@ -I${QLIBC_INCDIR}
 RM		= @RM@
 DEPLIBS		= @DEPLIBS@
 
@@ -42,8 +46,8 @@ TARGETS1	= list listtbl hashtbl hasharr vector vector_obj queue stack \
 			  config apacheconf
 TARGETS2	= list listtbl hashtbl hasharr vector vector_obj queue stack
 TARGETS		= ${@EXAMPLES_TARGETS@}
-LIBQLIBC	= ../src/libqlibc.a ${DEPLIBS}
-LIBQLIBCEXT	= ../src/libqlibcext.a
+LIBQLIBC	= ${QLIBC_LIBDIR}/libqlibc.a ${DEPLIBS}
+LIBQLIBCEXT	= ${QLIBC_LIBDIR}/libqlibcext.a
 
 ## Main
 all:	${TARGETS}

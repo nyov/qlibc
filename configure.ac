@@ -87,7 +87,7 @@ AC_SUBST(DEPLIBS, [""])
 
 ## Set path
 PATH="$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
-CPPFLAGS="$CPPFLAGS -I./ -I./internal -I/usr/include -I/usr/local/include"
+CPPFLAGS="$CPPFLAGS -I/usr/include -I/usr/local/include"
 CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
 CPPFLAGS="$CPPFLAGS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
 LDFLAGS="$LDFLAGS -L/usr/lib -L/usr/local/lib"
@@ -110,6 +110,7 @@ if test $ac_cv_prog_cc_c99 = no; then
 fi
 
 AC_PROG_INSTALL
+AC_PROG_MKDIR_P
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_RANLIB
