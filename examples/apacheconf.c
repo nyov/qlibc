@@ -28,6 +28,7 @@
  * $Id$
  ******************************************************************************/
 
+#include <stdlib.h>
 #include <string.h>
 #include "qlibc.h"
 #include "qlibcext.h"
@@ -43,13 +44,12 @@ int main(void)
 // Configuration file to parse.
 #define CONF_PATH   "apacheconf.conf"
 
-// User configuration structure.
+// Define an example userdata
 struct MyConf {
-    char *ringid;
-    int listen;
+    char ringid[128];   // ringid
+    int num_partitions; // a number of partitions
+    int sum_partitions; // sum value of Partition's 2nd argument.
 };
-
-struct MyConf g_myconf;
 
 // Define scope.
 //   QAC_SCOPE_ALL and QAC_SCOPE_ROOT are predefined.
@@ -65,28 +65,32 @@ enum {
 };
 
 // Define callback proto-types.
-static QAC_CB(confcb_ringid);
-static QAC_CB(confcb_listen);
-static QAC_CB(confcb_default);
+static QAC_CB(confcb_debug);
+static QAC_CB(confcb_userdata_example);
+static QAC_CB(confcb_section_example);
 
 // Define options.
 static qaconf_option_t options[] = {
-    {"RingID", QAC_TAKE1, confcb_ringid, 0, OPT_SECTION_ALL},
-    {"Listen", QAC_TAKE1_FLOAT, confcb_listen, 0, OPT_SECTION_ROOT},
-    {"Pi", QAC_TAKE1_FLOAT, confcb_default, 0, OPT_SECTION_ROOT},
-    {"Node", QAC_TAKEALL, confcb_default, OPT_SECTION_NODES, OPT_SECTION_ALL},
-      {"IP", QAC_TAKE1_STR, confcb_default, 0, OPT_SECTION_NODES},
-      {"RV", QAC_TAKEALL, confcb_default, 0, OPT_SECTION_NODES},
-    {"Partitions", QAC_TAKEALL, confcb_default, OPT_SECTION_PARTITIONS, OPT_SECTION_ALL},
-      {"Partition", QAC_TAKE1_STR, confcb_default, OPT_SECTION_PARTITION, OPT_SECTION_PARTITIONS},
-      {"Join", QAC_TAKEALL, confcb_default, 0, OPT_SECTION_PARTITIONS | OPT_SECTION_PARTITION},
-      {"Distribution", QAC_TAKE1_STR, confcb_default, 0, OPT_SECTION_PARTITIONS | OPT_SECTION_PARTITION},
+    {"RingID", QAC_TAKE1, confcb_userdata_example, 0, OPT_SECTION_ALL},
+    {"Listen", QAC_TAKE1_FLOAT, confcb_debug, 0, OPT_SECTION_ROOT},
+    {"Pi", QAC_TAKE1_FLOAT, confcb_debug, 0, OPT_SECTION_ROOT},
+    {"Node", QAC_TAKE2, confcb_debug, OPT_SECTION_NODES, OPT_SECTION_ALL},
+    {  "IP", QAC_TAKE1_STR, confcb_debug, 0, OPT_SECTION_NODES},
+    {  "RV", QAC_TAKEALL, confcb_debug, 0, OPT_SECTION_NODES},
+    {"Map", QAC_TAKE0, confcb_debug, OPT_SECTION_PARTITIONS, OPT_SECTION_ALL},
+    {  "Partition", QAC_TAKE2 | QAC_A2_INT, confcb_section_example, OPT_SECTION_PARTITION, OPT_SECTION_PARTITIONS},
+    {    "Join", QAC_TAKEALL, confcb_debug, 0, OPT_SECTION_PARTITIONS | OPT_SECTION_PARTITION},
+    {    "Distribution", QAC_TAKE1_STR, confcb_debug, 0, OPT_SECTION_PARTITIONS | OPT_SECTION_PARTITION},
 
     QAC_OPTION_END
 };
 
 int main(void)
 {
+    // Create a userdata structure.
+    struct MyConf myconf;
+    memset(&myconf, '\0', sizeof(myconf));
+
     // Initialize and create a qaconf object.
     qaconf_t *conf = qaconf();
     if (conf == NULL) {
@@ -96,13 +100,24 @@ int main(void)
 
     // Register options.
     conf->addoptions(conf, options);
-    conf->setuserdata(conf, &g_myconf);
 
+    // Set callback userdata.
+    conf->setuserdata(conf, &myconf);
+
+    // Run parser.
     int count = conf->parse(conf, CONF_PATH, QAC_CASEINSENSITIVE);
     if (count < 0) {
         printf("Error: %s\n", conf->errmsg(conf));
     } else {
         printf("Successfully loaded.\n");
+    }
+
+    // Verify userdata structure.
+    if (conf->errmsg(conf) == NULL) {  // another way to check parsing error.
+        printf("\n[MyConf structure]\n");
+        printf("MyConf.ringid=%s\n", myconf.ringid);
+        printf("MyConf.num_partitions=%d\n", myconf.num_partitions);
+        printf("MyConf.sum_partitions=%d\n", myconf.sum_partitions);
     }
 
     // Release resources.
@@ -111,25 +126,110 @@ int main(void)
     return 0;
 }
 
-static QAC_CB(confcb_ringid)
+static QAC_CB(confcb_debug)
 {
-    if (data->argc != 2) {
-        return strdup("Invalid argument!!!");
+    int i;
+    for (i = 0; i < data->level; i++) {
+        printf ("    ");
     }
 
-    printf("Hello\n");
+    // Print option name
+    if (data->otype == QAC_OTYPE_SECTIONOPEN) {
+        printf("<%s>", data->argv[0]);
+    } else if (data->otype == QAC_OTYPE_SECTIONCLOSE) {
+        printf("</%s>", data->argv[0]);
+    } else {
+        // This is QAC_OTYPE_OPTION type.
+        printf("%s", data->argv[0]);
+    }
 
+    // Print parent names
+    qaconf_cbdata_t *parent;
+    for (parent = data->parent; parent != NULL; parent = parent->parent) {
+        printf(" ::%s", parent->argv[0]);
+    }
+
+    // Print option arguments
+    for (i = 1; i < data->argc; i++) {
+        printf(" [%d:%s]", i, data->argv[i]);
+    }
+    printf("\n");
+
+    // Return OK
     return NULL;
 }
 
-static QAC_CB(confcb_listen)
+static QAC_CB(confcb_userdata_example)
 {
+    // Type casting userdata for convenient use.
+    struct MyConf *myconf = (struct MyConf *)userdata;
+
+    /*
+     * We don't need to verify number of arguments. qaconf() check the number
+     * of arguments for us. In this particular case, argc will 2.
+     * So the number of arguments is 1 (2-1), since argv[0] is used for
+     * option name itself.
+     *
+     * So below codes are not necessary here, but just to give you an idean
+     * how to handle errors.
+     */
+    //if (data->argc != 2) {
+    //    return strdup("Invalid argument!!!");
+    //}
+
+    // Copy argument into my structure.
+    strcpy(myconf->ringid, data->argv[1]);
+
+    // Just to print out option information for display purpose.
+    confcb_debug(data, userdata);
+
+    // Return OK.
     return NULL;
 }
 
-static QAC_CB(confcb_default)
+static QAC_CB(confcb_section_example)
 {
+    /*
+     * If option is found in brackets like <Option>, that is called section.
+     * It has opening section <Option> and closing section </Option>
+     *
+     * Sometimes, it's easier you handle sections when it's closing.
+     * So, for sections, it will be called twice one time at openning and
+     * one time at closing because sometimes it's easier you handle sections
+     * when it's closing.
+     *
+     * Section can also take arguments like <Option Arg1 Arg2...>, but only
+     * for opening section, because these arguments will be provided at closing
+     * callback for you convenient.
+     *
+     * For example.
+     *   <Option Arg1, Arg2> <= Opening section. It can take arguments.
+     *                          A callback will be make.
+     *
+     *   </Option2>          <= Closing section.
+     *                          Another callback will be make with arguments
+     *                          Arg1 and Arg2.
+     *
+     * data->otype can be used to determine if it's opening or closing.
+     */
 
+    // Just to print out option information for display purpose.
+    confcb_debug(data, userdata);
+
+    // This example handles this section at closing.
+    if (data->otype != QAC_OTYPE_SECTIONCLOSE) {
+        // Bypass QAC_OTYPE_SECTIONOPEN
+        return NULL;
+    }
+
+
+
+    // Type casting userdata for convenient use.
+    struct MyConf *myconf = (struct MyConf *)userdata;
+    myconf->num_partitions++;
+    myconf->sum_partitions += atoi(data->argv[2]);
+
+    // Return OK.
     return NULL;
 }
 

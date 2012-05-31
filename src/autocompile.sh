@@ -11,9 +11,9 @@ if [ $ARGC -le 0 ]; then
     echo "  ex) $0 ./ ./containers/"
     echo "  ex) $0 ./ ./*/"
     echo ""
-    echo "In 3 seconds, '$0 ./ ./*/' will be executed. Press CTRL+C to stop."
+    echo "In 3 seconds, '$0 ./ ../include/ ./*/' will be executed. Press CTRL+C to stop."
     sleep 3
-    $0 ./ ./*/
+    $0 ./ ../include/ ./*/
     exit
 fi
 

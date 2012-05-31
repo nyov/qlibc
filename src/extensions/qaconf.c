@@ -186,6 +186,7 @@ static int _parse_inline(qaconf_t *qaconf, FILE *fp, uint8_t flags,
     bool exception = false;
     int optcount = 0;  // number of option entry processed.
     int newsectionid = 0;  // temporary store
+    void *freethis = NULL;  // userdata to free
     while (doneloop == false && exception == false) {
 
 #define EXITLOOP(fmt, args...) do {                                         \
@@ -271,7 +272,7 @@ static int _parse_inline(qaconf_t *qaconf, FILE *fp, uint8_t flags,
                 ASSERT(cbdata->argv != NULL);
             }
 
-	    // Skip whitespaces
+            // Skip whitespaces
             for (; (*wp1 == ' ' || *wp1 == '\t'); wp1++);
 
             // Quote handling
@@ -322,6 +323,11 @@ static int _parse_inline(qaconf_t *qaconf, FILE *fp, uint8_t flags,
             cbdata->argv[cbdata->argc] = wp1;
             cbdata->argc++;
             DEBUG("  argv[%d]=%s", cbdata->argc - 1, wp1);
+
+            // For quoted string, this case can be happened.
+            if (*wp2 == '\0') {
+                doneparsing = true;
+            }
         }
 
         // Check mismatch sectionclose
@@ -336,12 +342,10 @@ static int _parse_inline(qaconf_t *qaconf, FILE *fp, uint8_t flags,
         // Find matching option
         bool optfound = false;
         int i;
-        for (i = 0; i < qaconf->numoptions; i++) {
+        for (i = 0; optfound == false && i < qaconf->numoptions; i++) {
             qaconf_option_t *option = &qaconf->options[i];
 
             if (!cmpfunc(cbdata->argv[0], option->name)) {
-                optfound = true;
-
                 // Check sections
                 if ((cbdata->otype != QAC_OTYPE_SECTIONCLOSE) &&
                     (option->sections != QAC_SECTION_ALL) &&
@@ -398,25 +402,24 @@ static int _parse_inline(qaconf_t *qaconf, FILE *fp, uint8_t flags,
                         // Callback
                         cberrmsg = usercb(cbdata_parent, qaconf->userdata);
 
-                        // Restore otype
+                        // Restore type
                         cbdata_parent->otype = orig_otype;
-
                     }
 
                     // Error handling
                     if (cberrmsg != NULL) {
+                        freethis = cberrmsg;
                         EXITLOOP("%s", cberrmsg);
                     }
                 }
 
-                // Duplicated option handlers are allowed.
-                if (cbdata->otype != QAC_OTYPE_OPTION) {
-                    if (cbdata->otype == QAC_OTYPE_SECTIONOPEN) {
-                        // Store it for later
-                        newsectionid = option->sectionid;
-                    }
-                    break;
+                if (cbdata->otype == QAC_OTYPE_SECTIONOPEN) {
+                    // Store it for later
+                    newsectionid = option->sectionid;
                 }
+
+                // Set found flag
+                optfound = true;
             }
         }
 
@@ -443,12 +446,15 @@ static int _parse_inline(qaconf_t *qaconf, FILE *fp, uint8_t flags,
             DEBUG("Returned to previous level %d.", cbdata->level);
         } else if (cbdata->otype == QAC_OTYPE_SECTIONCLOSE) {
             // Leave recursive call
-            // TODO: check bracket
             doneloop = true;
         }
 
         exitloop:
         // Release resources
+        if (freethis != NULL) {
+            free(freethis);
+        }
+
         if (cbdata != NULL) {
             _free_cbdata(cbdata);
             cbdata = NULL;

@@ -29,7 +29,11 @@
  ******************************************************************************/
 
 #include "qlibc.h"
+
+// This includes all extension header files.
 #include "qlibcext.h"
+// In case, you want to include only particular extensions, replace with this.
+//#include "extensions/qconfig.h"
 
 #define CONF_PATH   "config.conf"
 
