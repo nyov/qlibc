@@ -59,6 +59,7 @@ extern qaconf_t *qaconf(void);
 
 /* user's callback function prototype */
 #define QAC_CB(func) char *func(qaconf_cbdata_t *data, void *userdata)
+#define QAC_TAKEn(n) (n)
 
 /* parser option */
 enum {
@@ -67,54 +68,93 @@ enum {
 };
 
 /**
- * option type check (up to 6 arguments)
+ * Argument type check
  *
- *   Double   Integer  Args
- *   ----------------------
- *   842184 | 218421 | 8421    (16 bit : 6bit + 6 bit + 4 bit)
- *   ----------------------
- *   000000   000000   0001  => QAC_TAKE1
- *   000000   000001   0001  => QAC_TAKE1_INT
- *   000000   000010   0010  => QAC_TAKE2_STR_INT
- *   000100   000010   0011  => QAC_TAKE3 | QAC_A2_INT | QAC_A3_FLOAT
- *   000000   000000   1111  => QAC_TAKE_ALL
- *   100000   010100   1111  => QAC_TAKE_ALL|QAC_A3_INT|QAC_A5_INT|QAC_A6_FLOAT
+ * uint32_t type 32bit variabit is used for passing argument types.
+ *  notused  bool   float   int     #arg
+ *  ---- ---====== ---- --== ==== ---- ----
+ *  rrrr rrBb bbbb Ffff ffIi iiii aaaa aaaa  (32bit mask)
+ *   (6bit) (6bit)  (6bit) (6bit)   (8bit)
+ *
+ *  r : Not Used
+ *  B : Consider all arguments as BOOL type unless individually specified.
+ *  b : Flaged argument(1~5) must be bool type.
+ *  F : Consider all arguments as FLOAT type unless individually specified.
+ *  f : Flaged argument(1~5) must be float type.
+ *  I : Consider all arguments as INTEGER type unless individually specified.
+ *  i : Flaged argument(1~5) must be integer type.
+ *  a : Number of arguments (0~254).
+ *      Value 255 means take any number of arguments.
+ *
+ *  To take 1 argument in any type.
+ *    QAC_TAKE1       <= Any type
+ *    QAC_TAKE_STR    <= String(any) type
+ *    QAC_TAKE_INT    <= Integer type
+ *    QAC_TAKE_FLOAT  <= Float type
+ *    QAC_TAKE_BOOL   <= Bool type
+ *
+ *  To take 1 argument in bool type.
+ *    QAC_TAKE_BOOL
+ *    QAC_TAKE1 | QAC_A1_BOOL
+ *
+ *  To take 2 arguments, bool and float.
+ *    QAC_TAKE2 | QAC_A1_BOOL | QAC_A2_FLOAT
+ *
+ *  Take any number of integer arguments but 1st one must be bool and
+ *  2nd one must be integer and rest of them must be float.
+ *    QAC_TAKEALL | QAC_A1_BOOL | QAC_A2_INT | QAC_AA_FLOAT
  */
 enum qaconf_take {
-    QAC_TAKE0           = 0,
-    QAC_TAKE1           = 1,
-    QAC_TAKE2           = 2,
-    QAC_TAKE3           = 3,
-    QAC_TAKE4           = 4,
-    QAC_TAKE5           = 5,
-    QAC_TAKE6           = 6,
-    QAC_TAKEALL         = 0xF, /* Take any number of elements. (0 ~ INT_MAX) */
-
+    // Define string(any) type argument.
     QAC_A1_STR          = 0,
     QAC_A2_STR          = 0,
     QAC_A3_STR          = 0,
     QAC_A4_STR          = 0,
     QAC_A5_STR          = 0,
-    QAC_A6_STR          = 0,
+    QAC_AA_STR          = 0, // All string unless individually specified.
 
-    QAC_A1_INT          = (1 << 4),
+    // Define integer type argument.
+    QAC_A1_INT          = (1 << 8),
     QAC_A2_INT          = (QAC_A1_INT << 1),
     QAC_A3_INT          = (QAC_A1_INT << 2),
     QAC_A4_INT          = (QAC_A1_INT << 3),
     QAC_A5_INT          = (QAC_A1_INT << 4),
-    QAC_A6_INT          = (QAC_A1_INT << 5),
+    QAC_AA_INT          = (QAC_A1_INT << 5), // All integer unless specified.
 
-    QAC_A1_FLOAT        = (1 << 10),
+    // Define floating point type argument.
+    QAC_A1_FLOAT        = (1 << 16),
     QAC_A2_FLOAT        = (QAC_A1_FLOAT << 1),
     QAC_A3_FLOAT        = (QAC_A1_FLOAT << 2),
     QAC_A4_FLOAT        = (QAC_A1_FLOAT << 3),
     QAC_A5_FLOAT        = (QAC_A1_FLOAT << 4),
-    QAC_A6_FLOAT        = (QAC_A1_FLOAT << 5),
+    QAC_AA_FLOAT        = (QAC_A1_FLOAT << 5), // All float unless specified.
 
-    QAC_TAKE1_STR       = (QAC_TAKE1 | QAC_A1_STR),
-    QAC_TAKE1_INT       = (QAC_TAKE1 | QAC_A1_INT),
-    QAC_TAKE1_FLOAT     = (QAC_TAKE1 | QAC_A1_FLOAT),
+    // Define bool(true/false, yes/no, on/off, 1/0)  type argument.
+    QAC_A1_BOOL         = (1 << 24),
+    QAC_A2_BOOL         = (QAC_A1_BOOL << 1),
+    QAC_A3_BOOL         = (QAC_A1_BOOL << 2),
+    QAC_A4_BOOL         = (QAC_A1_BOOL << 3),
+    QAC_A5_BOOL         = (QAC_A1_BOOL << 4),
+    QAC_AA_BOOL         = (QAC_A1_BOOL << 5), // All bool unless specified.
+
+    // Number of arguments to take
+    QAC_TAKENONE        = QAC_TAKEn(0),
+    QAC_TAKE0           = QAC_TAKENONE,
+    QAC_TAKE1           = QAC_TAKEn(1),
+    QAC_TAKE2           = QAC_TAKEn(2),
+    QAC_TAKE3           = QAC_TAKEn(3),
+    QAC_TAKE4           = QAC_TAKEn(4),
+    QAC_TAKE5           = QAC_TAKEn(5),
+    // use QAC_TAKEn(N) macro for 6~254 arguments.
+    QAC_TAKEALL         = 0xFF, // Take any number of elements. (0 ~ INT_MAX)
+
+    // Convenient synonyms
+    QAC_TAKE_STR        = (QAC_TAKE1 | QAC_A1_STR),
+    QAC_TAKE_INT        = (QAC_TAKE1 | QAC_A1_INT),
+    QAC_TAKE_FLOAT      = (QAC_TAKE1 | QAC_A1_FLOAT),
+    QAC_TAKE_BOOL       = (QAC_TAKE1 | QAC_A1_BOOL),
 };
+#define QAC_TAKEn(n)    (n)
 
 /* pre-defined sections */
 enum qaconf_section {

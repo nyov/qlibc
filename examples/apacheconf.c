@@ -46,9 +46,8 @@ int main(void)
 
 // Define an example userdata
 struct MyConf {
-    char ringid[128];   // ringid
-    int num_partitions; // a number of partitions
-    int sum_partitions; // sum value of Partition's 2nd argument.
+    int listen;         // sample
+    int num_hosts;      // sample
 };
 
 // Define scope.
@@ -59,9 +58,8 @@ struct MyConf {
 enum {
     OPT_SECTION_ALL        = QAC_SECTION_ALL,   /* pre-defined */
     OPT_SECTION_ROOT       = QAC_SECTION_ROOT,  /* pre-defined */
-    OPT_SECTION_NODES      = (1 << 1),    /* user-defined section */
-    OPT_SECTION_PARTITIONS = (1 << 2),    /* user-defined section */
-    OPT_SECTION_PARTITION  = (1 << 3),    /* user-defined section */
+    OPT_SECTION_DOMAIN     = (1 << 1),    /* user-defined section */
+    OPT_SECTION_HOST       = (1 << 2),    /* user-defined section */
 };
 
 // Define callback proto-types.
@@ -71,17 +69,16 @@ static QAC_CB(confcb_section_example);
 
 // Define options.
 static qaconf_option_t options[] = {
-    {"RingID", QAC_TAKE1, confcb_userdata_example, 0, OPT_SECTION_ALL},
-    {"Listen", QAC_TAKE1_FLOAT, confcb_debug, 0, OPT_SECTION_ROOT},
-    {"Pi", QAC_TAKE1_FLOAT, confcb_debug, 0, OPT_SECTION_ROOT},
-    {"Node", QAC_TAKE2, confcb_debug, OPT_SECTION_NODES, OPT_SECTION_ALL},
-    {  "IP", QAC_TAKE1_STR, confcb_debug, 0, OPT_SECTION_NODES},
-    {  "RV", QAC_TAKEALL, confcb_debug, 0, OPT_SECTION_NODES},
-    {"Map", QAC_TAKE0, confcb_debug, OPT_SECTION_PARTITIONS, OPT_SECTION_ALL},
-    {  "Partition", QAC_TAKE2 | QAC_A2_INT, confcb_section_example, OPT_SECTION_PARTITION, OPT_SECTION_PARTITIONS},
-    {    "Join", QAC_TAKEALL, confcb_debug, 0, OPT_SECTION_PARTITIONS | OPT_SECTION_PARTITION},
-    {    "Distribution", QAC_TAKE1_STR, confcb_debug, 0, OPT_SECTION_PARTITIONS | OPT_SECTION_PARTITION},
-
+    {"Listen", QAC_TAKE_INT, confcb_userdata_example, 0, OPT_SECTION_ALL},
+    {"Protocols", QAC_TAKEALL, confcb_debug, 0, OPT_SECTION_ROOT},
+    {"IPSEC", QAC_TAKE_BOOL, confcb_debug, 0, OPT_SECTION_ROOT},
+    {"Domain", QAC_TAKE_STR, confcb_debug, OPT_SECTION_DOMAIN, OPT_SECTION_ROOT},
+    {  "TTL", QAC_TAKE_INT, confcb_debug, 0, OPT_SECTION_DOMAIN | OPT_SECTION_HOST},
+    {  "MX", QAC_TAKE2 | QAC_A1_INT, confcb_debug, 0, OPT_SECTION_DOMAIN},
+    {  "Host", QAC_TAKE_STR, confcb_section_example, OPT_SECTION_HOST, OPT_SECTION_DOMAIN},
+    {    "IPv4", QAC_TAKE_STR, confcb_debug, 0, OPT_SECTION_HOST},
+    {    "TXT", QAC_TAKE_STR, confcb_debug, 0, OPT_SECTION_HOST},
+    {    "CNAME", QAC_TAKE_STR, confcb_debug, 0, OPT_SECTION_HOST},
     QAC_OPTION_END
 };
 
@@ -114,10 +111,9 @@ int main(void)
 
     // Verify userdata structure.
     if (conf->errmsg(conf) == NULL) {  // another way to check parsing error.
-        printf("\n[MyConf structure]\n");
-        printf("MyConf.ringid=%s\n", myconf.ringid);
-        printf("MyConf.num_partitions=%d\n", myconf.num_partitions);
-        printf("MyConf.sum_partitions=%d\n", myconf.sum_partitions);
+        printf("\n[Sample MyConf structure]\n");
+        printf("MyConf.listen=%d\n", myconf.listen);
+        printf("MyConf.num_hosts=%d\n", myconf.num_hosts);
     }
 
     // Release resources.
@@ -146,7 +142,7 @@ static QAC_CB(confcb_debug)
     // Print parent names
     qaconf_cbdata_t *parent;
     for (parent = data->parent; parent != NULL; parent = parent->parent) {
-        printf(" ::%s", parent->argv[0]);
+        printf(" ::%s(%s)", parent->argv[0], parent->argv[1]);
     }
 
     // Print option arguments
@@ -178,7 +174,7 @@ static QAC_CB(confcb_userdata_example)
     //}
 
     // Copy argument into my structure.
-    strcpy(myconf->ringid, data->argv[1]);
+    myconf->listen = atoi(data->argv[1]);
 
     // Just to print out option information for display purpose.
     confcb_debug(data, userdata);
@@ -222,12 +218,9 @@ static QAC_CB(confcb_section_example)
         return NULL;
     }
 
-
-
     // Type casting userdata for convenient use.
     struct MyConf *myconf = (struct MyConf *)userdata;
-    myconf->num_partitions++;
-    myconf->sum_partitions += atoi(data->argv[2]);
+    myconf->num_hosts++;
 
     // Return OK.
     return NULL;

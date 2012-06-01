@@ -30,6 +30,42 @@
 
 /**
  * @file qaconf.c Apache-style configuration file parser.
+ *
+ * Apache-style Configuration is a configuration file syntax and format
+ * originally introduced by Apache HTTPd project. This format is power,
+ * versatile, flexible and human friendly.
+ *
+ * Sample Apache-style Configuration Syntax:
+ * ==========================================================================
+ *   # Lines that begin with the hash character "#" are considered comments.
+ *   Listen 53
+ *   Protocols UDP TCP
+ *   IPSEC On
+ *
+ *   <Domain "qdecoder.org">
+ *     TTL 86400
+ *     MX 10 mail.qdecoder.org
+ *
+ *     <Host mail>
+ *        IPv4 192.168.10.1
+ *        TXT "US Rack-13D-18 \"San Jose's\""
+ *     </Host>
+ *
+ *     <Host www>
+ *        IPv4 192.168.10.2
+ *        TXT 'KR Rack-48H-31 "Seoul\'s"'
+ *        TTL 3600
+ *     </Host>
+ *   </Domain>
+ *
+ *   <Domain "ringfs.org">
+ *     <Host www>
+ *        CNAME www.qdecoder.org
+ *     </Host>
+ *   </Domain>
+ * ==========================================================================
+ *
+ *
  */
 
 #ifndef DISABLE_QACONF
@@ -70,9 +106,16 @@ static int _parse_inline(qaconf_t *qaconf, FILE *fp, uint8_t flags,
                          qaconf_cbdata_t *cbdata_parent);
 static void _seterrmsg(qaconf_t *qaconf, const char *format, ...);
 static void _free_cbdata(qaconf_cbdata_t *cbdata);
-static int _is_number_str(const char *s);
+static int _is_str_number(const char *s);
+static int _is_str_bool(const char *s);
 #endif
 
+/**
+ * Create a new configuration object.
+ *
+ *
+ * @return a pointer of new qaconf_t object.
+ */
 qaconf_t *qaconf(void)
 {
     // Malloc qaconf_t structure
@@ -172,7 +215,7 @@ static void free_(qaconf_t *qaconf)
 #ifndef _DOXYGEN_SKIP
 #define ARGV_INIT_SIZE  (4)
 #define ARGV_INCR_STEP  (8)
-#define MAX_TYPECHECK   (6)
+#define MAX_TYPECHECK   (5)
 static int _parse_inline(qaconf_t *qaconf, FILE *fp, uint8_t flags,
                          enum qaconf_section sectionid,
                          qaconf_cbdata_t *cbdata_parent)
@@ -358,23 +401,44 @@ static int _parse_inline(qaconf_t *qaconf, FILE *fp, uint8_t flags,
                     // Check number of arguments
                     int numtake = option->take & QAC_TAKEALL;
                     if (numtake != QAC_TAKEALL && numtake != (cbdata->argc -1 )) {
-                        EXITLOOP("'%s' option takes only %d arguments.",
+                        EXITLOOP("'%s' option takes %d arguments.",
                                  option->name, numtake);
                     }
 
                     // Check argument types
+                    int deftype; // 0:str, 1:int, 2:float, 3:bool
+                    if (option->take & QAC_AA_INT) deftype = 1;
+                    else if (option->take & QAC_AA_FLOAT) deftype = 2;
+                    else if (option->take & QAC_AA_BOOL) deftype = 3;
+                    else deftype = 0;
+
                     int j;
                     for (j = 1; j < cbdata->argc && j <= MAX_TYPECHECK; j++) {
-                        if (option->take & (QAC_A1_FLOAT << (j - 1))) {
-                            // floating point type
-                            if(_is_number_str(cbdata->argv[j]) == 0) {
-                                EXITLOOP("%dth argument of '%s' must be a floating point.",
+                        int argtype;
+                        if (option->take & (QAC_A1_INT << (j - 1))) argtype = 1;
+                        else if (option->take & (QAC_A1_FLOAT << (j - 1))) argtype = 2;
+                        else if (option->take & (QAC_A1_BOOL << (j - 1))) argtype = 3;
+                        else argtype = deftype;
+
+                        if (argtype == 1) {
+                            // integer type
+                            if(_is_str_number(cbdata->argv[j]) != 1) {
+                                EXITLOOP("%dth argument of '%s' must be integer type.",
                                          j, option->name);
                             }
-                        } else if (option->take & (QAC_A1_INT << (j - 1))) {
-                            // integer type
-                            if(_is_number_str(cbdata->argv[j]) != 1) {
-                                EXITLOOP("%dth argument of '%s' must be a integer.",
+                        } else if (argtype == 2) {
+                            // floating point type
+                            if(_is_str_number(cbdata->argv[j]) == 0) {
+                                EXITLOOP("%dth argument of '%s' must be floating point. type",
+                                         j, option->name);
+                            }
+                        } else if (argtype == 3) {
+                            // bool type
+                            if(_is_str_bool(cbdata->argv[j]) != 0) {
+                                // Change argument to "1".
+                                strcpy(cbdata->argv[j], "1");
+                            } else {
+                                EXITLOOP("%dth argument of '%s' must be bool type.",
                                          j, option->name);
                             }
                         }
@@ -490,7 +554,7 @@ static void _free_cbdata(qaconf_cbdata_t *cbdata)
 // return 2 for floating point .
 // return 1 for integer
 // return 0 for non number
-static int _is_number_str(const char *s)
+static int _is_str_number(const char *s)
 {
     char *op = (char *)s;
     if (*op == '-') {
@@ -524,6 +588,15 @@ static int _is_number_str(const char *s)
 
     // integer
     return 1;
+}
+
+static int _is_str_bool(const char *s)
+{
+    if (!strcasecmp(s, "true")) return 1;
+    else if (!strcasecmp(s, "on")) return 1;
+    else if (!strcasecmp(s, "yes")) return 1;
+    else if (!strcasecmp(s, "1")) return 1;
+    return 0;
 }
 
 #endif /* _DOXYGEN_SKIP */
