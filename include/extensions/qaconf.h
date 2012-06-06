@@ -61,10 +61,10 @@ extern qaconf_t *qaconf(void);
 #define QAC_CB(func) char *func(qaconf_cbdata_t *data, void *userdata)
 #define QAC_TAKEn(n) (n)
 
-/* parser option */
+/* parser option flags */
 enum {
     QAC_CASEINSENSITIVE     = (1),
-    QAC_IGNOREUNKNOWN       = (2),  /* Ignore unknown option */
+    QAC_IGNOREUNKNOWN       = (2),  // Ignore unknown option directives.
 };
 
 /**
