@@ -36,7 +36,7 @@
  * versatile, flexible and human friendly.
  *
  * Sample Apache-style Configuration Syntax:
- * ==========================================================================
+ * @code
  *   # Lines that begin with the hash character "#" are considered comments.
  *   Listen 53
  *   Protocols UDP TCP
@@ -63,9 +63,111 @@
  *        CNAME www.qdecoder.org
  *     </Host>
  *   </Domain>
- * ==========================================================================
+ * @endcode
  *
+ * @code
+ *   // Define scope.
+ *   //   QAC_SCOPE_ALL and QAC_SCOPE_ROOT are predefined.
+ *   //   Custum scope should be defined from 2(1 << 1).
+ *   //   Note) These values are ORed(bit operation), so the number should be
+ *   //         2(1<<1), 4(1<<2), 6(1<<3), 8(1<<4), ...
+ *   enum {
+ *     OPT_SECTION_ALL        = QAC_SECTION_ALL,   // pre-defined
+ *     OPT_SECTION_ROOT       = QAC_SECTION_ROOT,  // pre-defined
+ *     OPT_SECTION_DOMAIN     = (1 << 1),    // user-defined section
+ *     OPT_SECTION_HOST       = (1 << 2),    // user-defined section
+ *   };
  *
+ *   // Define callback proto-types.
+ *   static QAC_CB(confcb_debug);
+ *   static QAC_CB(confcb_userdata_example);
+ *   static QAC_CB(confcb_section_example);
+ *
+ *   // Define options and callbacks.
+ *   static qaconf_option_t options[] = {
+ *     {"Listen", QAC_TAKE_INT, confcb_userdata_example, 0, OPT_SECTION_ALL},
+ *     {"Protocols", QAC_TAKEALL, confcb_debug, 0, OPT_SECTION_ROOT},
+ *     {"IPSEC", QAC_TAKE_BOOL, confcb_debug, 0, OPT_SECTION_ROOT},
+ *     {"Domain", QAC_TAKE_STR, confcb_debug, OPT_SECTION_DOMAIN, OPT_SECTION_ROOT},
+ *     {  "TTL", QAC_TAKE_INT, confcb_debug, 0, OPT_SECTION_DOMAIN | OPT_SECTION_HOST},
+ *     {  "MX", QAC_TAKE2 | QAC_A1_INT, confcb_debug, 0, OPT_SECTION_DOMAIN},
+ *     {  "Host", QAC_TAKE_STR, confcb_section_example, OPT_SECTION_HOST, OPT_SECTION_DOMAIN},
+ *     {    "IPv4", QAC_TAKE_STR, confcb_debug, 0, OPT_SECTION_HOST},
+ *     {    "TXT", QAC_TAKE_STR, confcb_debug, 0, OPT_SECTION_HOST},
+ *     {    "CNAME", QAC_TAKE_STR, confcb_debug, 0, OPT_SECTION_HOST},
+ *     QAC_OPTION_END
+ *   };
+ *
+ *   int user_main(void)
+ *   {
+ *     // Create a userdata structure.
+ *     struct MyConf myconf;
+ *
+ *     // Initialize and create a qaconf object.
+ *     qaconf_t *conf = qaconf();
+ *     if (conf == NULL) {
+ *       printf("Failed to open '" CONF_PATH "'.\n");
+ *       return -1;
+ *     }
+ *
+ *     // Register options.
+ *     conf->addoptions(conf, options);
+ *
+ *     // Set callback userdata.
+ *     conf->setuserdata(conf, &myconf);
+ *
+ *     // Run parser.
+ *     int count = conf->parse(conf, CONF_PATH, QAC_CASEINSENSITIVE);
+ *     if (count < 0) {
+ *       printf("Error: %s\n", conf->errmsg(conf));
+ *     } else {
+ *       printf("Successfully loaded.\n");
+ *     }
+ *
+ *     // Verify userdata structure.
+ *     if (conf->errmsg(conf) == NULL) {  // another way to check parsing error.
+ *       // codes here
+ *     }
+ *
+ *     // Release resources.
+ *     conf->free(conf);
+ *   }
+ *
+ *   static QAC_CB(confcb_debug)
+ *   {
+ *     int i;
+ *     for (i = 0; i < data->level; i++) {
+ *       printf ("    ");
+ *     }
+ *
+ *     // Print option name
+ *     if (data->otype == QAC_OTYPE_SECTIONOPEN) {
+ *       printf("<%s>", data->argv[0]);
+ *     } else if (data->otype == QAC_OTYPE_SECTIONCLOSE) {
+ *       printf("</%s>", data->argv[0]);
+ *     } else {  // This is QAC_OTYPE_OPTION type.
+ *       printf("%s", data->argv[0]);
+ *     }
+ *
+ *     // Print parent names
+ *     qaconf_cbdata_t *parent;
+ *     for (parent = data->parent; parent != NULL; parent = parent->parent) {
+ *       printf(" ::%s(%s)", parent->argv[0], parent->argv[1]);
+ *     }
+ *
+ *     // Print option arguments
+ *     for (i = 1; i < data->argc; i++) {
+ *       printf(" [%d:%s]", i, data->argv[i]);
+ *     }
+ *     printf("\n");
+ *
+ *     // Return OK
+ *     return NULL;
+ *   }
+ * @endcode
+ *
+ * @code
+ * @endcode
  */
 
 #ifndef DISABLE_QACONF
@@ -113,8 +215,14 @@ static int _is_str_bool(const char *s);
 /**
  * Create a new configuration object.
  *
- *
  * @return a pointer of new qaconf_t object.
+ *
+ * @code
+ *   qaconf_t *conf = qaconf();
+ *   if (conf == NULL) {
+ *     // Insufficient memory.
+ *   } 
+ * @endcode
  */
 qaconf_t *qaconf(void)
 {
@@ -137,6 +245,14 @@ qaconf_t *qaconf(void)
     return qaconf;
 }
 
+/**
+ * Register option directives.
+ *
+ * @param qaconf qaconf_t object
+ * @param options array pointer of qaconf_option_t.
+ *
+ * @return a number of options registered(added).
+ */
 static int addoptions(qaconf_t *qaconf, const qaconf_option_t *options)
 {
     if (qaconf == NULL || options == NULL) {
@@ -158,6 +274,15 @@ static int addoptions(qaconf_t *qaconf, const qaconf_option_t *options)
     return numopts;
 }
 
+/**
+ * Set default callback function.
+ *
+ * Default callback function will be called for unregistered option directives.
+ * QAC_IGNOREUNKNOWN flag will be ignored when default callback has set.
+ *
+ * @param qaconf qaconf_t object
+ * @param callback callback function pointer
+ */
 static void setdefhandler(qaconf_t *qaconf, const qaconf_cb_t *callback)
 {
     qaconf->defcb = callback;
