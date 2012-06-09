@@ -86,21 +86,22 @@ enum {
  *  a : Number of arguments (0~254).
  *      Value 255 means take any number of arguments.
  *
- *  To take 1 argument in any type.
- *    QAC_TAKE1       <= Any type
+ *  An option takes 1 argument.
  *    QAC_TAKE_STR    <= String(any) type
  *    QAC_TAKE_INT    <= Integer type
  *    QAC_TAKE_FLOAT  <= Float type
  *    QAC_TAKE_BOOL   <= Bool type
  *
- *  To take 1 argument in bool type.
- *    QAC_TAKE_BOOL
- *    QAC_TAKE1 | QAC_A1_BOOL
+ *    QAC_TAKE1               <= Equavalent to QAC_TAKE_STR
+ *    QAC_TAKE1 | QAC_A1_BOOL <= Equavalent to QAC_TAKE_BOOL
  *
- *  To take 2 arguments, bool and float.
+ *  An option takes 2 arguments, bool and float.
  *    QAC_TAKE2 | QAC_A1_BOOL | QAC_A2_FLOAT
  *
- *  Take any number of integer arguments but 1st one must be bool and
+ *  An option takes any number of arguments in any type.
+ *    QAC_TAKEALL
+ *
+ *  An option takes any number of arguments but 1st one must be bool and
  *  2nd one must be integer and rest of them must be float.
  *    QAC_TAKEALL | QAC_A1_BOOL | QAC_A2_INT | QAC_AA_FLOAT
  */
@@ -212,9 +213,9 @@ struct qaconf_option_s {
  */
 struct qaconf_cbdata_s {
     enum qaconf_otype otype;  /*!< option type */
-    uint64_t section;         /*!< current section where this option is placed */
+    uint64_t section;         /*!< current section where this option is located */
     uint64_t sections;        /*!< ORed all parent's sectionid(s) including current sections */
-    uint8_t level;            /*!< number of parents, root level is 0 */
+    uint8_t level;            /*!< number of parents(level), root level is 0 */
     qaconf_cbdata_t *parent;  /*!< upper parent link */
 
     int argc;       /*!< number arguments. always equal or greater than 1. */

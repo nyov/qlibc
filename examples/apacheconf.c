@@ -99,6 +99,7 @@ int main(void)
     conf->addoptions(conf, options);
 
     // Set callback userdata.
+    // This is a userdata which will be provided on callback
     conf->setuserdata(conf, &myconf);
 
     // Run parser.

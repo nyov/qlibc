@@ -66,6 +66,8 @@
  * @endcode
  *
  * @code
+ *   // THIS EXAMPLE CODE CAN BE FOUND IN EXAMPLES DIRECTORY.
+ *
  *   // Define scope.
  *   //   QAC_SCOPE_ALL and QAC_SCOPE_ROOT are predefined.
  *   //   Custum scope should be defined from 2(1 << 1).
@@ -80,18 +82,16 @@
  *
  *   // Define callback proto-types.
  *   static QAC_CB(confcb_debug);
- *   static QAC_CB(confcb_userdata_example);
- *   static QAC_CB(confcb_section_example);
  *
  *   // Define options and callbacks.
  *   static qaconf_option_t options[] = {
- *     {"Listen", QAC_TAKE_INT, confcb_userdata_example, 0, OPT_SECTION_ALL},
+ *     {"Listen", QAC_TAKE_INT, confcb_debug, 0, OPT_SECTION_ALL},
  *     {"Protocols", QAC_TAKEALL, confcb_debug, 0, OPT_SECTION_ROOT},
  *     {"IPSEC", QAC_TAKE_BOOL, confcb_debug, 0, OPT_SECTION_ROOT},
  *     {"Domain", QAC_TAKE_STR, confcb_debug, OPT_SECTION_DOMAIN, OPT_SECTION_ROOT},
  *     {  "TTL", QAC_TAKE_INT, confcb_debug, 0, OPT_SECTION_DOMAIN | OPT_SECTION_HOST},
  *     {  "MX", QAC_TAKE2 | QAC_A1_INT, confcb_debug, 0, OPT_SECTION_DOMAIN},
- *     {  "Host", QAC_TAKE_STR, confcb_section_example, OPT_SECTION_HOST, OPT_SECTION_DOMAIN},
+ *     {  "Host", QAC_TAKE_STR, confcb_debug, OPT_SECTION_HOST, OPT_SECTION_DOMAIN},
  *     {    "IPv4", QAC_TAKE_STR, confcb_debug, 0, OPT_SECTION_HOST},
  *     {    "TXT", QAC_TAKE_STR, confcb_debug, 0, OPT_SECTION_HOST},
  *     {    "CNAME", QAC_TAKE_STR, confcb_debug, 0, OPT_SECTION_HOST},
@@ -113,7 +113,8 @@
  *     // Register options.
  *     conf->addoptions(conf, options);
  *
- *     // Set callback userdata.
+ *     // Set callback userdata
+ *     // This is a userdata which will be provided on callback
  *     conf->setuserdata(conf, &myconf);
  *
  *     // Run parser.
@@ -167,6 +168,29 @@
  * @endcode
  *
  * @code
+ *   [Output]
+ *   Listen [1:53]
+ *   Protocols [1:UDP] [2:TCP]
+ *   IPSEC [1:1]
+ *   <Domain> [1:qdecoder.org]
+ *       TTL ::Domain(qdecoder.org) [1:86400]
+ *       MX ::Domain(qdecoder.org) [1:10] [2:mail.qdecoder.org]
+ *       <Host> ::Domain(qdecoder.org) [1:mail]
+ *           IPv4 ::Host(mail) ::Domain(qdecoder.org) [1:192.168.10.1]
+ *           TXT ::Host(mail) ::Domain(qdecoder.org) [1:US Rack-13D-18 "San Jose's"]
+ *       </Host> ::Domain(qdecoder.org) [1:mail]
+ *       <Host> ::Domain(qdecoder.org) [1:www]
+ *           IPv4 ::Host(www) ::Domain(qdecoder.org) [1:192.168.10.2]
+ *           TXT ::Host(www) ::Domain(qdecoder.org) [1:KR Rack-48H-31 "Seoul's"]
+ *           TTL ::Host(www) ::Domain(qdecoder.org) [1:3600]
+ *       </Host> ::Domain(qdecoder.org) [1:www]
+ *   </Domain> [1:qdecoder.org]
+ *   <Domain> [1:ringfs.org]
+ *       <Host> ::Domain(ringfs.org) [1:www]
+ *           CNAME ::Host(www) ::Domain(ringfs.org) [1:www.qdecoder.org]
+ *       </Host> ::Domain(ringfs.org) [1:www]
+ *   </Domain> [1:ringfs.org]
+ *   Successfully loaded.
  * @endcode
  */
 
@@ -183,16 +207,8 @@
 #include "qlibcext.h"
 #include "qinternal.h"
 
-#define _INCLUDE_DIRECTIVE  "Include "
-
 #ifndef _DOXYGEN_SKIP
 #define MAX_LINESIZE    (1024*4)
-
-#define _VAR        '$'
-#define _VAR_OPEN   '{'
-#define _VAR_CLOSE  '}'
-#define _VAR_CMD    '!'
-#define _VAR_ENV    '%'
 
 /* internal functions */
 static int addoptions(qaconf_t *qaconf, const qaconf_option_t *options);
@@ -221,7 +237,7 @@ static int _is_str_bool(const char *s);
  *   qaconf_t *conf = qaconf();
  *   if (conf == NULL) {
  *     // Insufficient memory.
- *   } 
+ *   }
  * @endcode
  */
 qaconf_t *qaconf(void)
@@ -246,12 +262,176 @@ qaconf_t *qaconf(void)
 }
 
 /**
- * Register option directives.
+ * qaconf_t->addoptions(): Register option directives.
  *
- * @param qaconf qaconf_t object
+ * @param qaconf qaconf_t object.
  * @param options array pointer of qaconf_option_t.
  *
  * @return a number of options registered(added).
+ *
+ * @code
+ *  qaconf_option_t options[] = {
+ *     {"Listen", QAC_TAKE_INT, confcb_debug, 0, OPT_SECTION_ALL},
+ *     {"Protocols", QAC_TAKEALL, confcb_debug, 0, OPT_SECTION_ROOT},
+ *     {"IPSEC", QAC_TAKE_BOOL, confcb_debug, 0, OPT_SECTION_ROOT},
+ *     {"Domain", QAC_TAKE_STR, confcb_debug, OPT_SECTION_DOMAIN, OPT_SECTION_ROOT},
+ *     {  "TTL", QAC_TAKE_INT, confcb_debug, 0, OPT_SECTION_DOMAIN | OPT_SECTION_HOST},
+ *     {  "MX", QAC_TAKE2 | QAC_A1_INT, confcb_debug, 0, OPT_SECTION_DOMAIN},
+ *     {  "Host", QAC_TAKE_STR, confcb_debug, OPT_SECTION_HOST, OPT_SECTION_DOMAIN},
+ *     {    "IPv4", QAC_TAKE_STR, confcb_debug, 0, OPT_SECTION_HOST},
+ *     {    "TXT", QAC_TAKE_STR, confcb_debug, 0, OPT_SECTION_HOST},
+ *     {    "CNAME", QAC_TAKE_STR, confcb_debug, 0, OPT_SECTION_HOST},
+ *     QAC_OPTION_END
+ *   };
+ *
+ *   // Register options.
+ *   qaconf_t *conf = qaconf();
+ *   conf->addoptions(conf, options);
+ *   (...codes goes...)
+ * @endcode
+ *
+ * It takes an array of options as provided in the sample codes.
+ * Each option consists of 5 parameters as below
+ *
+ * @code
+ *   1st) Option Name : A option directive name.
+ *   2nd) Arguments   : A number of arguments this option takes and their types.
+ *   3rd) Callback    : A function pointer for callback.
+ *   4th) Section ID  : Section ID if this option is a section like <Option>.
+ *                 Otherwise 0 for regular option.
+ *   5th) Sections    : ORed section IDs where this option can be specified.
+ * @endcode
+ *
+ * Example:
+ *
+ * @code
+ * {"TTL", QAC_TAKE_INT, confcb_debug, 0, OPT_SECTION_DOMAIN | OPT_SECTION_HOST}
+ *   1st) Option name is "TTL"
+ *   2nd) It takes 1 argument and its type must be integer.
+ *   3rd) Callback function, confcb_debug, will be called.
+ *   4th) This is a regular option and does not have section id.
+ *   5th) This option can be specified in OPT_SECTION_DOMAIN and OPT_SECTION_HOST.
+ * @endcode
+ *
+ * OPTION NAME field:
+ *
+ * Option name is a unique string. Even an option is section type like <option>
+ * only name part without bracket needs to be specifed.
+ *
+ * ARGUMENT field:
+ *
+ * This field is for providing argument checking in parser level. So in user's
+ * callback routine can go simple. This provides checking of number of arguments
+ * this option can take and those argument type.
+ *
+ * In terms of argument types. There are 4 argument types as below.
+ * And first 5 arguments can be checked individually with different types.
+ *
+ * @code
+ *   STR type   : any type
+ *   INT type   : integer type. ex) 23, -12, 0
+ *   FLOAT type : integer + floating point type. ex) 1.32, -32.5, 23, -12, 0
+ *   BOOL type  : bool type ex) 1/0, true/false, on/off, yes/no
+ * @endcode
+ *
+ * When a BOOL type is specified, the argument passed to callback will be
+ * replaced to "1" or "0" for convenience use. For example, if "On" is specified
+ * as a argument and if BOOL type checking is specified, then actual argument
+ * which will be passed to callback will have "1". So we can simply determine it
+ * like "bool enabled = atoi(data->argv[1])".
+ *
+ * If original input argument needs to be passed to callback, specify STR type.
+ *
+ * Here is some examples of how to specify "Arguments" field.
+ *
+ * @code
+ *  An option takes 1 argument.
+ *    QAC_TAKE_STR    <= String(any) type
+ *    QAC_TAKE_INT    <= Integer type
+ *    QAC_TAKE_FLOAT  <= Float type
+ *    QAC_TAKE_BOOL   <= Bool type
+ *
+ *    QAC_TAKE1               <= Equavalent to QAC_TAKE_STR
+ *    QAC_TAKE1 | QAC_A1_BOOL <= Equavalent to QAC_TAKE_BOOL
+ *
+ *  An option takes 2 arguments, bool and float.
+ *    QAC_TAKE2 | QAC_A1_BOOL | QAC_A2_FLOAT
+ *
+ *  An option takes any number of arguments in any type.
+ *    QAC_TAKEALL
+ *
+ *  An option takes any number of arguments but 1st one must be bool and
+ *  2nd one must be integer and rest of them must be float.
+ *    QAC_TAKEALL | QAC_A1_BOOL | QAC_A2_INT | QAC_AA_FLOAT
+ * @endcode
+ *
+ * CALLBACK field:
+ *
+ * User defined callback function. We provide a macro, QAC_CB, for function
+ * proto type. Always use QAC_CB macro.
+ *
+ * @code
+ *   QAC_CB(sample_cb) {
+ *     (...codes...)
+ *   }
+ *
+ *   is equavalent to
+ *
+ *   char *sample_cb(qaconf_cbdata_t *data, void *userdata) {
+ *     (...codes...)
+ *   }
+ * @endcode
+ *
+ * Callback function will be called with 2 arguments. One is callback data and
+ * the other one is userdata. Userdata is the data pointer set by setuserdata().
+ *
+ * Here is data structure. Arguments belong to the option can be accessed via
+ * argv variables like data->argv[1]. argv[0] is for the option name.
+ *
+ * @code
+ *   struct qaconf_cbdata_s {
+ *     enum qaconf_otype otype;  // option type
+ *     uint64_t section;         // current section where this option is located
+ *     uint64_t sections;        // ORed all parent's sectionid(s) including current sections
+ *     uint8_t level;            // number of parents(level), root level is 0
+ *     qaconf_cbdata_t *parent;  // upper parent link
+ *
+ *     int argc;       // number arguments. always equal or greater than 1.
+ *     char **argv;    // argument pointers. argv[0] is option name.
+ *   }
+ * @endcode
+ *
+ * SECTION ID field:
+ *
+ * If an option is an section like <Option>, section id can be assigned.
+ * This section id can be used to limit some other option directives to be
+ * located only inside of that section. So this is your choice. If it doesn't
+ * require to check directory scope, we can just specify 0 here.
+ *
+ * There are 2 pre-defined section id, QAC_SECTION_ALL and QAC_SECTION_ROOT.
+ * When we define user section, it has to be defined from 2(1 << 1)as below.
+ *
+ * @code
+ *   enum {
+ *     OPT_SECTION_ALL        = QAC_SECTION_ALL,   // pre-defined
+ *     OPT_SECTION_ROOT       = QAC_SECTION_ROOT,  // pre-defined
+ *     OPT_SECTION_DOMAIN     = (1 << 1),    // user-defined section
+ *     OPT_SECTION_HOST       = (1 << 2),    // user-defined section
+ *   };
+ * @endcode
+ *
+ * Please note that this section IDs are ORed. So the section id should be
+ * assigned in bit operation manner as 2(1<<1), 4(1<<2), 6(1<<3), 8(1<<4), ...
+ *
+ * SECTION IDS field:
+ *
+ * This field is to limit the scope where an option is allowed to be specified.
+ * Multiple section IDs can be ORed.
+ *
+ * QAC_SECTION_ALL means an option can be appeared in anywhere.
+ *
+ * QAC_SECTION_ROOT means an option can be appeared only in top level and not
+ * inside of any sections.
  */
 static int addoptions(qaconf_t *qaconf, const qaconf_option_t *options)
 {
@@ -280,7 +460,7 @@ static int addoptions(qaconf_t *qaconf, const qaconf_option_t *options)
  * Default callback function will be called for unregistered option directives.
  * QAC_IGNOREUNKNOWN flag will be ignored when default callback has set.
  *
- * @param qaconf qaconf_t object
+ * @param qaconf qaconf_t object.
  * @param callback callback function pointer
  */
 static void setdefhandler(qaconf_t *qaconf, const qaconf_cb_t *callback)
@@ -288,11 +468,67 @@ static void setdefhandler(qaconf_t *qaconf, const qaconf_cb_t *callback)
     qaconf->defcb = callback;
 }
 
+/**
+ * qaconf_t->setuserdata(): Set userdata which will be provided on callback.
+ *
+ * @param qaconf qaconf_t object.
+ * @param userdata a pointer of userdata.
+ *
+ * @code
+ *   // Define an example userdata
+ *   struct MyConf {
+ *     int sample;
+ *   };
+ *
+ *   int user_main(void) {
+ *     struct MyConf myconf;
+ *
+ *     (...codes...)
+ *
+ *     // Set callback userdata.
+ *     conf->setuserdata(conf, &myconf);
+ *     (...codes...)
+ *    }
+ *
+ *   QAC_CB(confcb_callback_func) {
+ *     (...codes...)
+ *      // Type casting userdata for convenient use.
+ *      struct MyConf *myconf = (struct MyConf *)userdata;
+ *      myconf->sample++;
+ *     (...codes...)
+ *     return NULL;
+ *   }
+ * @endcode
+ */
 static void setuserdata(qaconf_t *qaconf, const void *userdata)
 {
     qaconf->userdata = (void *)userdata;
 }
 
+/**
+ * qaconf_t->parse(): Run parser.
+ *
+ * @param qaconf qaconf_t object.
+ * @param filepath configuration file path.
+ * @param flags parser options. (0 for default)
+ *
+ * @return A number of option directives parsed. -1 will be returned in case of
+ *         error.
+ *
+ * Here is a list of flags. Multiple flags can be ORed.
+ *
+ *   QAC_CASEINSENSITIVE: Option name is case-insensitive.
+ *
+ *   QAC_IGNOREUNKNOWN : Ignore unknown option directives.
+ *   This flag will be ignored if setdefhandler() has set.
+ *
+ * @code
+ *   int c;
+ *   c = conf->parse(conf, "sm1.conf", 0);
+ *   c = conf->parse(conf, "sm2.conf", QAC_CASEINSENSITIVE);
+ *   c = conf->parse(conf, "sm3.conf", QAC_CASEINSENSITIVE | QAC_IGNOREUNKNOWN);
+ * @endcode
+ */
 static int parse(qaconf_t *qaconf, const char *filepath, uint8_t flags)
 {
     // Open file
@@ -316,11 +552,39 @@ static int parse(qaconf_t *qaconf, const char *filepath, uint8_t flags)
     return optcount;
 }
 
+/**
+ * qaconf_t->errmsg(): Get last error message.
+ *
+ * @param qaconf qaconf_t object.
+ *
+ * @return A const pointer of error message string.
+ *
+ * @code
+ *   int c = conf->parse(conf, "sample.conf", 0);
+ *   if (c < 0) {
+ *     // ERROR
+ *     printf("%s\n", conf->errmsg(conf));
+ *   }
+ * @endcode
+ */
 static const char *errmsg(qaconf_t *qaconf)
 {
     return (const char*)qaconf->errstr;
 }
 
+/**
+ * qaconf_t->reseterror(): Clear error message.
+ *
+ * @param qaconf qaconf_t object.
+ *
+ * @code
+ *   conf->reseterror(conf);
+ *   conf->parse(conf, "sample.conf", 0);
+ *   if (conf->errmsg(conf) != NULL) {
+ *     // ERROR
+ *   }
+ * @endcode
+ */
 static void reseterror(qaconf_t *qaconf)
 {
     if (qaconf->errstr != NULL) {
@@ -329,6 +593,15 @@ static void reseterror(qaconf_t *qaconf)
     }
 }
 
+/**
+ * qaconf_t->free(): Release resources.
+ *
+ * @param qaconf qaconf_t object.
+ *
+ * @code
+ *   conf->free(conf);
+ * @endcode
+ */
 static void free_(qaconf_t *qaconf)
 {
     if (qaconf->filepath != NULL) free(qaconf->filepath);
@@ -338,6 +611,7 @@ static void free_(qaconf_t *qaconf)
 }
 
 #ifndef _DOXYGEN_SKIP
+
 #define ARGV_INIT_SIZE  (4)
 #define ARGV_INCR_STEP  (8)
 #define MAX_TYPECHECK   (5)
