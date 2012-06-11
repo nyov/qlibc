@@ -148,15 +148,16 @@ AC_TYPE_OFF_T
 ## --enable section
 ##
 
+Q_ARG_ENABLE([debug], [Enable debugging output. This will print out internal debugging messages to stdout.], [-DBUILD_DEBUG])
+
 Q_ARG_ENABLE([threadsafe], [Enable thread-safe feature. When it's enabled, user applications need to link pthread library. (ex: -lpthread)], [-DENABLE_THREADSAFE])
 if test "$enableval" = yes; then
 	AC_CHECK_LIB([pthread], [main], [], AC_MSG_ERROR([Cannot find pthread library.]))
 	AC_SUBST(DEPLIBS, ["-lpthread"])
 fi
 
-Q_ARG_ENABLE([debug], [Enable debugging output. This will print out internal debugging messages to stdout.], [-DBUILD_DEBUG])
-#Q_ARG_ENABLE([lfs], [Enable large file supports.], [-DENABLE_LFS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64])
 Q_ARG_DISABLE([ipc], [Disable IPC APIs(src/ipc/) in qlibc library.], [-DDISABLE_IPC])
+#Q_ARG_ENABLE([lfs], [Enable large file supports.], [-DENABLE_LFS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64])
 #Q_ARG_DISABLE([ext], [Disable all extension APIs in src/extensions directory.], [-DDISABLE_QCONFIG -DDISABLE_QLOG -DDISABLE_QHTTPCLIENT -DDISABLE_QDATABASE])
 Q_ARG_DISABLE([ext], [Disable building qlibext extension library.], [])
 if test "$enableval" = no; then
