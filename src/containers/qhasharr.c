@@ -102,9 +102,9 @@
  *  int memsize = qhasharr_calculate_memsize(maxslots);
  *
  *  // create shared memory
- *  int shmid = qShmInit("/tmp/some_id_file", 'q', memsize, true);
+ *  int shmid = qshm_init("/tmp/some_id_file", 'q', memsize, true);
  *  if(shmid < 0) return -1; // creation failed
- *  void *memory = qShmGet(shmid);
+ *  void *memory = qshm_get(shmid);
  *
  *  // initialize hash-table
  *  qhasharr_t *tbl = qhasharr(memory, memsize);
@@ -113,15 +113,15 @@
  *  (...your codes with your own locking mechanism...)
  *
  *  // destroy shared memory
- *  qShmFree(shmid);
+ *  qshm_free(shmid);
  *
  *  [USER SIDE]
- *  int shmid = qShmGetId("/tmp/some_id_file", 'q');
+ *  int shmid = qshm_getid("/tmp/some_id_file", 'q');
  *
  *  // Every table data including internal private variables are stored in the
  *  // flat static memory area. So converting the memory pointer to the
  *  // qhasharr_t pointer type is everything we need.
- *  qhasharr_t *tbl = (qhasharr_t*)qShmGet(shmid);
+ *  qhasharr_t *tbl = (qhasharr_t*)qshm_get(shmid);
  *
  *  (...your codes with your own locking mechanism...)
  * @endcode
