@@ -308,17 +308,17 @@ bool qfile_mkdir(const char *dirpath, mode_t mode, bool recursive)
     DEBUG("try to create directory %s", dirpath);
     if (mkdir(dirpath, mode) == 0) return true;
 
+    bool ret = false;
     if (recursive == true && errno == ENOENT) {
         char *parentpath = qfile_get_dir(dirpath);
-        if (qfile_mkdir(parentpath, mode, recursive) == true
-            && qfile_mkdir(dirpath, mode, recursive) == true) {
-            free(parentpath);
-            return true;
+        if (qfile_mkdir(parentpath, mode, true) == true
+            && mkdir(dirpath, mode) == 0) {
+            ret = true;
         }
         free(parentpath);
     }
 
-    return false;
+    return ret;
 }
 
 /**
