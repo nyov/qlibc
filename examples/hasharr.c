@@ -87,5 +87,8 @@ int main(void)
         free(obj.data);
     }
 
+    // free table reference object.
+    tbl->free(tbl);
+
     return 0;
 }
