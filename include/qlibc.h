@@ -322,6 +322,7 @@ struct qhashtbl_s {
 /* types */
 typedef struct qhasharr_s qhasharr_t;
 typedef struct qhasharr_slot_s qhasharr_slot_t;
+typedef struct qhasharr_data_s qhasharr_data_t;
 
 /* public functions */
 extern qhasharr_t *qhasharr(void *memory, size_t memsize);
@@ -357,6 +358,16 @@ struct qhasharr_slot_s {
 };
 
 /**
+ * qhasharr memory structure
+ */
+struct qhasharr_data_s {
+    int maxslots;       /*!< number of maximum slots */
+    int usedslots;      /*!< number of used slots */
+    int num;            /*!< number of stored keys */
+    qhasharr_slot_t *slots;  /*!< data area pointer */
+};
+
+/**
  * qhasharr container
  */
 struct qhasharr_s {
@@ -378,12 +389,10 @@ struct qhasharr_s {
     void (*clear) (qhasharr_t *tbl);
     bool (*debug) (qhasharr_t *tbl, FILE *out);
 
-    /* private variables - do not access directly */
-    qmutex_t  qmutex;   /*!< activated if compiled with --enable-threadsafe */
-    int maxslots;       /*!< number of maximum slots */
-    int usedslots;      /*!< number of used slots */
-    int num;            /*!< number of stored keys */
-    qhasharr_slot_t *slots;  /*!< data area pointer */
+    void (*free) (qhasharr_t *tbl);
+
+    /* private variables */
+    qhasharr_data_t *data;
 };
 
 /******************************************************************************
