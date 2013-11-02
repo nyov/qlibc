@@ -291,7 +291,7 @@ uint32_t qhashmurmur3_32(const void *data, size_t nbytes)
         case 1:
             k ^= tail[0];
             k *= c1;
-            k = (k << 13) | (k >> (32 - 15));
+            k = (k << 15) | (k >> (32 - 15));
             k *= c2;
             h ^= k;
     };
