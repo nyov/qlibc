@@ -25,7 +25,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************
- * $Id$
+ * $Id: stack.c 78 2012-04-11 03:52:25Z seungyoung.kim $
  ******************************************************************************/
 
 #include <stdio.h>

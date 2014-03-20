@@ -25,7 +25,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************
- * $Id$
+ * $Id: qio.c 88 2012-04-17 00:23:20Z seungyoung.kim $
  ******************************************************************************/
 
 /**

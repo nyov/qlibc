@@ -25,7 +25,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************
- * $Id$
+ * $Id: qhasharr.c 130 2013-05-15 08:42:08Z seungyoung.kim $
  ******************************************************************************/
 
 /**

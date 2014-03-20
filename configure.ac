@@ -25,7 +25,7 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 ################################################################################
-## $Id$
+## $Id: configure.ac 125 2012-06-11 22:14:29Z seungyoung.kim $
 ################################################################################
 
 AC_COPYRIGHT([

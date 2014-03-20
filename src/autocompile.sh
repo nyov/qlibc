@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id$
+# $Id: autocompile.sh 120 2012-05-31 00:51:52Z seungyoung.kim $
 #
 
 ARGC=$#

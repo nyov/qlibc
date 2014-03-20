@@ -25,7 +25,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************
- * $Id$
+ * $Id: hashtbl.c 77 2012-04-11 01:19:11Z seungyoung.kim $
  ******************************************************************************/
 
 #include <stdio.h>

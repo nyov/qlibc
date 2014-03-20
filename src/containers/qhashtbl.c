@@ -25,7 +25,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************
- * $Id$
+ * $Id: qhashtbl.c 86 2012-04-14 07:05:28Z seungyoung.kim $
  ******************************************************************************/
 
 /**

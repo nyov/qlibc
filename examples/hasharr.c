@@ -25,7 +25,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************
- * $Id$
+ * $Id: hasharr.c 132 2013-05-15 08:46:41Z seungyoung.kim $
  ******************************************************************************/
 
 #include <stdio.h>

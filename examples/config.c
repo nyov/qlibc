@@ -25,7 +25,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************
- * $Id$
+ * $Id: config.c 120 2012-05-31 00:51:52Z seungyoung.kim $
  ******************************************************************************/
 
 #include "qlibc.h"

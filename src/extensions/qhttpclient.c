@@ -25,7 +25,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************
- * $Id$
+ * $Id: qhttpclient.c 96 2012-05-02 19:56:15Z seungyoung.kim $
  ******************************************************************************/
 
 /**

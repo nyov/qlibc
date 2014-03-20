@@ -25,7 +25,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************
- * $Id$
+ * $Id: qinternal.h 114 2012-05-26 13:27:36Z seungyoung.kim $
  ******************************************************************************/
 
 #ifndef _QINTERNAL_H
